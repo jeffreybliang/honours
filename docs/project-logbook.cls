@@ -453,7 +453,7 @@
 % Usage:
 %	\MakeFrontPage
 \NewDocumentCommand{\MakeFrontPage}{}{
-	\AddInstitutionLogo
+	% \AddInstitutionLogo
 	\AddProjectTitle
 	\newline
 	\AddSummary

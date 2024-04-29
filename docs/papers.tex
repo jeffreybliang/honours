@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{ifthen}
+
+\tcbuselibrary{skins,breakable}
+
+\title{Journal Article Summaries}
+\author{Your Name}
+\date{\today}
+
+\colorlet{ArticleBoxBackgroundColorOdd}{white}
+\colorlet{ArticleBoxBackgroundColorEven}{gray!10}
+
+\newbool{isEven}
+\setbool{isEven}{false}
+
+\newtcolorbox{ArticleColorBox}[1]{%
+    breakable, 
+    enhanced, 
+    colback=\ifbool{isEven}{ArticleBoxBackgroundColorEven}{ArticleBoxBackgroundColorOdd}, 
+    colframe=black, 
+    fonttitle=\bfseries, 
+    title=Article #1
+}
+
+\newcounter{ArticleSummaryCounter}
+\setcounter{ArticleSummaryCounter}{0}
+
+
+\newenvironment{ArticleSummary}[1]{
+    \refstepcounter{ArticleSummaryCounter} % Increment the counter
+    \begin{tcolorbox}[breakable, enhanced, colback=\ifbool{isEven}{ArticleBoxBackgroundColorEven}{ArticleBoxBackgroundColorOdd}, colframe=black, fonttitle=\bfseries, title=Summary \theArticleSummaryCounter: #1]
+    \setlength\parskip{0.2cm}
+}{
+    \end{tcolorbox}
+    \vspace*{0.5cm}
+    \ifbool{isEven}{\setbool{isEven}{false}}{\setbool{isEven}{true}}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{ArticleSummary}{dfdsf}
+\textbf{Citation:} sdfsd
+
+\textbf{Summary:} sdfasf
+
+\textbf{Key Points:}
+\begin{itemize}
+    \item : sdfs
+    \item : 
+\end{itemize}
+
+\end{ArticleSummary}
+\end{document}
