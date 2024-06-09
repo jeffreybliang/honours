@@ -1,60 +1,161 @@
 \documentclass{article}
+\usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsmath,amsfonts,amssymb, bm}
 \usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{hyperref}
 \usepackage{tcolorbox}
 \usepackage{ifthen}
+\usepackage{etoolbox}
+\usepackage{physics}
+\input{commands}
 
 \tcbuselibrary{skins,breakable}
 
 \title{Journal Article Summaries}
-\author{Your Name}
+\author{Jeffrey Liang}
 \date{\today}
 
 \colorlet{ArticleBoxBackgroundColorOdd}{white}
-\colorlet{ArticleBoxBackgroundColorEven}{gray!10}
+\colorlet{ArticleBoxBackgroundColorEven}{BlueGreen!4}
 
 \newbool{isEven}
-\setbool{isEven}{false}
-
-\newtcolorbox{ArticleColorBox}[1]{%
-    breakable, 
-    enhanced, 
-    colback=\ifbool{isEven}{ArticleBoxBackgroundColorEven}{ArticleBoxBackgroundColorOdd}, 
-    colframe=black, 
-    fonttitle=\bfseries, 
-    title=Article #1
-}
+\setbool{isEven}{false}  % Start with true to begin with the first condition
 
 \newcounter{ArticleSummaryCounter}
 \setcounter{ArticleSummaryCounter}{0}
 
+\newtcolorbox{ArticleSummaryBox}[2][]{%
+    breakable, 
+    enhanced, 
+    colback=\ifbool{isEven}{ArticleBoxBackgroundColorEven}{ArticleBoxBackgroundColorOdd}, 
+    colframe=BlueGreen, 
+    fonttitle=\bfseries, 
+    title=Summary \theArticleSummaryCounter: #2,
+    #1 % for additional optional parameters
+}
 
 \newenvironment{ArticleSummary}[1]{
     \refstepcounter{ArticleSummaryCounter} % Increment the counter
-    \begin{tcolorbox}[breakable, enhanced, colback=\ifbool{isEven}{ArticleBoxBackgroundColorEven}{ArticleBoxBackgroundColorOdd}, colframe=black, fonttitle=\bfseries, title=Summary \theArticleSummaryCounter: #1]
-    \setlength\parskip{0.2cm}
+    \ArticleSummaryBox{#1}
+    % \setlength\parskip{0.2cm}
 }{
-    \end{tcolorbox}
+    \endtcolorbox % This ends the 'tcolorbox' defined in 'ArticleSummaryBox'
     \vspace*{0.5cm}
-    \ifbool{isEven}{\setbool{isEven}{false}}{\setbool{isEven}{true}}
+    \ifbool{isEven}{\global\boolfalse{isEven}}{\global\booltrue{isEven}}
 }
 
 \begin{document}
 
 \maketitle
 
-\begin{ArticleSummary}{dfdsf}
-\textbf{Citation:} sdfsd
+\begin{ArticleSummary}{MeshSDF: Differentiable Iso-Surface Extraction}
+    \textbf{Citation:} Remelli \textit{et al.}, 2020
 
-\textbf{Summary:} sdfasf
+    \textbf{Summary:} Using a neural network to model a signed distance function, we sample points from the zero-level set of the watertight shape and then use Marching Cubes (MC) to create a mesh between points. Rather than differentiating with respect to the MC mesh, we differentiate directly with the neural network since the loss function only cares about zero-level set. There do exist differentiable MC variants but they can be complex/apply only in certain conditions.
 
-\textbf{Key Points:}
-\begin{itemize}
-    \item : sdfs
-    \item : 
-\end{itemize}
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Vertices are sampled from zero level set usually, so if the loss function only cares about the zero level set then you can directly differentiate with respect to the neural net. When the loss function cares about the facets, then we need a differentiable Marching Cubes (but the points are still sampled from the zero level set).
+        \item When a point $s$ undergoes an infinitesimal perturbation $\Delta s$, the local surface is perturbed in the opposite direction of the surface normal: $\pdv{v}{s} v = -n(v) = -\nabla s(v)$.
+        \item a negative $\Delta s$ causes points with slightly positive distance values move closer to the zero set (as you subtract), that is, the surface is inflated.
+        \item Marching Cubes (MC) converts implicit functions to 3D surface meshes $\mathcal M=(V,F)$. It samples the network on a discrete 3D grid, detecting zero-crossing of the field along grid edges and builds a surface mesh with a lookup table. The position of vertices on grid edges involves linear interpolation, which is modelled by a function discontinuous at $s_i = s_j$, so cannot allow topology changes through backpropagation.
+        
+        \item This method is used for tasks where we deform a 3D mesh $\mathcal{M} = (V,F)$, where $V = \lrbrace{\bm v_1, \bm v_2,...}$ denotes vertices in $\R^3$ and $F$ facets to minimise a task-specific loss function $\mathcal L_{\text {task}}(\mathcal M)$.
+        \item Signed distance function (SDF): $s: \R^3 \to \R$. Neural network $f_\theta$ is tarined on watertight surfaces $\mathcal S$ to approximate SDF $s$ by minimising
+        \begin{equation*}
+            \mathcal{L}_{\text{sdf}}\lr(){\lrbrace{\bm z_S}_{S\in \mathcal S}, \theta}
+                = \sum_{S\in \mathcal S} \frac{1}{|X_S|}\sum_{\bm x \in X_S} \lr||{f_\theta(\bm x, \bm z_S) - s(\bm x)} + \lambda_{\text{reg}}\sum_{S\in \mathcal S} \norm*{\bm z_S}^2_2
+        \end{equation*}
+        where $\bm z_S \in \R^Z$ is a $Z$-dimensional encoding of surface $S$, $\theta$ denotes network parameters, $X_S$ represents 3D point samples we use to train our netowrk, and $\lambda_{\text{reg}}$ affects regularisation.
 
+        When given a mesh, we want to be able to evaluate:
+        \begin{equation*}
+            \pdv{\mathcal L_{\text{task}}}{\bm z} = \sum_{\bm v \in V} \pdv{\mathcal L_{\text{task}}}{\bm v} \pdv{\bm v}{f_\theta} \pdv{f_\theta} {\bm z}.
+        \end{equation*}
+        As $f_\theta$ approximates an SDF, we can replace $\pdv{\bm v}{f_\theta}$ with $- \nabla f_\theta(\bm v, \bm z)$.
+        \item Two loss functions are considered between surfaces $S$ and $T$:
+        \begin{align*}
+            \mathcal L_{\text{task1}} &= \min_{s \in S} d(s,T) + \min_{t\in T} d(S,t), \tag*{surface-to-surface distance}\\
+            \mathcal L_{\text{task2}} &= \norm*{\text{DR}(S) - \text{DR}(T)}_1 \tag*{image-to-image distance}
+        \end{align*}
+
+        \item For shape optimisation, we can use the following loss function (aerodynamics):
+        \begin{equation*}
+            \mathcal L_{\text{task}}(\mathcal M) = \iint_{\mathcal M} g_\beta \bm n_x \, \text d\mathcal{M} + \mathcal L_{\text{constraint}}(\mathcal M).
+        \end{equation*}
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Structure-from-Motion Revisited}
+    \textbf{Citation:} Schönberger and Frahm, 2016 
+    
+    \textbf{Summary:} A new (incremental) SfM technique which looks to address image registration and triangulation more efficiently and robustly. It augments scene graph using geometric verification strategy. Next best view selection for incremental reconstruction process. Robust triangulation to produce more complete scene structure with reduced computational cost. An iterative BA, re-triangulation, and outlier filtering strategy to improve completeness. More efficient BA parametrisation for dense photo collections.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item SfM starts with correspondence search given a set of images $\mathcal{I} = \lrbrace{I_i \mid i=1,...,N_I}$:
+        \begin{enumerate}
+            \item Feature extraction: $\mathcal F_i = \lrbrace{(x_j, \bm f_j) \mid j=1,...,N_{F_i}}$ at location $\bm x_j\in\R^2$
+            \item Matching ($\mathcal{O}(N_I^2N_{F_i}^2)$): find most similar feature in the other image through brute force to give set of potentially matching image pairs $\mathcal C = \lrbrace{\lrbrace{I_a,I_b} \mid I_a, I_b \in \mathcal I, a<b}$ and associated feature correspondences $\mathcal{M}_{ab} \in \mathcal F_a \times \mathcal F_b$.
+            \item Geometric verification: estimate projection transformation to map between feature points (use homography or epipolar geometry) + RANSAC. Outputs a scene-graph, with images as nodes and verified pairs of images as edges.
+        \end{enumerate}
+        \item Incremental reconstruction: outputs pose estimates $\mathcal P = \lrbrace{\bm P_c \in \bm{SE}(3) \mid c = 1,...,N_P}$ for registered images and the reconstructed scene structure as a set of points $\mathcal X = \lrbrace{\bm X_k \in \R^3 \mid k=1,...,N_X}$.
+        \begin{enumerate}
+            \item Initialisation: done with carefully selected two-view reconstruction - can be from densse location in the image graph with many overlapping cameras. 
+            \item Image registration: can register to current model by solving Perspective-n-Point (PnP) problem suing using correspondences to triangulated points already in the image. Each new registered image extends the set $\mathcal P$. This paper attempts to improve in this part.
+            \item Triangulation: a new scene point can be triangulated and added to $\mathcal X$ as soon as one more image also covering the same scene but from a different viewpoint is registered. The redundancy and additional correspondences increases stability. This paper addresses more robust/efficient method.
+            \item Bundle adjustment: A joint non-linear refinement of camera parameters $\bm P_c$ and point parameters $\bm X_k$ which minimise the reprojection error $E = \sum_{j} \rho_j \lr(){\norm*{\pi (\bm P_c, \bm X_k) - \bm x_j}_2^2}$, where $\pi$ projects scene points to the image space and $\rho_j$ is a loss function to down-weight outliers. Levenberg-Marquardt is used to solve BA problems. Can use Schur complement trick. This paper attempts to improve on this part.
+        \end{enumerate}
+        \item Current challenges for SfM: failure to register images which should be, produce broken models due to mis-registrations or drift. Caused by incomplete scene graphs, or in failures in reconstruction stage due to inaccurate scene structure. 
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{CAPNet: Continuous Approximation Projection for 3D Point Cloud Reconstruction Using 2D Supervision}
+    \textbf{Citation:} Navaneet \textit{et al.}, 2019
+    
+    \textbf{Summary:} Constructs a 3D point cloud by projecting them into multiple 2D views and comparing with ground-truth 2D masks in each view (weak supervision). A continuous approximation of points in the point cloud produces smooth projections in a differentiable manner. Uses encoder-decoder architecture.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Point cloud representations are better than volumetric representations since the latter suffers from information sparsity. Surface voxels provide structural information, however internal voxels increase the computational complexity with minimal addition to information.
+        \item \textit{Goal}: From a single image of an object, reconstruct a 3D point cloud representation of the object. If $I$ is an image from the training set and $f$ is a trained network, let $p=f(I)$ be the corresponding 3D point cloud reconstruction. A projection $P(p,v)$ is from an arbitrary view point $v$ is obtained by performing a perspective transformation and projecting the transformed point cloud onto a plane. The transformed point $\hat{p}_n=(\hat x_n, \hat y_n, \hat z_n)$ in camera coordinates is obtained from: $\hat{p}_n = K(R_v p_n + t_v)\quad  \forall n \in \lrbrace{1,...,N}$, where $K, R_v, t_n$ are the camera intrinsics and extrinsics. Training uses ground truth 2D masks $M$ to supervise projection $\hat{M} = P(p,v).$
+        \item The encoder takes in a 2D image and the decoder reconstructs the point cloud. To compute the loss, the predicted point cloud is projected from $V$ different view-points and compared with corresponding ground truth projections.
+        \item The final loss function is $\mathcal L = \mathcal L_{bce} + \lambda \cdot \mathcal L_{\text{aff}}$. Let $\hat{M}^v_{i,j} = \tanh\lr(){\sum_{n=1}^N \phi(\hat{x}_n-i)\cdot\phi(\hat{y}_n-j)}$, where $\phi$ is the kernel function $\phi(k) = \exp\lr(){\frac{-k^2}{2\sigma^2}}$ (this Gaussian kernel allows smooth, accurate projections with no holes). The loss function is binary cross-entropy loss:
+        $$\mathcal{L}_{bce} = \sum_{v=1}^V -M^v \log (\hat M^v) - (1-M^v)\log(1-\hat M^v)$$
+        where $M^v$ and $\hat M^v$ are the ground truth and predicted masks, respectively, of dimension $(H,W)$. This loss function results in reconstructions with many outlier points, so a \textit{nearest point affinity loss} is imposed which minimises the nearest neighbour distance between two pixel maps weighted by pixel confidence:
+        $$\mathcal{L}_{\text {aff}} = \sum_{v=1}^V\sum_{i,j}^{H,W} \min_{(k,l)\in M_+^v} ((i-k)^2 +(j-l)^2)\hat M^v_{i,j} M^v_{k,l} + \sum_{v=1}^V\sum_{i,j}^{H,W} \min_{(k,l)\in \hat M_+^v} ((i-k)^2 +(j-l)^2) M^v_{i,j} \hat M^v_{k,l}$$
+        where $M_+^v$ and $\hat M_+^v$ are sets of pixel coordinates of the ground truth and predicted projections whose values are non-zero.
+        \item The resultant point cloud is evaluated with the ground truth by computing the Chamfer distance:
+        $$d_{\text{Chamfer}}(\hat{P}, P) = \sum_{x\in \hat P} = \min_{y\in P} \norm{x-y}_2^2 + \sum_{y\in P} = \min_{x \in \hat P} \norm{y-x}_2^2.$$ Ground truths were obtained by randomly sampling 16,384 points on the object surface and then performing farthest point sampling to obtain 1024 points.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Occupancy Networks: Learning 3D Reconstruction in Function Space}
+    \textbf{Citation:} Mescheder \textit{et al.}
+    
+    \textbf{Summary:} Uses a neural network classifier to represent the continuous decision boundary of a 3D surface.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Existing 3D representations can be broadly categorised into three categories: voxel-based representations, point-based representations, and mesh representations. Point clouds lack connectivity structure of underlying mesh and hence require extra post-processing steps to extract 3D geometry.
+        \item Let the occupancy function $o: \R^3 \to \{0,1\}$ denote whether that point is occupied by the object. The paper's occupancy function outputs a probability between 0 and 1 for every point $p\in \R^3$. We want to condition the reconstructed 3D object output on the input $x \in \mathcal X$. Hence, we train an \textit{occupancy network} $f_\theta: \R^3 \times \mathcal X \to [0,1]$, which takes a pair $(p,x)$ and outputs a real number representing the probability of occupancy.
+        \item We randomly sample points in the 3D bounding volume of the object. The loss function for a batch $\mathcal B$ is:
+        $$\mathcal L_{\mathcal B}^{\text{gen}} = \frac{1}{|\mathcal B|} \sum_{i=1}^{|\mathcal B|} \lr[] {\sum_{j=1}^{K} \mathcal L (f_\theta(p_{ij}, z_i), o_{ij}) + \text{KL}(q_\psi(z | (p_{ij}, o_{ij})_{j=1:K}) \lVert\, p_0(z))}$$ 
+        \item Creates a mesh using coarse voxel grid and evaluating occupancy network for cells in this grid. For boundary voxels, we further subdivide them and repeat, until we reach the desired resolution, before applying Marching Cubes.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{DRWR: A Differentiable Renderer without Rendering for Unsupervised 3D Strucutre Learning }
+    \textbf{Citation:} Han \textit{et al.}
+    
+    \textbf{Summary:} A unsupervised differentiable renderer using losses in a clever way as opposed to pixel-wise losses.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item This is unsupervised, so only requires images for training.
+        \item Existing pixel-wise loss functions render images from 3D structures 
+    \end{itemize}
 \end{ArticleSummary}
 \end{document}
