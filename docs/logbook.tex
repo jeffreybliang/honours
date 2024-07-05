@@ -71,9 +71,19 @@
 
 \begin{MeetingMinutes}{Thu 27/06/2024}{u7013004}
 	Attempting 3D version of the ellipse problem. \\
-	Question: Why do we invert the $u_i$s?
+	Question: Why do we invert the $u_i$s? Answer: you bring the 1 over and multiply by some expression on both sides.
 \end{MeetingMinutes}
 
+\begin{MeetingMinutes}{Fri 5/07/2024}{u7013004}
+	Having been making headway on the non-axis-aligned ellipsoid.
+	I've been able to fit an ellipse to one but I haven't been able to do the bi-level optimisation.
+	I'm going to try a couple approaches:
+	\begin{itemize}
+		\item reparametrise everything to radians and a,b,c rather than squared inverses of semi-axes
+		\item try original objective function rather than focusing on optimising rotation
+		\item last resort is to figure out what the SqrtBackward error is
+	\end{itemize}
+\end{MeetingMinutes}
 
 % The document is separated into sections, which in turn can be subdivided into subsections
 \section{Overview} \label{sec:overview}
