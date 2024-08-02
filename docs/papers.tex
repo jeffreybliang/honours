@@ -1,7 +1,7 @@
 \documentclass{article}
 \usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath,amsfonts,amssymb, bm}
+\usepackage{amsmath,amsfonts,amssymb, bm, mathtools}
 \usepackage{graphicx}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{hyperref}
@@ -150,12 +150,55 @@
 \begin{ArticleSummary}{DRWR: A Differentiable Renderer without Rendering for Unsupervised 3D Strucutre Learning }
     \textbf{Citation:} Han \textit{et al.}
     
-    \textbf{Summary:} A unsupervised differentiable renderer using losses in a clever way as opposed to pixel-wise losses.
+    \textbf{Summary:} An unsupervised differentiable renderer uses losses to evaluate the alignment of projections of reconstructed 3D point clouds with ground truth object silhouettes, instead of pixel-wise losses. Idea is to pull points to the surface of the silhouette and then push them far away from each other.
     
     \textbf{Key Points:}
     \begin{itemize}
         \item This is unsupervised, so only requires images for training.
-        \item Existing pixel-wise loss functions render images from 3D structures 
+        \item Existing pixel-wise loss functions render images from 3D structures but require rasterisation or pixel-wise interpolation commonly.
+        \item DRWR: doesn't require visibility handling, shading, or pixel-wise interpolation.
+        \item Loss function: smooth unary loss pulls projection of each 3D point into the foreground (image we're interested in) and binary/pairwise loss pushes each pair of projections lying inside the foreground far away (structure-aware since only considers repulsion once both points appear in foreground). This ensures the entire foreground is covered and prevents clumping.
     \end{itemize}
 \end{ArticleSummary}
+
+\begin{ArticleSummary}{Deep Declarative Networks: A New Hope}
+    \textbf{Citation:} Gould, Hartley, and Campbell, 2020
+    
+    \textbf{Summary:} Networks are defined in terms of desired behaviour rather than an explicit forward function, with the desired behaviour implicitly defined as a solution to an optimisation problem.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item We only need the optimal solution to an optimisation problem and twice-differentiable objective and constraint functions to perform backpropagation - the method used to find the solution can be non-differentiable such as RANSAC.
+        \item Identities and solutions use the Schur complement and block matrix inverses (on Wikipedia).
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Small Steps and Level Sets: Fitting Neural Surface Models with Point Guidance}
+    \textbf{Citation:} Koneputugodage \textit{et al.}, 2024
+    
+    \textbf{Summary:} Spherical initialisations of point clouds for neural SDFs often get trapped in local minima due to the biased initialisation. This approach uses intermediary "guiding points" during optimisation to allow the point cloud to fit complex shapes. Uses percentage of self-intersecting outward normals (SION\%)  to provide a metric of the diffence between surface geometries of the current and target shapes.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item The idea behind SION\% is that if there are large concavities in the target shape, the surface normals will self-intersect and few will make it out to the current surface which doesn't fit inside the cavity - however, if it did "fit" inside, then the surface normals would not self-intersect.
+        \item Performance decreases on IoU and Chamfer distance metrics as the shapes get more complex (increasing SION\%), though at much slower rate than other SotA.
+        \item In each iteration, the guiding points are determined by taking the guiding points from the previous iteration by moving it towards the closest target point.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{DeepSDF: Learning Continuous Signed Distance Functions
+    for Shape Representation}
+    \textbf{Citation:} Park \textit{et al.}, 2019
+    
+    \textbf{Summary:} Revolutionary paper about using neural networks to implicitly model the signed distance function of a 3D watertight shape.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Trained using set of pairs $X$ composed of 3D point samples and the SDF value, $X \coloneq \lrbrace{(\bm x, s) \mid SDF(\bm x) = s}$, such that the trained network is a good approximator of the SDF, that is, $f_\theta(\bm x) \approx SDF(\bm x)$. Loss is an $L_1$ loss function which uses clamping.
+        \item Auto-decoder which has the latent code as input and directly optimises that, involves taking the maximum-a-priori estimate of the loss function + a regularising term over all points over all shapes 
+        \item To make the network flexible and adaptable to many shapes, a latent code describing the shape is inputted with the 3D point into the network, rather than a single point input with the network containing information about the shape.
+        \item The SDF value is the signed distance from the shape's surface, with negative values indicating the point is inside the shape, zero values meaning the point lies on the surface, and positive values meaning the point is outside the shape. The magnitude of the value is the distance to the surface.
+    \end{itemize}
+\end{ArticleSummary}
+
 \end{document}

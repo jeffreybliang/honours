@@ -54,37 +54,6 @@
 %----------------------------------------------------------------------------------------
 \newpage
 
-\begin{MeetingMinutes}{Sun 12/05/2024}{u7013004}
-	Reading MeshSDF paper.
-\end{MeetingMinutes}
-
-\begin{MeetingMinutes}{Sat 18/05/2024}{u7013004}
-	Reading MeshSDF, the Learning Implicit Fields papers, and Structure from Motion. Need to look up what the following mean:
-	\begin{itemize}
-		\item differentiable rendering, surface reconstruction
-	\end{itemize}
-\end{MeetingMinutes}
-
-\begin{MeetingMinutes}{Sun 19/05/2024}{u7013004}
-	Reading more from Structure-from-Motion Revisited. Didn't really understand much of SfM last night.
-\end{MeetingMinutes}
-
-\begin{MeetingMinutes}{Thu 27/06/2024}{u7013004}
-	Attempting 3D version of the ellipse problem. \\
-	Question: Why do we invert the $u_i$s? Answer: you bring the 1 over and multiply by some expression on both sides.
-\end{MeetingMinutes}
-
-\begin{MeetingMinutes}{Fri 5/07/2024}{u7013004}
-	Having been making headway on the non-axis-aligned ellipsoid.
-	I've been able to fit an ellipse to one but I haven't been able to do the bi-level optimisation.
-	I'm going to try a couple approaches:
-	\begin{itemize}
-		\item reparametrise everything to radians and a,b,c rather than squared inverses of semi-axes
-		\item try original objective function rather than focusing on optimising rotation
-		\item last resort is to figure out what the SqrtBackward error is
-	\end{itemize}
-\end{MeetingMinutes}
-
 % The document is separated into sections, which in turn can be subdivided into subsections
 \section{Overview} \label{sec:overview}
 	% Sections start in a new page, for this reason sections contain clearly disjoint parts of the document
@@ -126,85 +95,79 @@
 		Following these sections, there is an Appendix, containing the list of references (papers to use as reference later when writing a paper), a list of resources such as a link to a video presentation, a tutorial, or something else that is less formal than a reference. In the end, you have a list of TODOs that have been defined in the document. They appear in the order in which they appeared in the document, not by writing date.
 
 
-\section{Meetings}
-	\subsection{External}
-		% We can add meeting minutes for each meeting, by using the MeetingMinutes environment
-		% We just need to specify the date yyyy-mm-dd and the id of the creator of the meeting minutes.
-		% This id must be either maintainer (for the maintainer) or the id of any of the other contributors.
-		\begin{MeetingMinutes}{2022-05-15}{ann}
-			This is what happened in the meeting.
-			\begin{equation}
-				\int_{\Omega}{\varphi(x)}\,\mathrm{d}x
-			\end{equation}
-			\lipsum[4]
-		\end{MeetingMinutes}
+\section{Progress Logbook}
+	\subsection{Progress}
+	\begin{MeetingMinutes}{Sun 12/05/2024}{u7013004}
+		Reading MeshSDF paper.
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Sat 18/05/2024}{u7013004}
+		Reading MeshSDF, the Learning Implicit Fields papers, and Structure from Motion. Need to look up what the following mean:
+		\begin{itemize}
+			\item differentiable rendering, surface reconstruction
+		\end{itemize}
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Sun 19/05/2024}{u7013004}
+		Reading more from Structure-from-Motion Revisited. Didn't really understand much of SfM last night.
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Thu 27/06/2024}{u7013004}
+		Attempting 3D version of the ellipse problem. \\
+		Question: Why do we invert the $u_i$s? Answer: you bring the 1 over and multiply by some expression on both sides.
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Fri 5/07/2024}{u7013004}
+		Having been making headway on the non-axis-aligned ellipsoid.
+		I've been able to fit an ellipse to one but I haven't been able to do the bi-level optimisation.
+		I'm going to try a couple approaches:
+		\begin{itemize}
+			\item reparametrise everything to radians and $a,b,c$ rather than squared inverses of semi-axes 
+			\item try original objective function rather than focusing on optimising rotation 
+			\item last resort is to figure out what the SqrtBackward error is
+		\end{itemize}
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Sun 7/07/2024}{u7013004}
+		Was able to switch implementation to radians and $a,b,c$ rather than squared inverses $1/a^2,...,1/c^2$. 
+		It's still temperamental though and will hopefully be finetuned when meeting with Chamin who hopefully has a few tricks.
+		Going to read some papers today about DRWR and the DDN and take notes to try and fully understand derivations etc.
+	\end{MeetingMinutes}
+	
+	\begin{MeetingMinutes}{Sat 20/07/2024}{u7013004}
+		Reading additional papers and waiting for Steve's meeting. Reading "Small Steps and Level Sets" by Chamin and will document.
+	\end{MeetingMinutes}
 
-		\begin{MeetingMinutes}{2022-05-11}{arkadybogdanov}
-			We discussed that the \texttt{MeetingMinutes} environment produces alternating background colours for easier visualisation.
-			\begin{equation}
-				\int_{\Omega}{\varphi(x)}\,\mathrm{d}x
-			\end{equation}
+	\begin{MeetingMinutes}{Mon 29/07/2024}{u7013004}
+		Trying to do experiments to ensure I know the cause of my errors and that it's not some implementation error.
+		Will do:
+		\begin{itemize}
+			\item small volume initialisations
+			\item close to ground truth initialisations
+			\item tightening the constraint slowly
+			\item PCA?
+		\end{itemize} 
+		Ideal semi-axes lengths is: 0.28209
+		Trials:
+		\begin{enumerate}
+			\item initialisation: 0.2, 0.4, 0.3, 30°, 25°, -120°. final: 0.271, 0.296,0.28, 29.98°, 24.99°, 60.0°
+			\item initialisation: 0.1, 0.2, 0.3, 30°, 25°, -120°. final: 0.479, 0.29,0.0913, 83.83°, 128.2°, 47.02° (no improvement).
+				 \\ the issue here is that the fitted ellipse is too far away from a sphere for it to approach a sphere?
+			\item initialisation: close to ideal. result: optimised fine and as expected.
+		\end{enumerate}
+		Perhaps farthest point sampling would prevent the ellipse from over concentrating at the poles.
 
-			\lipsum[3]
+		Issue! For Trial 2, a close reinitialisation of 0.1, 0.3, 0.5 and angles 30°, 25°, -120° worked well. In fact, an exact reinitialisation worked?! But then when reverting back so that the fitted ellipse had those params, the gradients calculated were zero.
 
-			We can anything inside meeting minutes, including (high priority) todo notes inside the minutes on the same day (or any other day), see \secref{sub:preprocessing} for more details.
+		Steps to reproduce error:
+		\begin{enumerate}
+			\item Initialise with 0.1, 0.2, 0.3 and 30°, 25°, -120°. Run the first cell and then second cell, and we should see no deformation of the fitted ellipsoid to a sphere - the parameters remain as 0.479, 0.29,0.0913, 83.83°, 128.2°, 47.02°. The gradients are very close to 0.
+			\item Initialise with the parameters 0.479, 0.29,0.0913 and 83.83°, 128.2°, 47.02°. We see that the gradients are non-zero and we optimise to a sphere.
+		\end{enumerate}
+		a, b, c = 0.4786546028, 0.2901328092,0.09132074619 \\ 
+		yaw, pitch, roll = 83.82856741, 128.3492915, 47.0228292
 
-			\hightodo{2022-05-10}{chalmers}{Compute the error between mode-downsampled segmentation state vectors at 1000 Hz and state vectors computed at 400 Hz. This needs to be performed to check that the segmentation algorithm is not overfitted to 1000Hz. If error is significant, retrain segmentation at 400 Hz or use 1000 just for segmentation (if Matlab 2022a improvements are true there should be no problem)}
-
-			or a (low priority) todo note by another contributor, for example
-
-			\lowtodo{2022-05-12}{ann}{Do not forget to first check this less important aspect.}
-		\end{MeetingMinutes}
-
-		% Meeting minutes alternate in color for easier visual separation. Any LaTeX content can be added inside
-		% the MeetingMinutes environment
-		\begin{MeetingMinutes}{2022-05-10}{chalmers}
-			This time, these meeting minutes, were written by the contributor \ContributorName{chalmers}, as can be seen by the id \emph{\Contributorid{chalmers}}~on the header of the box.
-
-			During this meeting the following points have been addressed
-			\begin{itemize}
-				\item This first very important point.
-				\item Followed by this second also important point.
-				\item This other less important point was also discussed at the end.
-			\end{itemize}
-
-			For this meeting this equation was important
-			\begin{equation}
-				\int_{\Omega}{\varphi(x)}\,\mathrm{d}x\,.
-			\end{equation}
-			\lipsum[2]
-
-			\begin{HighlightedNote}{}
-				Meeting minutes boxes can extend over to the next page (or more) if needed.
-			\end{HighlightedNote}
-
-			We can also list some things to do and highlight the ones already done, as they are done:
-			\begin{itemize}
-				\item \isdone{First task is done.}
-				\item Second task still needs to be done.
-			\end{itemize}
-		\end{MeetingMinutes}
-
-
-		\begin{MeetingMinutes}{2022-05-09}{maintainer}
-			This first meeting's minutes were added by \MaintainerName~(the maintainer of this project logbook), as can be seen by the id \emph{\Maintainerid}~on the header of the box.
-
-			In this first meeting the following equation was discussed
-			\begin{equation}
-				\int_{\Omega}{\varphi(x)}\,\mathrm{d}x\,.
-			\end{equation}
-			\lipsum[1]
-		\end{MeetingMinutes}
-
-	\subsection{Internal}
-		\begin{MeetingMinutes}{2022-05-15}{chalmers}
-			You can also add internal meetings when the participants are only from your group, no external people are involved.
-			\begin{equation}
-				\int_{\Omega}{\varphi(x)}\,\mathrm{d}x\,.
-			\end{equation}
-			\lipsum[1]
-		\end{MeetingMinutes}
-
+	\end{MeetingMinutes}
 
 \section{Topic A to focus on} \label{sec:topic_A}
 	We can use sections organize the text into different parts  such that specific topics are addressed in their own section.
