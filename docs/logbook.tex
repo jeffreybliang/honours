@@ -21,15 +21,15 @@
 % The project subtitle appears below the project title in the front page and serves as additional information to the title.
 %  Additionally, a shorter title must be set to appear on the header of the document, the header name.
 \SetProjectTitle{Honours Logbook}
-\SetProjectSubtitle{The subtitle of the project}
+\SetProjectSubtitle{Semester 1 2024 - Semester 1 2025}
 \SetProjectHeaderName{The very fancy project}
 
 % Below the project there is space to add a brief summary of the project for easy understanding when looking at the front page.
-\SetProjectSummary{Here you can add a brief summary of your project such that someone can quickly see what it is about, do not spend more than two lines on it.}
+\SetProjectSummary{This logbook contains notes and updates on my progress and findings throughout my Honours year.}
 
 % The institution logo (typically the one of the maintainer, but a logo file combining different logos can be used, but needs to
 % be in one single pdf or png file) can be set using the following macro
-\SetInstitutionLogo{figures/mcod_logo.png}
+\SetInstitutionLogo{assets/ANU_Secondary_Horizontal_GoldBlack.png}
 
 % Set the bibliography file
 \addbibresource{mybib.bib}
@@ -54,45 +54,10 @@
 %----------------------------------------------------------------------------------------
 \newpage
 
-% The document is separated into sections, which in turn can be subdivided into subsections
-\section{Overview} \label{sec:overview}
-	% Sections start in a new page, for this reason sections contain clearly disjoint parts of the document
-	This document shows an example of how to use the \texttt{project-logbook} \LaTeX~class. This class is based upon the \texttt{article} class and may be used together with other packages for additional functionality. This class implements functionality for simplifying writing project/research logbooks and unifying its layout. We will  go over the different functionalities to display how to use them.
-
-	\subsection{Preamble}
-		In the preamble of the document you may set several parameters of this document.
-
-		\subsubsection{Maintainer and contributors}
-			Everyone who contributes to this document, should be added as a contributor. In this way it is know who contributed and we can also use this to identify who added some elements. Adding a contributor is done with \texttt{\textbackslash CreateContributor\string{<key>\string}\string{<name>\string}\string{<id>\string}\string{<affiliation>\string}}, where
-			\begin{description}
-				\item[\texttt{<key>}] is the shorthand used to internally identify a contributor and to retrieve its data, this should be a short word without special characters.
-				\item[\texttt{<name>}] is the full name of the contributor to display on the front page (but may also be used in other situations if desired).
-				\item[\texttt{<id>}] is the abbreviation of the contributor name, to display when associating the contributor to a note (see below) or a meeting minutes box (see below).
-				\item[\texttt{<affiliation>}] is the affiliation of the contributor, mainly to display on the front page.
-    			\end{description}
-
-			This document is maintained by a unique maintainer, which is automatically defined as a contributor with key \texttt{maintainer}. The maintainer can be set in the preamble with  \texttt{\textbackslash SetMaintainer\string{<name>\string}\string{<id>\string}\string{<affiliation>\string}}. The meaning of the different input parameters is identical to what was seen above for the contributor.
-
-			The maintainer name, id, and affiliation can be accessed via the commands \texttt{\textbackslash MaintainerName}, \texttt{\textbackslash Maintainerid} and \texttt{\textbackslash MaintainerInsitution}, which for this case gives: \MaintainerName~(name), \Maintainerid~(id), and \MaintainerInstitution~(affiliation).
-
-			In a similar way, a contributor can be accessed via the commands \texttt{\textbackslash ContributorName\string{<key>\string}}, \texttt{\textbackslash Contributorid\string{<key>\string}}, and \texttt{\textbackslash ContributorInstitution\string{<key>\string}}, which for this case gives (for key \texttt{chalmers}):  \ContributorName{chalmers}~(name), \Contributorid{chalmers}~(id), and \ContributorInstitution{chalmers}~(affiliation).
-
-		\subsubsection{Project title, subtitle, and header name}
-			The project title (which appears in the center of the front page) can be set in the preamble of the document with \texttt{\textbackslash SetProjectTitle\string{<title>\string}}, where \texttt{<title>} is the title we wish to set.
-
-			Below the project title we can have a project subtitle, which can also be set in the preamble of the document with \texttt{\textbackslash SetProjectSubtitle\string{<subtitle>\string}}, where \texttt{<subtitle>} is the subtitle we wish to set.
-
-		\subsubsection{Maintainer institution logo}
-			On the top right corner of the front page you can add the logo of the institution of the maintainer. This can be done in the preamble with the command \texttt{\textbackslash SetInstitutionLogo\string{<path\_to\_file>\string}}, where \texttt{<path\_to\_file>} is the path to a .pdf or .png file. If you do not want to show a logo, use a white figure.
-
-	\subsection{Body}
-		The front page is generated with the command \texttt{\textbackslash MakeFrontPage}. This automatically adds the table of contents on the second page of the document, with direct links to the sections, for quick access.
-
-		One important section is the Meetings section, which is subdivided into External and Internal. The External subsection contains the minutes of the meetings with external partners and the Internal sections contains the internal meetings associated to the institution of the Maintainer. Any contributor (including the maintainer) can be an author of Meeting minutes.
-
-		Following the Meetings section, any number of sections can be added focussing on specific topics. The goal of these is to discuss the current state of the development of a particular part of the project. More discussed below.
-
-		Following these sections, there is an Appendix, containing the list of references (papers to use as reference later when writing a paper), a list of resources such as a link to a video presentation, a tutorial, or something else that is less formal than a reference. In the end, you have a list of TODOs that have been defined in the document. They appear in the order in which they appeared in the document, not by writing date.
+\section{Overview}\label{sec:overview}
+\begin{HighlightedNote}{Welcome to my progress logbook!}
+	Hello. Topic. Challenges. Research interest.
+\end{HighlightedNote}
 
 
 \section{Progress Logbook}
@@ -178,122 +143,17 @@
 	\end{MeetingMinutes}
 
 	\begin{MeetingMinutes}{Wed 4/09/2024}{u7013004}
-		For the past few days, I've been trying to mathematically formulate the projection. Just tested it in code today and it seems that I am minimising the area of the cross-section with the $x$-$y$ plane instead. So, just need to take Schur complement instead of projection with matrix P.
+		For the past few days, I've been trying to mathematically formulate the projection. Just tested it in code today and it seems that I am minimising the area of the cross-section with the $x$-$y$ plane instead. So, just need to take Schur complement instead of projection with matrix $P$.
+
+		One strange observation is that the gradients seem to increase in magnitude as time goes on; not decreasing.
 	\end{MeetingMinutes}
 	
+	\begin{MeetingMinutes}{Sun 15/09/2024}{u7013004}
+		Finally writing about the point-sampling approach. Have been busy with side project website.
+	\end{MeetingMinutes}
+
 \section{Topic A to focus on} \label{sec:topic_A}
 	We can use sections organize the text into different parts  such that specific topics are addressed in their own section.
-
-	\begin{HighlightedNote}{}
-		Sections always start at the top of a new page in order to generate clearly separated parts of the document. In this first section (Overview) one should introduce what this project is about, in a high level so you can do a simple explanation of the topic and the research challenges, who is involved, etc.
-
-		Since this information is important, we have added it within a \texttt{HighlightedNote} environment. This is the version without a title.
-	\end{HighlightedNote}
-
-	\begin{HighlightedNote}{You can add multiple things inside a \texttt{HighlightedNote}}
-		And this is the version with a title. You can use the title for example if you want to clearly state what is is, or if you want to make a larger note and give an idea of what it is about.
-
-		You can add equations to clarify your ideas
-		\begin{equation}
-			e^{i\pi} + 1 = 0
-		\end{equation}
-
-		Some tables
-
-		\begin{center}
-			\begin{tabular}{ccccc}
-            			{}  & \multicolumn{1}{c}{$A$} & \multicolumn{1}{c}{$N$} & \multicolumn{1}{c}{$S$} & \multicolumn{1}{c}{$A/S$} \\
-            			\midrule
-            			a & 292 & 117   & 409   & 0.714 \\
-            			b & 104 & 386   & 490   & 0.212 \\
-            			c & 24  & 7     & 31    & 0.774 \\
-            			d & 28  & 27    & 55    & 0.509 \\
-            			e & 183 & 1958  & 2141  & 0.085 \\
-            			\midrule
-            			& 631 & 2495 & 3126 & 0.202 \\
-        			\end{tabular}
-    		\end{center}
-		and other elements.
-
-	\end{HighlightedNote}
-
-	\begin{HighlightedNote}{With a fancy title}
-		The \texttt{HighlightedNotes} environment that generates these fancy boxes, can be used with a title \texttt{\textbackslash begin\string{HighlightedNotes\string}\string{the\_title\_text\string}}, as in this case, or without a title \texttt{\textbackslash begin\string{HighlightedNotes\string}\string{\string}}, as in the previous case.
-	\end{HighlightedNote}
-
-	\subsection{A subsection}
-		You can subdivide your section in a finer level using \texttt{\textbackslash subsection}.
-
-		\subsubsection{A subsubsection}
-			The subsections can be subdivided with \texttt{\textbackslash subsubsection}.
-
-			\subsubsubsection{A subsubsubsection}
-				And an additional level was added to subdivide subsubsections named \texttt{\textbackslash subsubsubsection}. This should give more than enough subdivision levels to your text for fine grained organisation.
-
-				\begin{HighlightedNote}{}
-					In most Machine Learning research projects you will be using some kind of samples from a Dataset to learn a model. Thus it is extremely important that you carefully describe the dataset and why you believe is a good dataset for the project and what type of preprocessing are you going to apply.
-				\end{HighlightedNote}
-
-				As usual, you can use your references to cite relevant articles as \cite{einstein} and \cite{knuth-fa}.
-
-				You can use tables and, of course, make references to them, like the amazing \tabref{tab:populations}.
-
-
-				\begin{table}[ht]
-					\centering
-						\begin{subtable}{0.48\textwidth}
-							\centering
-        								\begin{tabular}{*{5}{r}}
-									{}  & \multicolumn{1}{c}{$A$} & \multicolumn{1}{c}{$N$} & \multicolumn{1}{c}{$S$} & \multicolumn{1}{c}{$A/S$} \\
-									\midrule
-									a & 292 & 117   & 409   & 0.714 \\
-									b & 104 & 386   & 490   & 0.212 \\
-									c & 24  & 7     & 31    & 0.774 \\
-									d & 28  & 27    & 55    & 0.509 \\
-									e & 183 & 1958  & 2141  & 0.085 \\
-									\midrule
-									& 631 & 2495 & 3126 & 0.202 \\
-								\end{tabular}
-							\caption{Training Set}
-						\end{subtable}
-    						%
-    						\begin{subtable}{0.48\textwidth}
-        							\centering
-        								\begin{tabular}{*{6}{r}}
-									{}  & \multicolumn{1}{c}{$A'$} & \multicolumn{1}{c}{$N'$} & \multicolumn{1}{c}{$S'$} & \multicolumn{1}{c}{$A'/S'$} & $S'/S$ \\
-									\midrule
-									a & 40  & 40    & 80    & 0.5   & 0.20 \\
-									b & 49  & 49    & 98    & 0.5   & 0.20 \\
-									c & 4   & 3     & 7     & 0.57  & 0.23 \\
-									d & 5   & 5     & 10    & 0.5   & 0.18 \\
-									e & 53  & 53    & 106   & 0.5   & 0.05 \\
-									\midrule
-									& 151 & 150 & 301 & 0.50 & 0.10 \\
-								\end{tabular}
-								\caption{Validation Set}
-						\end{subtable}
-
-    						\caption{Population properties $A \equiv$ Abnormal, $N\equiv$ Normal, $S\equiv A+N$}
-    						\label{tab:populations}
-				\end{table}
-
-	\subsection{Another subsection} \label{sub:another_subsection}
-		Relevant equations can be added
-
-		\begin{equation}
-    			x_i' \gets \frac{x_i-\bar{x}}{\upsigma}
-		\end{equation}
-		\begin{equation}
-    			\bar{x} = \frac{1}{N}\sum_{i=1}^{N} x_i \qquad \upsigma^2 = {\frac{1}{N}\sum_{i=1}^{N} (x_i-\bar{x})}
-		\end{equation}
-
-		\begin{HighlightedNote}{Strike-through}
- 			Often you will be wrong on your assumptions, but do not throw them away completely, just cross them out in case you need them later using the \texttt{\textbackslash sout} command and it will look like \sout{this} or \texttt{\textbackslash soutthick} command and it will look like \soutthick{this}
-		\end{HighlightedNote}
-
-		\sout{Medoid computation is perfomed at $f_s'' = f_s'/5 = \SI{200}{\kilo\hertz}$ to speed computation. Simple analysis was performed to check that the features extracted from these 200Hz-medoids were approximately the same as the ones extracted from the  1khz-medoids.}
-
-		\soutthick{Downsampling can be seen as a problem of information loss in the frequency spectrum. If the frequency content $f > f_s/(2N)$ is mostly empty for $N$ when we downsample by said $N$ we will only be losing information in that range.}
 
 		\begin{HighlightedNote}{TODOs}
 			You will often have pending tasks that you need to track. This project logbook allows you to include both high and low priority todos that will be summarised in a list at the end of the file. Use the commands \texttt{\textbackslash hightodo\string{<date\_added>\string}\string{<author\_key>\string}} and \texttt{\textbackslash lowtodo}, including a date is recommended for tracking purposes.

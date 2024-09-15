@@ -83,20 +83,18 @@ Thus, we get two rotated ellipsoids, $\mathcal E_1$ and $\mathcal E_2$, parametr
     \mathcal E_1: \mathbf{R}_1^\top A(\mathbf u^*) \mathbf{R}_1 \qquad \mathcal E_2: \mathbf{R}_2^\top A(\mathbf u^*) \mathbf{R}_2.
 \end{align}
 
-To apply the projection onto the $x$-$y$ plane, we can multiply the above matrices by the projection matrix $\mathbf P$,
+To apply the projection onto the $x$-$y$ plane, it is \textit{not} as simple as multiplying the projection matrix $\mathbf P$,
 \begin{equation}
     \mathbf P = \begin{bmatrix}
         1 & 0 & 0\\
         0 & 1 & 0
-    \end{bmatrix}.
+    \end{bmatrix},
 \end{equation}
-To make the matrix multiplication well-defined, we can add a third row of zeroes to $P$.
-
-Thus, the two 2D ellipses $\varepsilon_1$ and $\varepsilon_2$ whose areas we are interested in are parametrised by the matrices $\hat{\mathbf A}_1$ and $\hat{\mathbf A}_2$ (which are effectively 2$\times$2 due to the last row and column being zeroes):
+as this will give us the cross-section with the $x$-$y$ plane instead. To obtain the projection, we need to take the Schur complement of the bottom-right entry of the 3D matrix. Let $S: \R^{3\times 3} \to \R^{2\times 2}$ return the Schur complement described above. Then, the two 2D ellipses $\varepsilon_1$ and $\varepsilon_2$ whose areas we are interested in are parametrised by the matrices $\hat{\mathbf A}_1$ and $\hat{\mathbf A}_2$:
 \begin{align}
-    \varepsilon_1:\hat{\mathbf A}_1= \mathbf  P \mathbf{R}_1^\top A(\mathbf u^*) \mathbf{R}_1 \qquad \varepsilon_2: \hat{\mathbf A}_2 =\mathbf P \mathbf{R}_2^\top A(\mathbf u^*) \mathbf{R}_2.
+    \varepsilon_1:\hat{\mathbf A}_1= S\lr(){ \mathbf{R}_1^\top A(\mathbf u^*) \mathbf{R}_1} \qquad \varepsilon_2: \hat{\mathbf A}_2 = S\lr() {\mathbf{R}_2^\top A(\mathbf u^*) \mathbf{R}_2}.
 \end{align}
-The determinants of the upper $2\times 2$ submatrices of $\hat{\mathbf A}_1$ and $\hat{\mathbf A}_2$, denoted as $\hat{\mathbf A}_{1, 2\times2}$ and $\hat{\mathbf A}_{2, 2\times2}$, respectively, would give the product of the eigenvalues of each matrix. As the eigenvalues would be the squared inverses of the semi-axes of $\varepsilon_1$ and $\varepsilon_2$, the inverse square root of the product of eigenvalues gives the product of the semi-axes lengths. Therefore, the area of an ellipse can be expressed as:
+The determinants of these $2\times 2$ matrices  $\hat{\mathbf A}_1$ and $\hat{\mathbf A}_2$ would give the product of the eigenvalues of each matrix. As the eigenvalues would be the squared inverses of the semi-axes of $\varepsilon_1$ and $\varepsilon_2$, the inverse square root of the product of eigenvalues gives the product of the semi-axes lengths. Therefore, the area of an ellipse can be expressed as:
 \begin{equation}
     \pi ab = \frac{\pi }{\frac{1}{\sqrt{a^2b^2}}}= \frac{\pi }{\sqrt{\lambda _1 \lambda _2}} = \frac{\pi}{\sqrt{\det{\hat{\mathbf A}_i}}}.
 \end{equation}
@@ -104,10 +102,15 @@ The determinants of the upper $2\times 2$ submatrices of $\hat{\mathbf A}_1$ and
 Given two target areas $t_1$ and $t_2$ for the projected ellipses $\varepsilon_1$ and $\varepsilon_2$, our final minimisation problem is thus:
 $$
 \begin{array}{ll}
-  \text{minimize (over $\mathcal X = \{ \mathbf x_i \}$)} &  \lr\Vert\Vert { \frac{\pi}{\sqrt{\det \hat{A}_1(\mathbf u^*)}} - t_1} ^2 + \lr\Vert\Vert{ \frac{\pi}{\sqrt{\det \hat{A}_2(\mathbf u^*)}} - t_2} ^2  \\[0.5em]
-  \text{subject to} & \mathbf u^* = \text{argmin} \; \|\lr\Vert\Vert {\text{diag}(\mathbf X^\top Q(\mathbf u_{4:6}) ^\top \Lambda(\mathbf u_{1:3}) Q(\mathbf u_{4:6}) \mathbf X) - \mathbf 1_m} ^2 \\[0.5em]
+    \underset{\text{over} \mathcal X = \{ \mathbf x_i \}}{\text{minimize}} &  \lr\Vert\Vert { \frac{\pi}{\sqrt{\det \hat{A}_1(\mathbf u^*)}} - t_1} ^2 + \lr\Vert\Vert{ \frac{\pi}{\sqrt{\det \hat{A}_2(\mathbf u^*)}} - t_2} ^2  \\[0.5em]
+  \text{subject to} & \mathbf u^* = \text{argmin} \; \lr\Vert\Vert {\text{diag}(\mathbf X^\top Q(\mathbf u_{4:6}) ^\top \Lambda(\mathbf u_{1:3}) Q(\mathbf u_{4:6}) \mathbf X) - \mathbf 1_m} ^2 \\[0.5em]
   & \hphantom{y =} \text{subject to} \;  \frac{4}{3} \pi \mathbf u_1 \mathbf u_2 \mathbf u_3 = 1
 \end{array}.
 $$
+
+\subsection{Sampling Approach}
+A point-sampling-based approach is more involved, though is more relevant to the water balloon example which this toy example will graduate to.
+
+After obtaining the projected ellipsoid with unit volume, 
 
 \end{document}
