@@ -1,0 +1,22 @@
+ACKNOWLEDGEMENTS:
+
+I'd like to acknowledge: 
+
+[November 2023]
+Prof. Dr. Birte Glimm (from Ulm University, Germany) for proposing to add a section on marking. It was now incorporated!
+
+[April 2023]
+Dr. Alban Grastien again! He noticed that in the "By" statement of the cover page only the "B" was in bold, not the y! :) Fixed now.
+
+[February 2022]
+Prof. Natalie Lloyd (from the ANU) for checking all the legal requirements (ANU rules) and looking from the perspective over the document that students from different schools might use this.
+
+[December 2021]
+Dr. Alban Grastien (from the ANU) also provided further corrections for a few remaining errors in a version that was considered final by me. :)
+
+[December 2021]
+Dr. Florian Geisser (from the ANU) for very detailed feedback on an early version of this document. This surely helped improving the document! 
+
+I also thank all contributors to stackoverflow for an almost endless source of knowledge! :) Well, and openAI for chatGPT, which also contributed...
+
+-- Pascal Bercher
