@@ -1,5 +1,5 @@
 \documentclass{project-logbook}
-
+\input{commands}
 \usepackage{csquotes}
 \usepackage{lastpage}
 % You can add the maintainer and the contributors in the preamble of the document
@@ -164,7 +164,63 @@
 		Tried switching to float64 and it's not working. Going to try add more views. For 
 	\end{MeetingMinutes}
 
-\section{Topic A to focus on} \label{sec:topic_A}
+	\begin{MeetingMinutes}{Sun 29/09/2024}{u7013004}
+		Worked on Chamfer distance and it worked! Forgot to take inverse of square root matrix but figured it all out after reading my projection notes.
+
+		Going to write my ellipsoid stuff in this logbook until I have to copy it over into my thesis.
+
+		\lowtodo{2024-09-29}{u7013004}{Figure out Blender stuff, proposal, and whether to use other nearest-neighbour method.}
+
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Sun 6/10/2024}{u7013004}
+		Wrote up some stuff for ellipsoid. Still unsure how to tackle boundary?
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Mon 21/10/2024}{u7013004}
+		Basically spent 2 weeks without doing work. Time to do more! Going to attempt the alpha shapes approach. Hopefully converting back and forth from tensor to numpy won't do weird things.
+	\end{MeetingMinutes}
+
+\section{Ellipsoid Formulation} \label{sec:ellipsoid}
+An ellipsoid is a 3-dimensional surface obtained by deforming a sphere under an affine transformation. As ellipsoid surfaces can be represented as the zero set of a quadratic polynomial in three variables, it is considered a quadric surface.
+
+There are multiple mathematical representations of ellipsoids. Ellipsoids have three pairwise perpendicular axes of symmetry known as principal axes which intersect at the centre of the ellipsoid. The most general ellipsoid is a triaxial ellipsoid, where each of these three principal axes are of different lengths. The line segments along these axes from the origin to the surface boundary are named the principal semi-axes as they are half the length of the principal axes. An ellipsoid centred at the origin and with its axes aligned to the standard basis of $\R^3$ is commonly represented in Cartesian coordinates as the points $(x,y,z) \in \R^3$ which satisfy
+\begin{equation}
+	\frac{x^2}{a^2} + \frac{y^2}{b^2} + \frac{z^2}{c^2} = 1,
+\end{equation}
+where $a$, $b$, and $c$ are the lengths of the semi-axes. If we let $\mathbf x = [x, y, z]^\top \in \R^3$, then we can represent this expression becomes
+\begin{equation}
+	\mathbf x^\top \mathbf A \mathbf x = 1,
+\end{equation}
+where $$\mathbf A = \begin{bmatrix}
+	1/a^2 & 0 & 0 \\
+	0 & 1/b^2 & 0 \\
+	0 & 0 & 1/c^2
+\end{bmatrix}.$$
+However, ellipsoids need not be axis-aligned with respect to the standard basis. Rather than having $\mathbf A$ be a diagonal matrix with the inverse squared semi-axes lengths, we can generalise ellipsoids to be non-axis-aligned by letting $\mathbf A$ be any symmetric positive-definite matrix -- that is, having $\mathbf A \in \mathbb S^3_{++}$ such that $\mathbf A = \mathbf A^\top \succ 0$. This represents an ellipsoid $\mathcal E$ as the convex set
+\begin{equation}
+	\mathcal E  = \lrbrace{\mathbf x \in \R^3 \mid \mathbf x^\top \mathbf A \mathbf x = 1, \mathbf A \in \mathbb S^3_{++} }.
+\end{equation}
+
+We can further perform an eigendecomposition on $\mathbf A$ to express it in terms of an orthonormal rotation matrix $\mathbf R \in SO(3)$ and a diagonal matrix $\mathbf \Lambda$ containing the eigenvalues of $\mathbf A$, which are the inverse squares of the semi-axes lengths:
+\begin{equation}
+	\mathbf A = \mathbf Q^\top \mathbf\Lambda \mathbf Q,
+\end{equation}
+where $\mathbf \Lambda = \begin{bmatrix}
+	1/a^2 & 0 & 0 \\
+	0 & 1/b^2 & 0 \\
+	0 & 0 & 1/c^2
+\end{bmatrix}$
+and thus 
+\begin{equation}
+	\mathcal E  = \lrbrace{\mathbf x \in \R^3 \mid \mathbf x^\top \mathbf Q^\top \mathbf\Lambda \mathbf Q \mathbf x = 1, \mathbf Q \in SO(3)}.
+\end{equation}
+
+
+
+
+\section{Project Book Components} \label{sec:topic_B}
+
 	We can use sections organize the text into different parts  such that specific topics are addressed in their own section.
 
 		\begin{HighlightedNote}{TODOs}
@@ -179,9 +235,7 @@
 		\hightodo{2016-05-27}{maintainer}{Perform convergence analysis with the latest version of the code.}
 
 
-\section{Topic B to focus on} \label{sec:topic_B}
-
-	\subsection{Algorithms} \label{sub:algorithms}
+		\subsection{Algorithms} \label{sub:algorithms}
 
 		\begin{HighlightedNote}{}
 			Sometimes the most straightforward way to explain a procedure is just to give it in a algorithmic format, it takes a little time but it will force you to go through the steps and you will most likely be able to reuse it on you paper. For the full documentation see here \url{https://texdoc.org/serve/algorithmicx/0}.
@@ -296,16 +350,7 @@ def DTW_distance(s1, s2):
 			However, sometimes you will need more complicated diagrams (or maybe you do not like TiKZ, in that case I recommend a vector drawing tool such as Inkscape which allows \LaTeX \,embedding)
 		\end{HighlightedNote}
 
-		% \begin{figure}[h]
-    	% 		\includegraphics[width=0.9\textwidth]{figures/LSTM}
-    	% 		\centering
-    	% 		\caption{Gate Recurrent Unit in a Long Short Term Memory Neural Netwok (GRU-LSTM). \\ \emph{Credit to \url{https://colah.github.io/posts/2015-08-Understanding-LSTMs/}}}
-    	% 		\label{fig:LSTM}
-		% \end{figure}
-
-
-\section{Topic C to focus on} \label{sec:topic_c}
-	\subsection{Figures} \label{sub:figures}
+		\subsection{Figures} \label{sub:figures}
 
 		\begin{HighlightedNote}{}
 			In general the best way to visualize your results will be some figures, I recommend Python's matplotlib for generating them or any other tool you are familiar with.
@@ -376,6 +421,19 @@ def DTW_distance(s1, s2):
      \label{tab:error_128_avg}
  \end{table}
 
+
+
+
+
+		% \begin{figure}[h]
+    	% 		\includegraphics[width=0.9\textwidth]{figures/LSTM}
+    	% 		\centering
+    	% 		\caption{Gate Recurrent Unit in a Long Short Term Memory Neural Netwok (GRU-LSTM). \\ \emph{Credit to \url{https://colah.github.io/posts/2015-08-Understanding-LSTMs/}}}
+    	% 		\label{fig:LSTM}
+		% \end{figure}
+
+
+\section{Topic C to focus on} \label{sec:topic_c}
 % subsection tables (end)
 
 % section results (end)
