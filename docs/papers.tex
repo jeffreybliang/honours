@@ -63,7 +63,7 @@
         \item Marching Cubes (MC) converts implicit functions to 3D surface meshes $\mathcal M=(V,F)$. It samples the network on a discrete 3D grid, detecting zero-crossing of the field along grid edges and builds a surface mesh with a lookup table. The position of vertices on grid edges involves linear interpolation, which is modelled by a function discontinuous at $s_i = s_j$, so cannot allow topology changes through backpropagation.
         
         \item This method is used for tasks where we deform a 3D mesh $\mathcal{M} = (V,F)$, where $V = \lrbrace{\bm v_1, \bm v_2,...}$ denotes vertices in $\R^3$ and $F$ facets to minimise a task-specific loss function $\mathcal L_{\text {task}}(\mathcal M)$.
-        \item Signed distance function (SDF): $s: \R^3 \to \R$. Neural network $f_\theta$ is tarined on watertight surfaces $\mathcal S$ to approximate SDF $s$ by minimising
+        \item Signed distance function (SDF): $s: \R^3 \to \R$. Neural network $f_\theta$ is trained on watertight surfaces $\mathcal S$ to approximate SDF $s$ by minimising
         \begin{equation*}
             \mathcal{L}_{\text{sdf}}\lr(){\lrbrace{\bm z_S}_{S\in \mathcal S}, \theta}
                 = \sum_{S\in \mathcal S} \frac{1}{|X_S|}\sum_{\bm x \in X_S} \lr||{f_\theta(\bm x, \bm z_S) - s(\bm x)} + \lambda_{\text{reg}}\sum_{S\in \mathcal S} \norm*{\bm z_S}^2_2

@@ -181,6 +181,10 @@
 		Basically spent 2 weeks without doing work. Time to do more! Going to attempt the alpha shapes approach. Hopefully converting back and forth from tensor to numpy won't do weird things.
 	\end{MeetingMinutes}
 
+	\begin{MeetingMinutes}{Thu 23/01/2025}{u7013004}
+		Not sure how the mesh will be able to handle concavities if only the boundary points are detected in the upper-level loss, these will only be able to handle convex parts. I guess that the lower-level loss will handle that by moving in those concave sections in more.
+	\end{MeetingMinutes}
+
 \section{Ellipsoid Formulation} \label{sec:ellipsoid}
 An ellipsoid is a 3-dimensional surface obtained by deforming a sphere under an affine transformation. As ellipsoid surfaces can be represented as the zero set of a quadratic polynomial in three variables, it is considered a quadric surface.
 
@@ -217,7 +221,10 @@ and thus
 \end{equation}
 
 
+\section{Deep Declarative Nodes} \label{sec:ddn}
+Deep neural networks are themselves optimisation problems, where a loss function is minimised over the network weights. Backpropagation enables this optimisation to occur efficiently. However, incorporating constraints into a neural network complicates this procedure as constraints need to be respected in the optimisation process. Furthermore, constrained optimisation is often iterative and not naturally compatible with the differentiable nature of the current neural networks.
 
+Deep declarative networks (DDNs) provide a new framework to achieve backpropagation through certain constrained optimisation problems. The conditions for these problems are that we need the optimal solution to the optimisation problem and twice-differentiable objective and constriant functions, and thus the method used to find the optimal solution can be non-differentiable, such as RANSAC.
 
 \section{Project Book Components} \label{sec:topic_B}
 

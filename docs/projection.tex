@@ -117,7 +117,7 @@ In literature, there have been various proposed metrics to measure the differenc
 \end{equation}
 where $d(a, \mathcal S)$ for a point $a$ and a set $\mathcal S$ is defined as $\min d(a,s)$ for all $s \in \mathcal S$. In other words, this gives the sum of mean distance between all pairs of points from $\mathcal X$ to $\mathcal Y$ and the opposite. As Euclidean distance is known to be sensitive to outliers, other variations like density-aware and hyperbolic Chamfer distance have been researched. 
 
-Conceptually, after projected the rotated unit volume ellipsoid onto the $x$-$y$ plane, we sample around these 2D ellipses. We then calculate the Chamfer distance of these sampled points to our ground truth points at each step and attempt to minimise this distance through backpropagation.
+Conceptually, after projecting the rotated unit volume ellipsoid onto the $x$-$y$ plane, we sample around these 2D ellipses. We then calculate the Chamfer distance of these sampled points to our ground truth points at each step and attempt to minimise this distance through backpropagation.
 
 The matter of sampling the points poses issues if not done carefully as stochastic nodes cannot be backpropagated through. We take inspiration from variational autoencoders (VAE) and apply the "reparametrisation trick" such that the random variable can be expressed in terms of deterministic nodes through which the gradient can flow through and a stochastic node to perform the sampling.
 
@@ -139,5 +139,37 @@ $$
   & \hphantom{y =} \text{subject to} \;  \frac{4}{3} \pi \mathbf u_1 \mathbf u_2 \mathbf u_3 = 1
 \end{array}.
 $$
+
+\section{Adopting a Mesh-Based Approach}
+Now, as our water balloon may not remain conform to an ellipsoid, we must represent it more generally. We do this by using a mesh based representation.
+
+Let $\mathcal M = (V,E)$ represent the mesh. Let $\text{Vol}(\mathcal M)$ denote the volume of such a mesh. Then, the first constraint which we must change is $\frac{4}{3} \pi \mathbf u_1 \mathbf u_2 \mathbf u_3 = 1$, which now becomes $\text{Vol}(\mathcal M) = 1$.
+
+Next, we replace $\lr\Vert\Vert {\text{diag}(\mathbf X^\top Q(\mathbf u_{4:6}) ^\top \Lambda(\mathbf u_{1:3}) Q(\mathbf u_{4:6}) \mathbf X) - \mathbf 1_m} ^2$ with another least squares function. However, this time, we pair up points $V$ of the mesh with vertices $U$ in the ground-truth mesh we obtain from the physical simulation to form corresponding pairs $(v_i, u_i)$. The replacement least squares function is thus $\sum_{i=1}^{|V| = |U|}\lr\Vert\Vert {v_i - u_i}^2$. 
+
+For our upper-level loss function, we can still perform a Chamfer distance to compare with the ground-truth points of the mesh from $k$ different views, $\mathcal Y_k$, with these same views of our mesh $\mathcal X_k(U)$.
+
+Though this can be confusing, if we take a step back, conceptually, the components of our bi-level optimisation are:
+$$
+\begin{array}{ll}
+    \underset{}{\text{minimize}} &  \text{difference between current points $V^*$ and target} \\[0.5em]
+  \text{subject to} & V^* = \text{argmin} \; \text{projection of current points onto intended shape} \\[0.5em]
+  & \hphantom{y =} \text{subject to} \;  \text{volume constraint}
+\end{array}
+$$
+
+This makes it very easy to substitute in our modifications:
+$$
+\begin{array}{ll}
+    \underset{\text{over } \mathcal X = \lrbrace{\mathbf x_i} }{\text{minimize}} &  \sum_{k'=1}^k d_C(\mathcal X_k(V^*), \mathcal Y_k) \\[0.5em]
+  \text{subject to} & V^* = \text{argmin} \; \sum_{i \in [|\mathcal X|]} ||v_i - u_i||^2, \quad v_i \in V, u_i \in U \\[0.5em]
+  & \hphantom{y =} \text{subject to} \;  \text{Vol}(\mathcal M) = 1
+\end{array}
+$$
+
+So the difference between the upper and lower-level losses are that the upper-level function is moving the points $\mathcal X$ by minimising differences in 2D projections of the mesh (so only boundary points have gradient flowing through them), whereas the lower-level loss minimises the 3D distance between all points on the mesh with the corresponding pairs.
+
+Additional considerations are now whether the mesh is self-intersecting and ensuring it is watertight; two factors which were implicit in assuming an ellipsoid representation. We need to handle these somehow later on.
+
 
 \end{document}
