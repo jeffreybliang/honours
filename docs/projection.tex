@@ -152,8 +152,8 @@ For our upper-level loss function, we can still perform a Chamfer distance to co
 Though this can be confusing, if we take a step back, conceptually, the components of our bi-level optimisation are:
 $$
 \begin{array}{ll}
-    \underset{}{\text{minimize}} &  \text{difference between current points $V^*$ and target} \\[0.5em]
-  \text{subject to} & V^* = \text{argmin} \; \text{projection of current points onto intended shape} \\[0.5em]
+    \underset{}{\text{minimize}} &  \text{error between projected mesh points $V^*$ and target} \\[0.5em]
+  \text{subject to} & \text{projected mesh points } V^* = \text{argmin} \; \text{nearest points to existing mesh} \\[0.5em]
   & \hphantom{y =} \text{subject to} \;  \text{volume constraint}
 \end{array}
 $$

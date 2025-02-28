@@ -185,6 +185,53 @@
 		Not sure how the mesh will be able to handle concavities if only the boundary points are detected in the upper-level loss, these will only be able to handle convex parts. I guess that the lower-level loss will handle that by moving in those concave sections in more.
 	\end{MeetingMinutes}
 
+	\begin{MeetingMinutes}{Wed 26/02/2025}{u7013004}
+		Have explored many many options for the physics simulation. I will list them out. The aim is to get good data by Friday. I will aim by tonight to have tried various options and have thought about which one is best.
+		The options are:
+		\begin{enumerate}
+			\item NVIDIA Omniverse - pros: minimal effort to set up inflatable, can set up scene easily, cons: unsure how mesh would be extracted, I will need access to Pranav's computer
+			\item Feather - pros: physics looks robust, easily usable interface, should be easily to extract mesh and it's in C++, can simulate interactions, cons: will need to manually set up environment, port to Blender and render there, requires Linux
+			\item Q-Minh: pros: good interface, physics looks good, should be easy to extract mesh, in C++, cons: need to port to Blender
+			\item \sout{liujustin53: unknown, will have to try} BAD!
+			\item PBS-soft-body (ETH): can interact with rigid body if the rigid body is in the scene and not moving
+			\item PBDTaichi: Python, pretty basic, can't handle collisions with other objects
+		\end{enumerate}
+		
+		FML. Feather can only work on OpenGL 4.3 so I'll try on Windows at home.
+
+		Can also ask Jiahao about the apt stuff for libgl and other RandR (RandR library and headers were not found).
+
+		Can use the PBAToolkit in Python, so that should be doable on Mac. Same with some of the other ones.
+		
+		The Feather one, I have almost no hope for. I can try to run it on the GPU but the OpenGL is so far behind.
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Thu 27/02/2025}{u7013004}
+		This really sucks right now bruh. I am bumping into dead ends and I wonder if the only thing I can use is Pranav's computer atm.
+		Going to try vcpkg again for Feather and Q-Minh (he replied and said he hasn't ported it over to Python yet but can do it next week).
+		In the meantime, I can try liujustin53, PBS-soft-body (ETH).
+		Verdict: liujustin53 can't do collisions.
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Fri 28/02/2025}{u7013004}
+		Ok, need to ask if I can somehow use a computer with a GPU. If not, rent one?
+		NVIDIA Omniverse has everything, I just need to be able to use it.
+		
+		My options otherwise are PBDTaichi, PBS-soft-body, and Feather.
+		All can do volume preservation.\\
+
+		Feather is super slow but can do bending and length constraints, and can handle collisions with other objects. Investigate solver iteration.
+
+		PBDTaichi has bending and length constraints, but cannot handle collisions with other objects.
+
+		PBS-soft-body has length and friction constraints, can handle collisions with static objects in the scene, cannot handle collisions with other objects.
+
+		For now, I need some really basic data to get the pipeline working. 
+
+		Discussion with Steve: he'll ask IT, I will generate a simple example in Blender first.
+
+	\end{MeetingMinutes}
+
 \section{Ellipsoid Formulation} \label{sec:ellipsoid}
 An ellipsoid is a 3-dimensional surface obtained by deforming a sphere under an affine transformation. As ellipsoid surfaces can be represented as the zero set of a quadratic polynomial in three variables, it is considered a quadric surface.
 
