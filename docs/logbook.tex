@@ -249,7 +249,16 @@
 		Get the Canny edge detector.
 		After that, tidy up point cloud section and talk about how to perform surface reconstruction.
 	\end{MeetingMinutes}
-	
+
+	\begin{MeetingMinutes}{Sat 8/3/2025}{u7013004}
+		Important to have no nothing days. Today, I will write more about SfM in my thesis. The goal of the long weekend will be to have results of the mesh changing.
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Wed 12/03/2025}{u7013004}
+		Turns out the SciPy was hanging because it takes 4 minutes per iteration when using a subdivision level of 4. Takes 10 seconds if subdivision level of 3, and basically instant with subdivision level of 2. I think including the manually providing the gradients should speed up the computation.
+
+		Today, I want to write the code for the node and make sure that it works for subdiv levels 2 and 3. After that, I want to write the Chamfer distance loss function and hook it up. Then I'd like to visualise the results. Should be good!
+	\end{MeetingMinutes}
 
 \section{Ellipsoid Formulation} \label{sec:ellipsoid}
 An ellipsoid is a 3-dimensional surface obtained by deforming a sphere under an affine transformation. As ellipsoid surfaces can be represented as the zero set of a quadratic polynomial in three variables, it is considered a quadric surface.
