@@ -1,7 +1,7 @@
 import cv2
 import sys
 
-def apply_canny(input_path, output_path=None, threshold1=100, threshold2=200):
+def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250):
     # Read the image in grayscale
     img = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
     
