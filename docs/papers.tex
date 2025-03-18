@@ -148,14 +148,14 @@
 \end{ArticleSummary}
 
 \begin{ArticleSummary}{DRWR: A Differentiable Renderer without Rendering for Unsupervised 3D Strucutre Learning }
-    \textbf{Citation:} Han \textit{et al.}
+    \textbf{Citation:} Han \textit{et al.}, 2020
     
     \textbf{Summary:} An unsupervised differentiable renderer uses losses to evaluate the alignment of projections of reconstructed 3D point clouds with ground truth object silhouettes, instead of pixel-wise losses. Idea is to pull points to the surface of the silhouette and then push them far away from each other.
     
     \textbf{Key Points:}
     \begin{itemize}
         \item This is unsupervised, so only requires images for training.
-        \item Existing pixel-wise loss functions render images from 3D structures but require rasterisation or pixel-wise interpolation commonly.
+        \item Existing pixel-wise loss functions render images from 3D structures but require rasterisation or pixel-wise interpolation commonly, which they claim don't actually contribute to structure learning
         \item DRWR: doesn't require visibility handling, shading, or pixel-wise interpolation.
         \item Loss function: smooth unary loss pulls projection of each 3D point into the foreground (image we're interested in) and binary/pairwise loss pushes each pair of projections lying inside the foreground far away (structure-aware since only considers repulsion once both points appear in foreground). This ensures the entire foreground is covered and prevents clumping.
     \end{itemize}
@@ -198,6 +198,234 @@
         \item Auto-decoder which has the latent code as input and directly optimises that, involves taking the maximum-a-priori estimate of the loss function + a regularising term over all points over all shapes 
         \item To make the network flexible and adaptable to many shapes, a latent code describing the shape is inputted with the 3D point into the network, rather than a single point input with the network containing information about the shape.
         \item The SDF value is the signed distance from the shape's surface, with negative values indicating the point is inside the shape, zero values meaning the point lies on the surface, and positive values meaning the point is outside the shape. The magnitude of the value is the distance to the surface.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Multi-view Convolutional Neural Networks for 3D Shape Recognition}
+    \textbf{Citation:} Su et al., 2015
+    
+    \textbf{Summary:} Classifies 3D objects using 2D projections of said object from different views using a CNN, outperforms previous approaches which had access to the 3D information.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item They can outperform 3D based methods as 1) 2D representations are less memory expensive compared to voxel representations and thus training is more efficient, 2) image descriptors have advanced to be more information dense, 3) there exist massive image databases which are well-annotated
+        \item Rather than averaging views, the multi-view CNN is able to identify more informative views and combine these to form the 3D object (think about the pooling layers).
+        \item ``Jittering'' used to augment data and provide analogous samples to changing the view.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{GRF: Learning a General Radiance Field for 3D Representation and Rendering}
+    \textbf{Citation:} Trevithick and Yang, 2021
+    
+    \textbf{Summary:} Takes a set of 2D images with known camera poses and intrinsics, constructs 3D rendering from arbitrary positions using neural network, uses attention mechanism from differing views to account for occlusions. 
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Builds upon NeRF, can infer from unobserved viewpoints. Can generalise unlike NeRF to any set of images to a 3D structure with geometric details.
+        \item Exploits the underlying 3D geometry unlike previous approaches which generated images from unseen views by learning a 2D manifold.
+        \item Four components: 1) feature extractor from 2D pixels using CNN, 2) reprojector to transform into 3D space, 3) aggreggator to obtain general features for 3D points, 4) NeRF to render internal representation
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Pixel2Mesh: Generating 3D Mesh Models
+    from Single RGB Images}
+    \textbf{Citation:} Wang et al., 2018
+    
+    \textbf{Summary:} Graph-based CNN which learns deformations (not the structure itself) of an ellipsoid tempplate to output a 3D mesh from a single colour image.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Coarse-to-fine strategy for stability by graph unpooling (typical division strategy used in computer graphics where new vertex is midpoint of an edge, generating 4 new triangles), uses many surface and geometric losses to improve realism and fidelity
+        \item graph-based convolutional network used to model the mesh with nodes = vertices and connections = edges, use a pooling layer of 2D images in the GCN to incorporate features/knowledge in 3D construction
+        \item Multi-view geometry is restricted by the coverage of views (cannot generalise to unseen viewpoints) and appearance (cannot generate non-Lambertian surfaces), hence why learning approaches are important
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{AtlasNet: A Papier-M\^ach\'e Approach to Learning 3D Surface Generation}
+    \textbf{Citation:} Groueix et al., 2018
+    
+    \textbf{Summary:} From a latent shape vector, sample a point on a unit square, the network produces a 3D point with the square deformed in 3D to be a continuous planar surface (locally 2D manifold) allowing arbitrary resolution, and repeat this for multiple patches.
+\end{ArticleSummary}
+
+
+\begin{ArticleSummary}{Mesh R-CNN}
+    \textbf{Citation:} Gkioxari, Malik, and Johnson, 2019
+    
+    \textbf{Summary:} Mix of 2D perception and 3D shape prediction. Takes input image and predicts meshes of variable topology by first predicting coarse voxel structure, converting to mesh, and then refining the mesh with graph convolution network.
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Deep Marching Tetrahedra: a Hybrid Representation for High-Resolution 3D Shape Synthesis}
+    \textbf{Citation:} Shen et al., 2021
+
+    \textbf{Summary:} Generative model to generate 3D shapes via user guided input (such as coarse voxels), hybrid implementation where explicit representation used to allow finer geometric features to be rendered and implicit representation (deformable tetrahedral grid) to allow arbitrary topology.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Uses Marching Tetrahedra algorithm which is differentiable unlike MC, adapts resolution by deforming the tetrahedra grid --- the singularity for linearly interpolating the crossing remains but in practice only evaluated when vertex sign is different
+        \item Input is point cloud or low-res voxel which gets converted into a feature vector of the 3D volume, 
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Shape as Points: a Differentiable Poisson Solver}
+    \textbf{Citation:} Peng et al., 2021
+    
+    \textbf{Summary:} Differentiable Poisson surface reconstruction method used in both optimisation and learning-based scenarios (noisy point clouds). Render using MC.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Optimisation-based: noisy oriented point cloud as input, pass this into DPSR to obtain dense indicator grid, then sample points and use MC to generate a mesh which can be compared using Chamfer to target. MC not differentiable, but gradient approximated using inverse normals of mesh sampled vertices (from MeshSDF). 
+        \item Learning -based: learns features/normals from a point cloud using an MLP and then calculating an indicator grid using DPSR and comparing it to the target indicator grid to supervise learning.
+        \item Doees not require normals like traditional PSR.
+        \item Poisson equation intuition: the gradient of the indicator function image is approximated by point normals.
+        \item Discretizes allowing inversion of divergence operator, use spectral methods to solve the equation (FFT highly optimised on GPUs).
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Convolutional Occupancy Networks}
+    \textbf{Citation:} Peng et al., 2020
+    
+    \textbf{Summary:} A new implicit representation (compared to MLPs which fail to encode local information/structured reasoning) which uses convolutional encoders and then a decoder to get a probabilistic occupancy grid.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Converts 3D input (point cloud or voxel) into features, run features through CNN onto occupancy grid output
+    \end{itemize}
+\end{ArticleSummary}
+
+
+\begin{ArticleSummary}{Multiview Neural Surface Reconstruction by Disentangling Geometry and Appearance}
+    \textbf{Citation:} Yariv et al., 2020
+    
+    \textbf{Summary:} Separates geometry from appearance from camera parameters to construct 3D scenes from input images (even with variable lighting conditions).
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Input: masked 2D images (indicator function approximated using sigmoid for differentiability) and camera estimates.
+        \item Differentiable renderer which is able to render the surface of a shape represented by the zero level set of the implicit representation (neural network).
+        \item Able to render material/colour alongside reconstruct shape.
+        \item Uses differentiable ray casting, parametrises the intersection of the ray with the surface of the object with the geometry and camera parameters.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Scene Representation Networks: Continuous 3D-Structure-Aware Neural Scene Representations}
+    \textbf{Citation:} Sitzmann, Zollhofer, Wetzstein
+    
+    \textbf{Summary:} Differentiable ray-marching algorithm trained on 2D images and camera poses, outputs 3D scene (geometry + appearance). Maps 3D world coordinate to feature representation of scene properties at that coordinate. Does not require 3D supervision.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Can generate images without 2D convolutions - not a 3D shape reconstruction, but still involves a 3D implicit representation to generate images from novel views.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Differentiable Volumetric Rendering:
+    Learning Implicit 3D Representations without 3D Supervision}
+    \textbf{Citation:} Niemeyer et al., 2020
+    
+    \textbf{Summary:} Differentiable renderer for implicit shapes (and texture). Depth gradients obtained with implicit differentiation. Input 2D posed images. Outputs depth map from occupancy network, which is unprojected into 3D and rendered to be compared with ground truth image.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item 2D supervision (depth maps or multi-vew images) attempts to overcome learning-based 3D reconstruction approaches which are restricted to synthetic data (and restricts their prior knowledge) during supervision. However many suffer from discretisation artifacts (meshes and voxels).
+        \item Mesh based methods require deformable template mesh or a collection of 3D patches which leads to self-intersections and non-watertight meshes
+        \item uses occupancy network to assign a probability of occupancy to each point, and texture (colour) uses a texture field
+        \item able to learn without 3D ground truth data
+        \item key contribution is analytical gradient to optimise for the surface depth and overcome non-differentiable argmin and iterative secant method
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Octree Generating Networks: Efficient Convolutional Architectures for High-resolution 3D Outputs}
+    \textbf{Citation:} Tatarchenko, Dosovitskiy, and Brox, 2017
+    
+    \textbf{Summary:} Convolutional decoder which outputs higher resolution octree from high-level feature descriptions and reconstructing 3D objects from single images.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Uses hash table rather than storing cell pointers using an index-value pair $(m,v)$ where $m$ generated from spatial coordinate and level using Z-order curves and $v$ generated any signal.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation}
+    \textbf{Citation:} Qi et al., 2017
+    
+    \textbf{Summary:} Takes point clouds and outputs classification, segmentation, and semantic parsing.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Uses symmetric function of max pooling for permutation invariance (as point clouds are a set)
+        \item Network learns set of functions which select informative points of the point cloud and encode reason for selection
+        \item Network should be invariant to ordering and transformations such as rotation or translation
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{DUSt3R: Geometric 3D Vision Made Easy}
+    \textbf{Citation:} Wang et al., 2024
+    
+    \textbf{Summary:} Multi-view stereo reconstruction in the wild, from unconstrained image collection, can output pointmaps from which camera parameters, depthmaps, and 3D reconstruction can be recovered
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Unlike most approaches which first attempt to estimate camera parameters, this work performs regression of pointmaps to relax hard constraints of projective camera models
+        \item Unconstrained image-based dense 3D reconstruction form multiple views subsumes many other geometric 3D vision tasks
+        \item Attempts to overcome challenge of existing approaches which are only as good as the quality of input images and camera parameters 
+        \item Jointly processes input images and 3D pointmaps (dense 2D field of 3D points) in order to associate 2D structures with 3D shapes
+        \item Need to apply MC, PSR, or other learning-based methods to extract mesh from pointmap
+        \item From a pair of images, encodes them using ViT (patchify) with shared weights, but then decoded separately, with the second decoder also optimising for relative pose to image 1. Outputs point map and confidence map for each head.
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis}
+    \textbf{Citation:} Mildenhall et al., 2020
+    
+    \textbf{Summary:} Trains one MLP per scene with input being single 5D coordinate (x,y,z and viewing direction $\theta, \phi$) and output is volume density and view-dependent radiance (colour and lighting). Loss between rendered images and observed image inputs.
+
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Uses positional encoding with sine and cosines to take input vectors into a higher frequency dimension, allowing finer details to be generated
+        \item Estimates radiance using quadrature (whatever that means)
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{Pix2Vox++: Multi-scale Context-aware 3D Object Reconstruction from Single and Multiple Images}
+    \textbf{Citation:} Xie et al., 2020
+    
+    \textbf{Summary:} Takes multi-view images to produce coarse voxel strucures which are then fused adn refined
+\end{ArticleSummary}
+
+
+\begin{ArticleSummary}{3D-R2N2: A Unified Approach for Single and Multi-view 3D Object Reconstruction}
+    \textbf{Citation:} Choy et al., 2016
+    
+    \textbf{Summary:} Uses Recurrent NN to map image/s to reconstructed 3D shape in the form of a voxelised occupancy grid.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Convolution NN with many LSTMs with restricted connections for encoding, decoder is 3D deconvolution network, uses softmax voxel-wise loss
+        \item 
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{BundleSDF: Neural 6-DoF Tracking and 3D Reconstruction of Unknown Objects}
+    \textbf{Citation:} Wen et al., 2023
+    
+    \textbf{Summary:} Near real-time tracking method of objects (6 DoF) from a video sequence whilst performing 3D reconstruction. Only need to be segmented in the first frame.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item 1) Match features between consecutive segmented video frames to obtain rough pose estimates of the object, some which are stored in memory. 2) Pose graph constructed from memory pool 3) Online optimisation of pose graph with current pose, then stored back in memory pool, 4) All posed frames in memory pool used to train Neural Object Field (geometry is an SDF and also visual appearance/texture)
+        \item Uses octree for (hierarchical) ray sampling
+    \end{itemize}
+\end{ArticleSummary}
+
+\begin{ArticleSummary}{TopoNet: Topology Learning for 3D Reconstruction of Objects of Arbitrary Genus}
+    \textbf{Citation:} Charrada et al., 2022
+    
+    \textbf{Summary:} Takes RGB image and reconstructs 3D mesh by deforming a template mesh and then performs face-pruning to refine the mesh and allow arbitrary genus changing using an RL network.
+    
+    \textbf{Key Points:}
+    \begin{itemize}
+        \item Conv Graph Net to extract features of initial mesh and deform it
+        \item Does not look watertight bro
     \end{itemize}
 \end{ArticleSummary}
 

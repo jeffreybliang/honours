@@ -1,7 +1,5 @@
 import torch
 import numpy as np
-
-
 import os
 import re
 from collections import defaultdict
@@ -30,21 +28,37 @@ def read_matrices_from_file(filename):
         
     return matrices
 
-def load_camera_matrices(path):
+def load_camera_matrices(path, matrix_types=None):
+    """
+    Loads camera matrices from .npy files in the specified directory.
+
+    Parameters:
+        path (str): Path to the directory containing camera matrix files.
+        matrix_types (set or list, optional): Specifies which matrix types to load (e.g., {'K', 'RT'}).
+                                              If None, all available matrices ('K', 'RT', 'P') will be loaded.
+
+    Returns:
+        dict: A dictionary mapping camera names to their respective matrices.
+    """
     cameras = defaultdict(dict)
     file_pattern = re.compile(r"^(.*)_(K|RT|P)\.npy$")
-    for filename in os.listdir(path):
+    
+    if matrix_types is not None:
+        matrix_types = set(matrix_types)  # Ensure it's a set for quick lookup
+    
+    for filename in sorted(os.listdir(path)):  # Sort filenames alphabetically
         match = file_pattern.match(filename)
         if match:
-            print(filename)
             cam_name, matrix_type = match.groups()
-            filepath = os.path.join(path, filename)
-            cameras[cam_name][matrix_type] = np.load(filepath)
-    return cameras
+            if matrix_types is None or matrix_type in matrix_types:
+                filepath = os.path.join(path, filename)
+                cameras[cam_name][matrix_type] = torch.tensor(np.load(filepath))
     
+    return cameras
+
 
 def load_renders(renders_path):
-    renders = defaultdict(list)
+    renders = defaultdict(dict)
     pattern = re.compile(r"([a-zA-Z]+)(\d+)\.png")
     for filename in sorted(os.listdir(renders_path), key=lambda x: (re.match(pattern, x).group(1), int(re.match(pattern, x).group(2))) if re.match(pattern, x) else (x, float('inf'))):
         match = pattern.match(filename)
@@ -52,11 +66,11 @@ def load_renders(renders_path):
             word, number = match.groups()
             number = int(number)  # Convert number to integer for sorting
 
-            # Load image (PIL) or store filename
             image_path = os.path.join(renders_path, filename)
             image = cv2.imread(image_path)  # Load image using OpenCV
             if image is not None:
-                renders[word].append(image)
+                renders[word][number] = image  # Store image in the nested dictionary
+
     return renders
 
 
