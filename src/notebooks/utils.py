@@ -5,29 +5,6 @@ import re
 from collections import defaultdict
 import cv2
 
-def read_matrices_from_file(filename):
-    matrices = {}
-    current_cam = None
-    
-    with open(filename, "r") as f:
-        lines = f.readlines()
-        
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-        
-        if line.startswith("Camera:"):
-            current_cam = line.split("Camera: ")[1]
-            matrices[current_cam] = {}
-        elif any(matrix_type in line for matrix_type in ["K (Intrinsic", "RT (Extrinsic", "P (Projection"]):
-            matrix_type = line.split(" ")[0]  
-            i += 1
-            matrices[current_cam][matrix_type] = torch.tensor(np.loadtxt(lines[i:i+3]), dtype=torch.float32)
-            i += 2  
-        i += 1
-        
-    return matrices
-
 def load_camera_matrices(path, matrix_types=None):
     """
     Loads camera matrices from .npy files in the specified directory.
@@ -35,13 +12,13 @@ def load_camera_matrices(path, matrix_types=None):
     Parameters:
         path (str): Path to the directory containing camera matrix files.
         matrix_types (set or list, optional): Specifies which matrix types to load (e.g., {'K', 'RT'}).
-                                              If None, all available matrices ('K', 'RT', 'P') will be loaded.
+        If None, all available matrices ('K', 'RT', 'P') will be loaded.
 
     Returns:
-        dict: A dictionary mapping camera names to their respective matrices.
+        dict: A dictionary mapping camera numbers to their respective matrices.
     """
     cameras = defaultdict(dict)
-    file_pattern = re.compile(r"^(.*)_(K|RT|P)\.npy$")
+    file_pattern = re.compile(r"^Camera_(\d+)_(K|RT|P)\.npy$")
     
     if matrix_types is not None:
         matrix_types = set(matrix_types)  # Ensure it's a set for quick lookup
@@ -49,13 +26,13 @@ def load_camera_matrices(path, matrix_types=None):
     for filename in sorted(os.listdir(path)):  # Sort filenames alphabetically
         match = file_pattern.match(filename)
         if match:
-            cam_name, matrix_type = match.groups()
+            cam_number, matrix_type = match.groups()
+            cam_number = int(cam_number)  # Convert camera number to integer
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
-                cameras[cam_name][matrix_type] = torch.tensor(np.load(filepath))
+                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath))
     
     return cameras
-
 
 def load_renders(renders_path):
     renders = defaultdict(dict)
@@ -73,6 +50,31 @@ def load_renders(renders_path):
 
     return renders
 
+def get_projmats_and_edgemap_info(view_idx, target_mesh: str, matrices, edgemaps, edgemaps_len):
+    """
+    Retrieves the projection matrices and target edgemap information for the specified view indices and target mesh.
+
+    Parameters:
+        view_idx (list): List of indices for which to retrieve projection matrices and edgemaps.
+        target_mesh (str): The target mesh name (e.g., 'balloon') to extract edgemaps and lengths for.
+        matrices (dict): Dictionary containing camera matrices.
+        edgemaps (dict): Dictionary containing edgemaps for various meshes.
+        edgemaps_len (dict): Dictionary containing the lengths of the edgemaps for each mesh.
+
+    Returns:
+        tuple: A tuple containing the projection matrices (torch.Tensor) and the target edgemap information (tuple of torch.Tensors).
+    """
+    # Get the projection matrices for the specified view indices
+    projmats = torch.stack([matrices[view_idx[i]]["P"] for i in range(len(view_idx))])
+
+    # Get the target edgemaps for the specified target mesh
+    tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[target_mesh][i] for i in view_idx], batch_first=True, padding_value=0.0)
+    tgt_edgemaps_len = torch.tensor([edgemaps_len[target_mesh][i] for i in view_idx])
+
+    # Pack the target edgemaps and their lengths
+    tgt_edgemap_info = (tgt_edgemaps, tgt_edgemaps_len)
+
+    return projmats, tgt_edgemap_info
 
 
 def project_batched_vertices(self, vertices):
