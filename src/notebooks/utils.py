@@ -25,8 +25,10 @@ def load_camera_matrices(path, matrix_types=None):
     
     for filename in sorted(os.listdir(path)):  # Sort filenames alphabetically
         match = file_pattern.match(filename)
+        print(match)
         if match:
-            cam_number, matrix_type = match.groups()
+            print(match)
+            _, cam_number, matrix_type = match.groups()
             cam_number = int(cam_number)  # Convert camera number to integer
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
