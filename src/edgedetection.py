@@ -3,14 +3,15 @@ import sys
 
 def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250):
     # Read the image in grayscale
-    img = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
-    
+    img = cv2.imread(input_path)
+    img = cv2.cvtColor(cv2.COLOR_RGB2GRAY)
+
     if img is None:
         print(f"Error: Unable to read image {input_path}")
         return
 
     # Apply Canny edge detection        
-    img = cv2.equalizeHist(img)
+    # img = cv2.equalizeHist(img)
     edges = cv2.Canny(img, threshold1, threshold2)
 
     if output_path:
