@@ -261,7 +261,29 @@
 	\end{MeetingMinutes}
 
 	\begin{MeetingMinutes}{Fri 14/3/2025}{u7013004}
-		Possibly learn the offsets so I can use offset_verts but that requires a packed tensor I believe. Might as well just start a new set of vertices I reckon.
+		Possibly learn the offsets so I can use offset\_verts but that requires a packed tensor I believe. Might as well just start a new set of vertices I reckon.
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Sun 30/3/2025}{u7013004}
+		The edge loss didn't work on Friday. Let's think about why.
+
+		If X is the result after Chamfer loss backwards, then it won't conform to the volume constraints. If Y is the malleable mesh, then decreasing SSE between Y and X will decrease the error in positions of Y and X subjecting Y to have constant volume. Preserving the edge length constraint can result in Y being as close to X. As a result, the solver might just choose to focus on minimising SSE and edge length constraints could assist in that. 
+
+		Okay, the issue is that if I do Edge loss by itself, the gradient blows up. Why? Because the Hessian (double derivative of objective with respect to Y twice) is apparently incredibly ill-conditioned. ChatGPT says it's because of 
+
+		2.1 Edge Lengths Close to Their Targets (Small Gradients): if $d(Y_i, Y_j)^2 \approx d(X_i, X_j)^2$ then the scaling term $d(Y_i, Y_j)^2 - d(X_i, X_j)^2$ is small. This means the Hessian matrix has many small entries, leading to near-zero eigenvalues and an ill-conditioned system.
+
+		2.2 Highly Connected Meshes (Near-Dependent Constraints): If a vertex has many connected neighbors, its position is constrained by multiple edges. This causes rows of the Hessian to be nearly linearly dependent, leading to a large condition number.
+
+		2.3 The Rigid Motion Null Space: The edge length term does not penalize rigid transformations, meaning there are six zero eigenvalues (three for translation, three for rotation), making 
+		$f_{YY}$ singular
+	\end{MeetingMinutes}
+
+	\begin{MeetingMinutes}{Tue 1/4/2025}{u7013004}
+		Wtf it's the 1st of April. After the past four days, I've found that the edge length constraint is kinda bad and not worth spending more time on. 
+		The next phase is to keep writing my thesis, and to write scripts for average performance, and also test a little bit of robustness with edges today. I can plan out my day. 
+
+		For my thesis, I would like to plan out my roadmap and write my abstract. My dad would like me to write a problem definition, idk if I'll use it but I'll do it to make him happy. 
 	\end{MeetingMinutes}
 
 \section{Ellipsoid Formulation} \label{sec:ellipsoid}
