@@ -25,10 +25,8 @@ def load_camera_matrices(path, matrix_types=None):
     
     for filename in sorted(os.listdir(path)):  # Sort filenames alphabetically
         match = file_pattern.match(filename)
-        print(match)
         if match:
-            print(match)
-            _, cam_number, matrix_type = match.groups()
+            cam_number, matrix_type = match.groups()
             cam_number = int(cam_number)  # Convert camera number to integer
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
@@ -105,3 +103,36 @@ def project_batched_vertices(self, vertices):
     projected_cartesian = projected[..., :2] / projected[..., 2:3]  # Shape: (B, P, N, 2)
 
     return projected_cartesian
+
+
+
+def manual_gradient(u0, tgt_vtxs, src_edges, eta=1):
+    """
+    Compute the gradient manually without using autograd.
+    """
+    u0 = torch.tensor(u0, dtype=torch.float32, requires_grad=False)
+    tgt_vtxs = torch.tensor(tgt_vtxs, dtype=torch.float32)
+
+    # Convert src_edges to tensor
+    src_edges = torch.tensor(src_edges, dtype=torch.long)  
+    u, v = src_edges[:, 0], src_edges[:, 1]
+
+    # Compute edge length differences
+    src_dist = torch.square(u0[u] - u0[v]).sum(dim=1)  # d(X_i, X_j)^2
+    tgt_dist = torch.square(tgt_vtxs[u] - tgt_vtxs[v]).sum(dim=1)  # d(Y_i, Y_j)^2
+    length_diff = tgt_dist - src_dist   # ell_{ij}
+
+    # Compute per-edge gradient contribution
+    edge_grad = -4 * eta * length_diff[:, None] * (u0[u] - u0[v])  # Shape: (num_edges, d)
+
+    # Initialize gradient accumulation tensor
+    grad = torch.zeros_like(u0)
+
+    # Scatter gradients to vertices using index_add_
+    grad.index_add_(0, u, edge_grad)  # Accumulate gradients for node u
+    grad.index_add_(0, v, -edge_grad)  # Accumulate gradients for node v (opposite sign)
+    
+    # Add gradient from L_sse term
+    grad += 2 * (u0 - tgt_vtxs)
+
+    return grad
