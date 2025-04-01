@@ -1,7 +1,7 @@
 import cv2
 import sys
 
-def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250):
+def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250, equalize=False):
     # Read the image in grayscale
     img = cv2.imread(input_path)
     img = cv2.cvtColor(cv2.COLOR_RGB2GRAY)
@@ -9,7 +9,11 @@ def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250):
     if img is None:
         print(f"Error: Unable to read image {input_path}")
         return
-
+    
+    # Apply histogram equalization if the flag is set
+    if equalize:
+        img = cv2.equalizeHist(img)
+    
     # Apply Canny edge detection        
     # img = cv2.equalizeHist(img)
     edges = cv2.Canny(img, threshold1, threshold2)
@@ -26,7 +30,7 @@ def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python canny_edge.py <input_image> [output_image] [threshold1] [threshold2]")
+        print("Usage: python canny_edge.py <input_image> [output_image] [threshold1] [threshold2] [--equalize]")
         sys.exit(1)
     
     input_file = sys.argv[1]
@@ -35,5 +39,8 @@ if __name__ == "__main__":
     # Optional thresholds
     thresh1 = int(sys.argv[3]) if len(sys.argv) > 3 else 100
     thresh2 = int(sys.argv[4]) if len(sys.argv) > 4 else 200
-
-    apply_canny(input_file, output_file, thresh1, thresh2)
+    
+    # Check if equalization flag is provided
+    equalize = "--equalize" in sys.argv or "-e" in sys.argv
+    
+    apply_canny(input_file, output_file, thresh1, thresh2, equalize)
