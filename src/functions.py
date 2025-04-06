@@ -1,5 +1,6 @@
 import torch
-from pytorch3d import Meshes, chamfer_distance
+from pytorch3d.structures import Meshes
+from pytorch3d.loss import chamfer_distance
 import trimesh
 
 torch.autograd.set_detect_anomaly(True)

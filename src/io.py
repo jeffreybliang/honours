@@ -90,20 +90,33 @@ def canny_edge_map(img: MatLike, options):
     # return edge map
     return edge_map
 
-def get_edgemaps(renders, options):
+def load_edgemaps(renders, options):
     edgemaps = {}
     edgemaps_len = {}
-    for k,v in renders.items():
+
+    # Iterate through the renders dictionary, which is grouped by mesh names
+    for mesh_name, mesh_renders in renders.items():
         views = {}
         views_len = {}
-        for num, img in v.items():
-            edges = canny_edge_map(img, options[num])
-            edge_coords = np.argwhere(edges > 0)
-            edge_coords = edge_coords[:, [1,0]]  
-            views[num] = torch.tensor(edge_coords)
-            views_len[num] = len(edge_coords)
-        edgemaps[k] = views
-        edgemaps_len[k] = views_len
+        
+        # Find the edgemap options for the current mesh name
+        if mesh_name in options:
+            edgemap_options = options[mesh_name]
+
+            # Iterate through each render (view) for the current mesh
+            for num, img in mesh_renders.items():
+                # Apply the corresponding edgemap options for this render number (num)
+                if num in edgemap_options:
+                    edge_option = edgemap_options[num]
+                    edges = canny_edge_map(img, edge_option)
+                    edge_coords = np.argwhere(edges > 0)
+                    edge_coords = edge_coords[:, [1, 0]]  # Convert to (x, y) coordinates
+                    
+                    views[num] = torch.tensor(edge_coords)
+                    views_len[num] = len(edge_coords)
+
+        # Store the results for the current mesh
+        edgemaps[mesh_name] = views
+        edgemaps_len[mesh_name] = views_len
+
     return edgemaps, edgemaps_len
-
-

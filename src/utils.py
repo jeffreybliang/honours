@@ -1,6 +1,8 @@
 import torch
 import matplotlib.pyplot as plt
 from chamfer import get_boundary
+import plotly.graph_objects as go
+import numpy as np
 
 def padded_to_packed(xs, lengths):
     packed = []
@@ -75,3 +77,58 @@ def plot_projections(projverts, projmats, edgemaps):
     plt.subplots_adjust(wspace=0.1)  # Reduce horizontal space
     plt.show()
     plt.close(fig)
+
+def visualise_meshes(srcmesh, tgtmesh):
+    vertices = np.asarray(srcmesh.verts_packed())
+    faces = np.asarray(srcmesh.faces_packed())
+
+# Create a Plotly 3D mesh
+    fig = go.Figure(data=[go.Mesh3d(
+        x=vertices[:, 0],
+        y=vertices[:, 1],
+        z=vertices[:, 2],
+        i=faces[:, 0],
+        j=faces[:, 1],
+        k=faces[:, 2],
+        opacity=0.5,
+        color="lightblue"
+    )])
+
+    vertices = np.asarray(tgtmesh.verts_packed())
+    faces = np.asarray(tgtmesh.faces_packed())
+
+    fig.add_trace(go.Mesh3d(
+        x=vertices[:, 0],
+        y=vertices[:, 1],
+        z=vertices[:, 2],
+        i=faces[:, 0],
+        j=faces[:, 1],
+        k=faces[:, 2],
+        opacity=0.1,
+        color="red"
+    ))
+
+    # Update layout for better presentation
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(title="X"),
+            yaxis=dict(title="Y"),
+            zaxis=dict(title="Z"),
+        ),
+        title="3D Mesh Visualization"
+    )
+
+    # Show the figure
+    fig.show()
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'

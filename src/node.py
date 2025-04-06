@@ -1,18 +1,17 @@
 import torch
-from pytorch3d import Meshes
+from pytorch3d.structures import Meshes
 from ddn import EqConstDeclarativeNode, DeclarativeFunction
-from functions import *
-from utils import *
+from .functions import *
+from .utils import *
 import scipy.optimize as opt
 
 class ConstrainedProjectionNode(EqConstDeclarativeNode):
     """
     Performs a projection of the input points X onto the nearest points Y such that the volume of Y is constant.
     """
-    def __init__(self, src: Meshes, tgt: Meshes):
+    def __init__(self, src: Meshes):
         super().__init__(eps=1.0e-6) # relax tolerance on optimality test 
         self.src = src # source meshes (B,)
-        # self.tgt = tgt # target meshes (B,)
         self.b = len(src)
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor, scatter_add=False):

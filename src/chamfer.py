@@ -1,7 +1,8 @@
 from alpha_shapes import *
 import shapely
 import torch
-from pytorch3d import Meshes, chamfer_distance
+from pytorch3d.structures import Meshes
+from pytorch3d.loss import chamfer_distance
 from torch import nn
 
 def get_boundary(projected_pts, alpha=10.0):
