@@ -1,9 +1,10 @@
 import torch
 from pytorch3d.structures import Meshes
-from ddn import EqConstDeclarativeNode, DeclarativeFunction
+from ddn.pytorch.node import *
 from .functions import *
 from .utils import *
 import scipy.optimize as opt
+import wandb
 
 class ConstrainedProjectionNode(EqConstDeclarativeNode):
     """
@@ -13,6 +14,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
         super().__init__(eps=1.0e-6) # relax tolerance on optimality test 
         self.src = src # source meshes (B,)
         self.b = len(src)
+        self.iter = 0
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor, scatter_add=False):
         """
@@ -73,7 +75,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
         volumes = volumes.abs()
         return volumes  # Shape: (B,)    
     
-    def solve(self, xs: torch.Tensor):
+    def solve(self, xs: torch.Tensor, ):
         """Projects the vertices onto the target mesh vertices across batches.
 
         Args:
@@ -85,6 +87,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
         n_batches = len(self.src)
         num_verts_per_mesh = self.src.num_verts_per_mesh()
         results = torch.zeros((n_batches, num_verts_per_mesh.max(), 3), dtype=torch.double)
+        losses = torch.zeros(n_batches, dtype=torch.double)
         for batch in range(n_batches):
             n_verts = num_verts_per_mesh[batch]
             verts = xs[batch][:n_verts].flatten().detach().double().cpu().numpy()
@@ -117,7 +120,15 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
             if not res.success:
                 print("FAILED:", res.message)
             results[batch] = torch.tensor(res.x, dtype=torch.double, requires_grad=True).view(-1,3)
+            losses[batch] = res.fun
         results = torch.nn.utils.rnn.pad_sequence(results, batch_first=True)
+        
+        # assume one batch
+        wandb.log(
+            data={"inner/lstsq": losses[0]},
+            step=self.iter,
+        )
+
         return results,None
     
 

@@ -1,6 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
-from chamfer import get_boundary
+from .chamfer import get_boundary
 import plotly.graph_objects as go
 import numpy as np
 
