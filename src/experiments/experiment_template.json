@@ -1,0 +1,32 @@
+{
+    "project": "Test",
+    "name": "test_run_try1",
+    "description": "sky_sphere_manual_balloon_random_strawberry",
+    "src_mesh": "sphere",
+    "target_meshes": [
+        "balloon", 
+        "rstrawberry"
+    ],
+    "views": {
+        "balloon": {
+            "mode": "manual",
+            "view_idx": [0,1,2,3,5,6,7,8,9,10,11],
+            "num_views": 4
+        },
+        "rstrawberry": {
+            "mode": "manual",
+            "view_idx": [0,1,2,3,5,6,7,8,11],
+            "num_views": 9
+        }
+    },
+    "training": {
+    "n_iters": 150,
+    "lr": 1e-6,
+    "momentum": 0.8
+    },
+    "verbose": true,
+    "vis": {
+        "enabled": false,
+        "frequency": 50
+      }
+}
