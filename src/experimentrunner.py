@@ -7,6 +7,7 @@ from typing import List, Tuple, Union
 import random
 import wandb
 import os
+from tqdm import trange
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -34,6 +35,8 @@ class ExperimentRunner:
                 "view_idx": view_config["view_idx"],
                 "num_views": view_config["num_views"]
             }
+            self.num_views = view_config["num_views"]
+
         
         # Training settings
         self.n_iters = self.cfg["training"]["n_iters"]
@@ -61,7 +64,8 @@ class ExperimentRunner:
                 "lr":       self.lr,
                 "momentum": self.momentum,
                 "source": src_name,
-                "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names
+                "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
+                "num_views": self.num_views
             }
         )
         wandb.define_metric("outer/chamfer", summary="min")
@@ -110,7 +114,9 @@ class ExperimentRunner:
         # plot_projections(verts.detach().squeeze().double(), projmats, (a,b))
         min_loss = float("inf")
         best_verts = None
-        for i in range(n_iters):
+    
+        pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
+        for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
@@ -123,6 +129,8 @@ class ExperimentRunner:
                 colour = bcolors.OKGREEN
             loss.backward()
             optimiser.step()
+
+            pbar.set_description(f"Loss: {loss.item():.4f}")
 
             # log
             wandb.log(
