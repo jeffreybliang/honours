@@ -135,7 +135,7 @@
 \begin{ArticleSummary}{Occupancy Networks: Learning 3D Reconstruction in Function Space}
     \textbf{Citation:} Mescheder \textit{et al.}
     
-    \textbf{Summary:} Uses a neural network classifier to represent the continuous decision boundary of a 3D surface.
+    \textbf{Summary:} Uses a neural network classifier to represent the continuous decision boundary of a 3D surface, enables occupancy to be evaulated at arbitrary resolution.
     
     \textbf{Key Points:}
     \begin{itemize}
@@ -144,6 +144,7 @@
         \item We randomly sample points in the 3D bounding volume of the object. The loss function for a batch $\mathcal B$ is:
         $$\mathcal L_{\mathcal B}^{\text{gen}} = \frac{1}{|\mathcal B|} \sum_{i=1}^{|\mathcal B|} \lr[] {\sum_{j=1}^{K} \mathcal L (f_\theta(p_{ij}, z_i), o_{ij}) + \text{KL}(q_\psi(z | (p_{ij}, o_{ij})_{j=1:K}) \lVert\, p_0(z))}$$ 
         \item Creates a mesh using coarse voxel grid and evaluating occupancy network for cells in this grid. For boundary voxels, we further subdivide them and repeat, until we reach the desired resolution, before applying Marching Cubes.
+        \item In ShapeNet results, able to construct finer details which get lost in coarser voxel representations.
     \end{itemize}
 \end{ArticleSummary}
 
@@ -154,10 +155,11 @@
     
     \textbf{Key Points:}
     \begin{itemize}
-        \item This is unsupervised, so only requires images for training.
+        \item This is unsupervised, so only requires images for training, whereas existing approaches require large amounts of data.
         \item Existing pixel-wise loss functions render images from 3D structures but require rasterisation or pixel-wise interpolation commonly, which they claim don't actually contribute to structure learning
         \item DRWR: doesn't require visibility handling, shading, or pixel-wise interpolation.
         \item Loss function: smooth unary loss pulls projection of each 3D point into the foreground (image we're interested in) and binary/pairwise loss pushes each pair of projections lying inside the foreground far away (structure-aware since only considers repulsion once both points appear in foreground). This ensures the entire foreground is covered and prevents clumping.
+        \item Link to my approach: renderers bridge the gap between 3D and 2D by using 2D loss functions on 3D structure, loss functions which are usually defined on RGB pixelvalues or pixel-wise silhouette coverage. Renders predicted 3D structure from specific view angle into an image.
     \end{itemize}
 \end{ArticleSummary}
 
