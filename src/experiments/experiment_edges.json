@@ -1,10 +1,11 @@
 {
     "project": "NumViews",
-    "name": "sphere2balloon_nviews_",
-    "description": "sphere to balloon with varying views",
+    "name": "edge1_sphere2balloon_nviews_",
+    "description": "sphere to balloon with varying views and edge distractions level 1",
+    "group": "edge1",
     "src_mesh": "sphere",
     "target_meshes": [
-        "balloon"    
+        "balloon"
     ],
     "views": {
         "balloon": {

@@ -5,9 +5,9 @@ warnings.filterwarnings('ignore')
 
 def main():
     # from source S to target T, vary the number of views randomly
-    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig.json")
+    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig_edge1.json")
 
-    with open("/home/jeffrey/honours/src/experiments/experiment_num_views.json") as f:
+    with open("/home/jeffrey/honours/src/experiments/experiment_edges.json") as f:
         base_cfg = json.load(f)
 
     tgt_mesh_name = base_cfg["target_meshes"][0]
@@ -19,7 +19,7 @@ def main():
         base_name = f"{cfg['name']}{nviews}"
         print(f"\n[INFO] Starting experiments with {nviews} view(s)...")
 
-        for r in range(5):
+        for r in range(8):
             cfg["name"] = f"{base_name}_r{r}"
             print(f"[INFO] Running: {cfg['name']}")
             runner = ExperimentRunner(cfg, dataloader)

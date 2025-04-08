@@ -1,0 +1,78 @@
+{
+  "paths": {
+    "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
+    "mesh_res": 2,
+    "renders_path": "/home/jeffrey/honours/src/data/sky/renders",
+    "matrices_path": "/home/jeffrey/honours/src/data/sky/cameras"
+  },
+  "meshes": [
+    {
+      "name": "sphere",
+      "edgemap_options": {
+        "0": [true, 10, 200 ], 
+        "1": [false, 0, 60 ],
+        "2": [false, 0, 90],
+        "3": [true, 0, 300 ],
+        "4": [true, 0, 300 ],
+        "5": [false, 0, 90 ], 
+        "6": [true, 0, 200],
+        "7": [false, 0, 80],
+        "8": [false, 0, 80],
+        "9": [false, 0, 80],
+        "10":[false, 0, 100 ],
+        "11":[true, 0, 200]
+        }
+    },
+    {
+      "name": "balloon",
+      "edgemap_options": {
+        "0": [true, 10, 200 ], 
+        "1": [false, 0, 60 ],
+        "2": [false, 0, 90],
+        "3": [true, 20, 300 ],
+        "4": [true, 0, 300 ],
+        "5": [false, 0, 90 ], 
+        "6": [true, 0, 200],
+        "7": [false, 0, 80],
+        "8": [false, 0, 80],
+        "9": [false, 0, 80],
+        "10":[false, 0, 100 ],
+        "11":[true, 0, 200]
+        }
+    },
+    {
+      "name": "rstrawberry",
+      "edgemap_options": {
+        "0": [true, 20, 200 ],
+        "1": [false, 5, 100 ],
+        "2": [false, 5, 150],
+        "3": [true, 20, 150],
+        "4": [false, 5, 100 ], 
+        "5": [false, 10, 100],
+        "6": [false, 15, 100],
+        "7": [false, 15, 100],
+        "8": [false, 15, 100],
+        "9": [true, 20, 120],
+        "10":[false, 0, 100 ],
+        "11":[false, 0, 100 ]
+        }
+    },
+    {
+      "name": "parabola",
+      "edgemap_options": {
+        "0": [true,  40, 200 ],
+        "1": [false, 5,  120 ],
+        "2": [false, 10, 100],
+        "3": [true,  100,200],
+        "4": [false, 5,  100 ], 
+        "5": [false, 10, 100],
+        "6": [false, 15, 100],
+        "7": [false, 15, 120],
+        "8": [false, 15, 100],
+        "9": [true,  150,150],
+        "10":[false, 0,  100 ],
+        "11":[false, 0,  100 ]
+        }
+    }
+  ]
+}

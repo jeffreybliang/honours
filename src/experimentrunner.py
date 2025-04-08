@@ -24,6 +24,7 @@ class ExperimentRunner:
         self.project = self.cfg["project"]
         self.experiment_name = self.cfg["name"]
         self.experiment_description = self.cfg["description"]
+        self.group = self.cfg["group"]
         self.src_mesh = self.cfg["src_mesh"]
         self.target_meshes = self.cfg["target_meshes"]
         
@@ -59,6 +60,7 @@ class ExperimentRunner:
             project=self.project,
             name=self.experiment_name,
             notes=self.experiment_description,
+            group=self.group,
             config={
                 "iters":    self.n_iters,
                 "lr":       self.lr,

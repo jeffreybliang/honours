@@ -1,0 +1,78 @@
+{
+  "paths": {
+    "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
+    "mesh_res": 2,
+    "renders_path": "/home/jeffrey/honours/src/data/sky/renders",
+    "matrices_path": "/home/jeffrey/honours/src/data/sky/cameras"
+  },
+  "meshes": [
+    {
+      "name": "sphere",
+      "edgemap_options": {
+        "0": [true, 20, 100],
+        "1": [true, 20, 100],
+        "2": [true, 20, 100],
+        "3": [true, 20, 100],
+        "4": [true, 20, 100],
+        "5": [true, 20, 100],
+        "6": [true, 20, 100],
+        "7": [true, 20, 100],
+        "8": [true, 20, 100],
+        "9": [true, 20, 100],
+        "10":[true, 20, 100],
+        "11":[true, 20, 100]
+        }
+    },
+    {
+      "name": "balloon",
+      "edgemap_options": {
+        "0": [true, 20, 100],
+        "1": [true, 20, 100],
+        "2": [true, 20, 100],
+        "3": [true, 20, 100],
+        "4": [true, 20, 100],
+        "5": [true, 20, 100],
+        "6": [true, 20, 100],
+        "7": [true, 20, 100],
+        "8": [true, 20, 100],
+        "9": [true, 20, 100],
+        "10":[true, 20, 100],
+        "11":[true, 20, 100]
+        }
+    },
+    {
+      "name": "rstrawberry",
+      "edgemap_options": {
+        "0": [true, 20, 100],
+        "1": [true, 20, 100],
+        "2": [true, 20, 100],
+        "3": [true, 20, 100],
+        "4": [true, 20, 100],
+        "5": [true, 20, 100],
+        "6": [true, 20, 100],
+        "7": [true, 20, 100],
+        "8": [true, 20, 100],
+        "9": [true, 20, 100],
+        "10":[true, 20, 100],
+        "11":[true, 20, 100]
+        }
+    },
+    {
+      "name": "parabola",
+      "edgemap_options": {
+        "0": [true, 20, 100],
+        "1": [true, 20, 100],
+        "2": [true, 20, 100],
+        "3": [true, 20, 100],
+        "4": [true, 20, 100],
+        "5": [true, 20, 100],
+        "6": [true, 20, 100],
+        "7": [true, 20, 100],
+        "8": [true, 20, 100],
+        "9": [true, 20, 100],
+        "10":[true, 20, 100],
+        "11":[true, 20, 100]
+        }
+    }
+  ]
+}
