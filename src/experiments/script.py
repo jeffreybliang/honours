@@ -1,5 +1,5 @@
-from src.dataloader import *
-from src.experimentrunner import *
+from src.framework_mesh.dataloader import *
+from src.framework_mesh.experimentrunner import *
 import warnings
 warnings.filterwarnings('ignore')
 
