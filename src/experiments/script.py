@@ -19,6 +19,10 @@ def main():
     runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/exp_pipeline.json", dataloader)
     runner.run()
 
+    # from source S to target T, vary the number of views randomly
+    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig_balloon.json")
+    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_spline.json", dataloader)
+    runner.run()
 
 if __name__ == "__main__":
     main()
