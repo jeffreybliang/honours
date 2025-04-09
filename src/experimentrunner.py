@@ -59,13 +59,14 @@ class ExperimentRunner:
             project=self.project,
             name=self.experiment_name,
             notes=self.experiment_description,
+            group="clean",
             config={
                 "iters":    self.n_iters,
                 "lr":       self.lr,
                 "momentum": self.momentum,
                 "source": src_name,
                 "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
-                "num_views": self.num_views
+                "num_views": self.num_views,
             }
         )
         wandb.define_metric("outer/chamfer", summary="min")
@@ -171,9 +172,8 @@ class ExperimentRunner:
             view_idx = self.views_config[mesh_name]["view_idx"]
         else: # random
             num_views = self.views_config[mesh_name]["num_views"]
-            view_idx = random.sample(list(camera_matrices.keys()), num_views)
-        print(view_idx)
-        print([k for k in camera_matrices.keys()])
+            view_idx = random.sample(self.views_config[mesh_name]["view_idx"], num_views)
+        print(f"{view_idx} from {self.views_config[mesh_name]['view_idx']}")
         projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx])
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0)
         tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx])
