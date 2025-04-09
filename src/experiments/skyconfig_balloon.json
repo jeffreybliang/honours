@@ -1,0 +1,28 @@
+{
+  "paths": {
+    "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
+    "mesh_res": 2,
+    "renders_path": "/home/jeffrey/honours/src/data/sky/renders",
+    "matrices_path": "/home/jeffrey/honours/src/data/sky/cameras"
+  },
+  "meshes": [
+    {
+      "name": "balloon",
+      "edgemap_options": {
+        "0": [true, 80, 700 ], 
+        "1": [false, 5, 120 ],
+        "2": [false, 10, 180],
+        "3": [true, 40, 600 ],
+        "4": [true, 40, 600 ],
+        "5": [false, 0, 180 ], 
+        "6": [true, 200, 900],
+        "7": [false, 10, 200],
+        "8": [false, 10, 200],
+        "9": [false, 20, 250],
+        "10":[false, 0, 300 ],
+        "11":[true, 200, 900]
+        }
+    },
+    {"name": "sphere"}
+  ]
+}

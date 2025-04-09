@@ -3,6 +3,7 @@ import json
 from .node import *
 from .chamfer import *
 from .utils import *
+from .io import *
 from typing import List, Tuple, Union
 import random
 import wandb
@@ -47,6 +48,8 @@ class ExperimentRunner:
         self.vis_freq = self.cfg["vis"]["frequency"]
         # Use the DataLoader to load data
         self.data_loader = data_loader
+        edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
+        self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options)
 
 
     def run(self):
@@ -158,8 +161,7 @@ class ExperimentRunner:
         return self.data_loader.meshes[name]
     
     def get_edgemaps(self, name):
-        dataloader = self.data_loader
-        return dataloader.edgemaps[name], dataloader.edgemaps_len[name]
+        return self.edgemaps[name], self.edgemaps_len[name]
 
     def get_camera_matrices(self):
         return self.data_loader.camera_matrices
