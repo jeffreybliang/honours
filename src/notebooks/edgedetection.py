@@ -4,7 +4,7 @@ import sys
 def apply_canny(input_path, output_path=None, threshold1=20, threshold2=250, equalize=False):
     # Read the image in grayscale
     img = cv2.imread(input_path)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     if img is None:
         print(f"Error: Unable to read image {input_path}")

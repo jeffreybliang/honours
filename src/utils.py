@@ -3,6 +3,21 @@ import matplotlib.pyplot as plt
 from .chamfer import get_boundary
 import plotly.graph_objects as go
 import numpy as np
+from pytorch3d.structures import Meshes
+import trimesh
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 
 def padded_to_packed(xs, lengths):
     packed = []
@@ -82,7 +97,7 @@ def visualise_meshes(srcmesh, tgtmesh):
     vertices = np.asarray(srcmesh.verts_packed())
     faces = np.asarray(srcmesh.faces_packed())
 
-# Create a Plotly 3D mesh
+    # Create a Plotly 3D mesh
     fig = go.Figure(data=[go.Mesh3d(
         x=vertices[:, 0],
         y=vertices[:, 1],
@@ -122,13 +137,52 @@ def visualise_meshes(srcmesh, tgtmesh):
     fig.show()
 
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+def visualise_heatmap(src: Meshes, tgt: Meshes):
+    mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), 
+                                faces=src[0].faces_packed().detach().cpu().numpy())
+    mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), 
+                                faces=tgt[0].faces_packed().detach().cpu().numpy())
+
+    # Get vertices
+    X_vertices = mesh_X.vertices
+    Y_tree = trimesh.proximity.ProximityQuery(mesh_Y)
+
+    # For each vertex in X, find closest point on Y
+    closest_points, _, _ = Y_tree.on_surface(X_vertices)
+
+    # Compute signed distance based on norm from origin
+    X_norms = np.linalg.norm(X_vertices, axis=1)
+    Y_norms = np.linalg.norm(closest_points, axis=1)
+    signed_dists = X_norms - Y_norms  # positive = further out than Y
+
+    # Normalize or clip for better colormap contrast if needed
+    max_val = np.max(np.abs(signed_dists))
+    cmin, cmax = -max_val, max_val  # white will now be centered at 0
+
+    # Plot using Plotly
+    i, j, k = mesh_X.faces.T
+    fig = go.Figure(data=[
+        go.Mesh3d(
+            x=X_vertices[:, 0],
+            y=X_vertices[:, 1],
+            z=X_vertices[:, 2],
+            i=i, j=j, k=k,
+            intensity=signed_dists,
+            colorscale='RdBu',
+            reversescale=True,
+            cmin=cmin,
+            cmax=cmax,
+            colorbar=dict(title='Signed Distance'),
+            showscale=True,
+            # flatshading=True,
+            lighting=dict(ambient=0.8, diffuse=0.9),
+            lightposition=dict(x=100, y=200, z=0),
+            opacity=1.0
+        )
+    ])
+    fig.update_layout(
+        title='Mesh X Colored by Signed Distance from Mesh Y',
+        scene=dict(aspectmode='data')
+    )
+    fig.show()
+
