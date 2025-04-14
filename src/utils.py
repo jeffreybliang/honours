@@ -199,7 +199,7 @@ def visualise_meshes(srcmesh, tgtmesh):
     fig.show()
 
 
-def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None):
+def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None, cmin=None, cmax=None):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), 
                                 faces=src[0].faces_packed().detach().cpu().numpy())
     mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), 
@@ -220,6 +220,7 @@ def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None):
     # Normalize or clip for better colormap contrast if needed
     max_val = np.max(np.abs(signed_dists))
     if cmin is None or cmax is None:
+        if cmin is None or cmax is None:
         cmin, cmax = -max_val, max_val  # white will now be centered at 0
 
     # Plot using Plotly
@@ -275,7 +276,8 @@ def compute_signed_distances(src, tgt):
     X_vertices = mesh_X.vertices
     Y_tree = trimesh.proximity.ProximityQuery(mesh_Y)
     closest_points, _, _ = Y_tree.on_surface(X_vertices)
-    
+        return cmin,cmax
+
     X_norms = np.linalg.norm(X_vertices, axis=1)
     Y_norms = np.linalg.norm(closest_points, axis=1)
     return X_norms - Y_norms
