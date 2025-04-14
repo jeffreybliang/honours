@@ -79,7 +79,7 @@ class ExperimentRunner:
 
         src_mesh = self.get_mesh(src_name)
         for tgt_name in tgt_names:
-            tgt_mesh = self.get_mesh(tgt_name)
+            tgt_mesh = self.get_gt_mesh(tgt_name)
 
             # Select the view points and get corresponding projmats
             projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name)
@@ -165,6 +165,9 @@ class ExperimentRunner:
                                 "plt/heatmap": wandb.Plotly(heatmap)}, 
                                 step=i + step_offset)   
         return best_verts
+
+    def get_gt_mesh(self,name):
+        return self.data_loader.gt_meshes[name]
 
     def get_mesh(self, name):
         return self.data_loader.meshes[name]
