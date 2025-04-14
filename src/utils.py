@@ -137,7 +137,7 @@ def visualise_meshes(srcmesh, tgtmesh):
     fig.show()
 
 
-def visualise_heatmap(src: Meshes, tgt: Meshes):
+def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), 
                                 faces=src[0].faces_packed().detach().cpu().numpy())
     mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), 
@@ -157,7 +157,8 @@ def visualise_heatmap(src: Meshes, tgt: Meshes):
 
     # Normalize or clip for better colormap contrast if needed
     max_val = np.max(np.abs(signed_dists))
-    cmin, cmax = -max_val, max_val  # white will now be centered at 0
+    if cmin is None or cmax is None:
+        cmin, cmax = -max_val, max_val  # white will now be centered at 0
 
     # Plot using Plotly
     i, j, k = mesh_X.faces.T
@@ -185,4 +186,5 @@ def visualise_heatmap(src: Meshes, tgt: Meshes):
         scene=dict(aspectmode='data')
     )
     fig.show()
+    return cmin,cmax
 

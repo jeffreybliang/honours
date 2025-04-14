@@ -3,10 +3,12 @@ import json
 from .node import *
 from .chamfer import *
 from .utils import *
+from .io import *
 from typing import List, Tuple, Union
 import random
 import wandb
 import os
+from tqdm import trange
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -34,6 +36,8 @@ class ExperimentRunner:
                 "view_idx": view_config["view_idx"],
                 "num_views": view_config["num_views"]
             }
+            self.num_views = view_config["num_views"]
+
         
         # Training settings
         self.n_iters = self.cfg["training"]["n_iters"]
@@ -44,6 +48,8 @@ class ExperimentRunner:
         self.vis_freq = self.cfg["vis"]["frequency"]
         # Use the DataLoader to load data
         self.data_loader = data_loader
+        edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
+        self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options)
 
 
     def run(self):
@@ -56,12 +62,14 @@ class ExperimentRunner:
             project=self.project,
             name=self.experiment_name,
             notes=self.experiment_description,
+            group="clean",
             config={
                 "iters":    self.n_iters,
                 "lr":       self.lr,
                 "momentum": self.momentum,
                 "source": src_name,
-                "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names
+                "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
+                "num_views": self.num_views,
             }
         )
         wandb.define_metric("outer/chamfer", summary="min")
@@ -74,7 +82,7 @@ class ExperimentRunner:
 
         src_mesh = self.get_mesh(src_name)
         for tgt_name in tgt_names:
-            tgt_mesh = self.get_mesh(tgt_name)
+            tgt_mesh = self.get_gt_mesh(tgt_name)
 
             # Select the view points and get corresponding projmats
             projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name)
@@ -110,7 +118,9 @@ class ExperimentRunner:
         # plot_projections(verts.detach().squeeze().double(), projmats, (a,b))
         min_loss = float("inf")
         best_verts = None
-        for i in range(n_iters):
+    
+        pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
+        for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
@@ -123,6 +133,8 @@ class ExperimentRunner:
                 colour = bcolors.OKGREEN
             loss.backward()
             optimiser.step()
+
+            pbar.set_description(f"Loss: {loss.item():.4f}")
 
             # log
             wandb.log(
@@ -145,12 +157,14 @@ class ExperimentRunner:
                     plot_projections(projverts.detach().squeeze().double(), projmats, (a,b))
         return best_verts
 
+    def get_gt_mesh(self,name):
+        return self.data_loader.gt_meshes[name]
+
     def get_mesh(self, name):
         return self.data_loader.meshes[name]
     
     def get_edgemaps(self, name):
-        dataloader = self.data_loader
-        return dataloader.edgemaps[name], dataloader.edgemaps_len[name]
+        return self.edgemaps[name], self.edgemaps_len[name]
 
     def get_camera_matrices(self):
         return self.data_loader.camera_matrices
@@ -163,9 +177,8 @@ class ExperimentRunner:
             view_idx = self.views_config[mesh_name]["view_idx"]
         else: # random
             num_views = self.views_config[mesh_name]["num_views"]
-            view_idx = random.sample(list(camera_matrices.keys()), num_views)
-        print(view_idx)
-        print([k for k in camera_matrices.keys()])
+            view_idx = random.sample(self.views_config[mesh_name]["view_idx"], num_views)
+        print(f"{view_idx} from {self.views_config[mesh_name]['view_idx']}")
         projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx])
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0)
         tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx])

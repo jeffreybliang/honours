@@ -4,10 +4,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def main():
-    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig.json")
-    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_template.json", dataloader)
+    # from source S to target T, vary the number of views randomly
+    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig_balloon.json")
+    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_spline.json", dataloader)
     runner.run()
-
 
 if __name__ == "__main__":
     main()
