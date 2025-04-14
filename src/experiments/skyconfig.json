@@ -58,6 +58,23 @@
         }
     },
     {
+      "name": "lstrawberry",
+      "edgemap_options": {
+        "0": [true, 40, 400 ],
+        "1": [false, 5, 250 ],
+        "2": [false, 10, 200],
+        "3": [true, 100, 400],
+        "4": [false, 5, 200 ], 
+        "5": [false, 10, 200],
+        "6": [false, 15, 220],
+        "7": [false, 15, 250],
+        "8": [false, 15, 200],
+        "9": [true, 150, 500],
+        "10":[false, 0, 320 ],
+        "11":[false, 0, 250 ]
+        }
+    },
+    {
       "name": "parabola",
       "edgemap_options": {
         "0": [true,  40, 400 ],
