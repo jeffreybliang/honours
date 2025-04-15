@@ -4,8 +4,19 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def main():
-    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig.json")
-    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_template.json", dataloader)
+    data_path = "/home/jeffrey/honours/src/experiments/skyconfig_local.json"
+    with open(data_path, 'r') as f:
+        config = json.load(f)
+
+    # Modify the 'mesh_res' value
+    config['paths']['mesh_res'] = 2
+    dataloader = DataLoader(config)
+    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/exp_pipeline.json", dataloader)
+    runner.run()
+
+    config['paths']['mesh_res'] = 3
+    dataloader = DataLoader(config)
+    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/exp_pipeline.json", dataloader)
     runner.run()
 
 

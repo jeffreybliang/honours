@@ -2,6 +2,7 @@ import torch
 from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
 import trimesh
+import numpy as np
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -109,24 +110,42 @@ def sse_gt(mesh, src:Meshes, tgt:Meshes):
     return sse.tolist() # (B,)
 
 
-def iou_gt(mesh, src:Meshes, tgt:Meshes,engine='manifold'):
+def iou_gt(mesh, src: Meshes, tgt: Meshes, engine='manifold'):
     batch_size = len(mesh)
     ious = []
     gt = tgt.verts_padded()
+
     for b in range(batch_size):
         num_verts_src = src.num_verts_per_mesh()[b].item()
         num_verts_tgt = tgt.num_verts_per_mesh()[b].item()
         
-        mesh_trimesh = trimesh.Trimesh(vertices=mesh[b][:num_verts_src].detach().cpu().numpy(), 
-                                       faces=src[b].faces_packed().detach().cpu().numpy())
-        gt_trimesh = trimesh.Trimesh(vertices=gt[b][:num_verts_tgt].detach().cpu().numpy(), 
-                                     faces=tgt[b].faces_packed().detach().cpu().numpy())
-        intersection = mesh_trimesh.intersection(other=gt_trimesh, engine=engine)
-        union = mesh_trimesh.union(other=gt_trimesh, engine=engine)
-        
-        if union.volume == 0:  # Handle edge case
+        mesh_trimesh = trimesh.Trimesh(
+            vertices=mesh[b][:num_verts_src].detach().cpu().numpy(), 
+            faces=src[b].faces_packed().detach().cpu().numpy()
+        )
+        gt_trimesh = trimesh.Trimesh(
+            vertices=gt[b][:num_verts_tgt].detach().cpu().numpy(), 
+            faces=tgt[b].faces_packed().detach().cpu().numpy()
+        )
+
+        try:
+            intersection = mesh_trimesh.intersection(gt_trimesh, engine=engine, check_volume=True)
+        except ValueError as e:
+            print(f"Intersection fallback triggered: {e}")
+            intersection = mesh_trimesh.intersection(gt_trimesh, engine=engine, check_volume=False)
+
+        try:
+            union = mesh_trimesh.union(gt_trimesh, engine=engine, check_volume=True)
+        except ValueError as e:
+            print(f"Union fallback triggered: {e}")
+            union = mesh_trimesh.union(gt_trimesh, engine=engine, check_volume=False)
+
+        if union.volume == 0:
             iou = 0.0
         else:
             iou = intersection.volume / union.volume
+            iou = float(np.clip(iou, 0.0, 1.0))  # Ensure the IoU is between 0 and 1
+
         ious.append(iou)
-    return ious # (B,)
+
+    return ious  # (B,)
