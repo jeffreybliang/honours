@@ -1,5 +1,5 @@
-from src.dataloader import *
-from src.experimentrunner import *
+from .dataloader import *
+from .experimentrunner import *
 import warnings
 warnings.filterwarnings('ignore')
 
