@@ -85,7 +85,6 @@ class PyTorchChamferLoss(nn.Module):
         for b in range(B):
             boundaries_b = boundaries[b].float()
             edgemaps_b = self.edgemaps[b].float()
-            print(len(edgemaps_b[0]))
             res, _ = chamfer_distance(  x=boundaries_b,
                                         y=edgemaps_b,
                                         x_lengths=boundary_lengths[b].long(),

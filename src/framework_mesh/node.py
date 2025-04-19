@@ -10,11 +10,12 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
     """
     Performs a projection of the input points X onto the nearest points Y such that the volume of Y is constant.
     """
-    def __init__(self, src: Meshes):
+    def __init__(self, src: Meshes, wandbBool):
         super().__init__(eps=1.0e-6) # relax tolerance on optimality test 
         self.src = src # source meshes (B,)
         self.b = len(src)
         self.iter = 0
+        self.wandb = wandbBool
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor, scatter_add=False):
         """
@@ -124,10 +125,11 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
         results = torch.nn.utils.rnn.pad_sequence(results, batch_first=True)
         
         # assume one batch
-        wandb.log(
-            data={"inner/lstsq": losses[0]},
-            step=self.iter,
-        )
+        if self.wandb:
+            wandb.log(
+                data={"inner/lstsq": losses[0]},
+                step=self.iter,
+            )
 
         return results,None
     
