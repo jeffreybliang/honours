@@ -35,20 +35,57 @@ class EllipsoidExperiment:
         for i in range(self.cfg["n_iters"]):
             optimiser.zero_grad()
             y = self.problem.wrap_node_function(node, x)
-            outer_loss = loss_fn(y)
+            res = loss_fn(y)
+            outer_loss = res.sum()
             outer_loss.backward()
             optimiser.step()
 
-            wandb.log({"outer/loss": outer_loss.item()}, step=i)
+            wandb.log({
+                "outer/loss": outer_loss.item(),
+                "chamfer/mean": res.mean().item(),
+                **{f"chamfer/e{j+1}": res[j].item() for j in range(res.numel())}
+            }, step=i)
 
+        y_detached = y.detach().squeeze()
+        a_hat = y_detached[0].item()
+        b_hat = y_detached[1].item()
+        c_hat = y_detached[2].item()
+        vol = ellipsoid_volume(a_hat, b_hat, c_hat)
+        sa = ellipsoid_surface_area(a_hat, b_hat, c_hat, self.problem.p)
+        wandb.log({
+            "geometry/a": a_hat,
+            "geometry/b": b_hat,
+            "geometry/c": c_hat,
+            "geometry/volume": vol,
+            "geometry/surface_area": sa
+        }, step=i)
+
+        r = self.cfg["target"]["radius"]
+        V_gt = ellipsoid_volume(r,r,r)
+        S_gt = ellipsoid_surface_area(r,r,r)
+        wandb.log({
+            "gt/axes_L2": ((a_hat - r)**2 + (b_hat - r)**2 + (c_hat - r)**2),
+            "gt/axes_rel_L2": (((a_hat - r)/r)**2 + ((b_hat - r)/r)**2 + ((c_hat - r)/r)**2),
+            "gt/a" : (a_hat - r)**2,
+            "gt/b" : (b_hat - r)**2,
+            "gt/c" : (c_hat - r)**2,
+            "gt/volume_abs": abs(vol - V_gt),
+            "gt/volume_rel": abs(vol - V_gt) / V_gt,
+            "gt/surface_area_abs": abs(sa - S_gt),
+            "gt/surface_area_rel": abs(sa - S_gt) / S_gt
+        })
+
+        if y_detached.numel() >= 6:  # check if angles exist
+            yaw_hat, pitch_hat, roll_hat = torch.rad2deg(y_detached[3:6]).tolist()
+            wandb.log({
+                "geometry/yaw": yaw_hat,
+                "geometry/pitch": pitch_hat,
+                "geometry/roll": roll_hat
+            }, step=i)
+
+        
         if self.cfg.get("verbose", False):
-            y_detached = y.detach().squeeze()
-            a_hat = y_detached[0].item()
-            b_hat = y_detached[1].item()
-            c_hat = y_detached[2].item()
-
             if y_detached.numel() >= 6:  # check if angles exist
-                yaw_hat, pitch_hat, roll_hat = torch.rad2deg(y_detached[3:6]).tolist()
                 print(f"{i:5d} ellipsoid estimate ({a_hat:0.3}, {b_hat:0.3}, {c_hat:0.3}, "
                     f"{yaw_hat:0.4}°, {pitch_hat:0.4}°, {roll_hat:0.4}°) "
                     f"has volume {ellipsoid_volume(a_hat, b_hat, c_hat):0.3} and "

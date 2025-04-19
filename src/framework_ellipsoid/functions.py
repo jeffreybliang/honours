@@ -40,19 +40,24 @@ def sa_constraint_function_grad(u):
         res = sa_constraint_function(u)
     return torch.autograd.grad(res, u)[0]
 
-def objective_function(u, X):
+def objective_function(u, X, u_prev=None):
     if not torch.is_tensor(u):
         u = torch.tensor(u).double()
     if not torch.is_tensor(X):
         X = torch.tensor(X).double()
-    L = torch.diag(1 / u[:3]**2).double()
-    R = rotation_matrix_3d(u[3:6]).double()
+    L = torch.diag(1/u[:3]**2).double()
+    R = rotation_matrix_3d(u[3:6]).double() # assumes radians
     A = R @ L @ R.T
     XT_AX = torch.einsum('ji,jk,ki->i', X, A, X)
     b = torch.ones(X.shape[1])
-    return torch.sum((XT_AX - b)**2) / 100
+    if u_prev is None:
+        u_prev = u 
+    elif not torch.is_tensor(u_prev):   
+        u_prev = torch.tensor(u_prev).double()
+    res = torch.sum((XT_AX - b) ** 2) + torch.norm(u_prev - u)**2
+    return res
 
-def objective_function_grad(u, X):
+def objective_function_grad(u, X, u_prev=None):
     if torch.is_tensor(u):
         u = u.detach().clone()
     else:
@@ -61,10 +66,18 @@ def objective_function_grad(u, X):
         X = X.detach().clone()
     else:
         X = torch.tensor(X).double()
+    if u_prev is not None:
+        if torch.is_tensor(u_prev):
+            u_prev = u_prev.detach().clone()
+        else:
+            u_prev = torch.tensor(u_prev)
+    else:
+        u_prev = u
     u.requires_grad = True
     with torch.enable_grad():
-        res = objective_function(u, X).double()
-    return torch.autograd.grad(res, u)[0].double()
+        res = objective_function(u, X, u_prev).double()
+    obj_grad = torch.autograd.grad(res, u)[0].double()
+    return obj_grad
 
 def initialise_u(data, method="default"):
     if method == "default":
