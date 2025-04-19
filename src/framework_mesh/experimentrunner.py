@@ -126,7 +126,7 @@ class ExperimentRunner:
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
-                        "plt/heatmap": wandb.Image(initheatmap)}, step= step_offset)
+                        "plt/heatmap": wandb.Plotly(initheatmap)}, step= step_offset)
 
         min_loss = float("inf")
         best_verts = None
@@ -169,10 +169,8 @@ class ExperimentRunner:
                 heatmap,cmin,cmax = create_heatmap(Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
                 if self.wandb:
                     wandb.log({"plt/projections": wandb.Image(projectionplot),
-                                "plt/heatmap": wandb.Image(heatmap)}, 
-                                step=i + step_offset)
-
-
+                                "plt/heatmap": wandb.Plotly(heatmap)}, 
+                                step=i + step_offset)   
         return best_verts
 
     def get_gt_mesh(self,name):

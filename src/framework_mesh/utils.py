@@ -284,7 +284,7 @@ def compute_signed_distances(src, tgt):
 def generate_3d_visualization(src, tgt, signed_dists, cmin, cmax):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().cpu().numpy(), faces=src[0].faces_packed().cpu().numpy())
     i, j, k = mesh_X.faces.T
-    return go.Figure(data=[
+    fig = go.Figure(data=[
         go.Mesh3d(
             x=mesh_X.vertices[:, 0],
             y=mesh_X.vertices[:, 1],
@@ -295,13 +295,22 @@ def generate_3d_visualization(src, tgt, signed_dists, cmin, cmax):
             reversescale=True,
             cmin=cmin, cmax=cmax,
             colorbar=dict(title='Signed Distance'),
-            showscale=False,
+            showscale=True,
             flatshading=True,
             lighting=dict(ambient=0.8, diffuse=0.7),
             lightposition=dict(x=100, y=200, z=0),
             opacity=1.0
         )
     ])
+    fig.update_layout(
+        # title='Mesh X Colored by Signed Distance from Mesh Y',
+        scene=dict(
+            aspectmode='data',
+            xaxis=dict(title="X"),
+            yaxis=dict(title="Y"),
+            zaxis=dict(title="Z")),         
+    )
+    return fig
 
 
 def capture_camera_views(fig, camera_views, target_w, target_h):
@@ -347,16 +356,17 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
         cmin, cmax = -max_val, max_val
 
     fig = generate_3d_visualization(src, tgt, signed_dists, cmin, cmax)
-    camera_views = [
-        dict(eye=dict(x=1.2, y=1.2, z=1.2)),
-        dict(eye=dict(x=-1.2, y=1.2, z=1.2)),
-        dict(eye=dict(x=1.2, y=-1.2, z=1.2)),
-        dict(eye=dict(x=0.0, y=0.0, z=2.4)),
-    ]
-    
-    images = capture_camera_views(fig, camera_views, 256, 256)
-    colorbar_img = create_colorbar(cmin, cmax)
-    final_img = create_final_image(images, colorbar_img, 256, 256)
+    if False:
+        camera_views = [
+            dict(eye=dict(x=1.2, y=1.2, z=1.2)),
+            dict(eye=dict(x=-1.2, y=1.2, z=1.2)),
+            dict(eye=dict(x=1.2, y=-1.2, z=1.2)),
+            dict(eye=dict(x=0.0, y=0.0, z=2.4)),
+        ]
+        
+        images = capture_camera_views(fig, camera_views, 256, 256)
+        colorbar_img = create_colorbar(cmin, cmax)
+        final_img = create_final_image(images, colorbar_img, 256, 256)
 
     # # Display the final image
     # dpi = 100  # You can adjust this if needed
@@ -369,5 +379,5 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
     # ax.imshow(final_img)
     # plt.show()
 
-    return final_img, cmin, cmax
+    return fig, cmin, cmax
 
