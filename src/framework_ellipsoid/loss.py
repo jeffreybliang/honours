@@ -4,6 +4,7 @@ import torch.nn as nn
 from pytorch3d.loss import chamfer_distance
 import alpha_shapes
 import numpy as np
+from .plotting import *
 
 
 def A_from_u_batch(u):
@@ -47,7 +48,7 @@ def sample_pts(sqrtA, m=50):
     points = torch.stack([torch.cos(t), torch.sin(t)])
     inverse_sqrtA = torch.linalg.inv(sqrtA)
     sampled_pts = inverse_sqrtA @ points
-    return sampled_pts.mT
+    return sampled_pts
 
 
 def make_homogeneous_torch(M):
@@ -96,6 +97,7 @@ class SampledProjectionChamferLoss(nn.Module):
         super().__init__()
         self.rot_mats, self.target_pts = views
         self.m = m
+        self.last_projected_pts = None  # store for silhouette plots
 
     def forward(self, input, p=1.6075):
         A = A_from_u_batch(input).double()  # (1, 3, 3)
@@ -104,13 +106,30 @@ class SampledProjectionChamferLoss(nn.Module):
 
         ellipses = homogeneous_projection_batch_torch(A, R)  # (N, 2, 2)
         matrix_sqrts = pos_sqrt(ellipses)
-        sampled_pts = sample_pts(matrix_sqrts, m=self.m)
+        sampled_pts = sample_pts(matrix_sqrts, m=self.m)  # (N, 2, m)
+        self.last_projected_pts = sampled_pts.unsqueeze(0)  # → (1, N, 2, m)
+        sampled_pts = sampled_pts.transpose(1, 2)         # → (N, m, 2)
+        
         res, _ = chamfer_distance(
             sampled_pts.float(), self.target_pts.float(),
             batch_reduction=None,
             point_reduction="mean"
         )
         return res
+
+
+    def plot_silhouettes(self, step=None):
+        fig = plot_silhouettes(
+            projected_pts=self.last_projected_pts,
+            target_pts=self.target_pts,
+            show_alpha=False,
+            step=step
+        )
+        return fig
+
+
+
+
 
 def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
     """
@@ -141,6 +160,9 @@ class BoundaryProjectionChamferLoss(nn.Module):
         self.rot_mats, self.target_pts = views  # target_pts: (N, M, 2)
         self.m = m
         self.alpha = alpha
+        self.last_projected_pts = None         # (B, V, 2, N)
+        self.last_boundary_points = None       # list[list[Tensor]] of shape B × V
+        self.last_hulls = None                 # list[list[Polygon]] of shape B × V
 
     def sample_unit_sphere(self, m, device):
         """Sample m points on the unit sphere S²"""
@@ -201,3 +223,15 @@ class BoundaryProjectionChamferLoss(nn.Module):
         )
 
         return res
+
+
+    def plot_silhouettes(self, step=None):
+        fig = plot_silhouettes(
+            projected_pts=self.last_projected_pts,
+            target_pts=self.target_pts,
+            boundary_points=self.last_boundary_points,
+            hulls=self.last_hulls,
+            show_alpha=True,
+            step=step
+        )
+        return fig

@@ -99,15 +99,21 @@ def build_view_matrices(cfg):
     mode = cfg.get("view_mode", "angles")
 
     if mode == "angles":
-        angles_deg = torch.tensor(cfg["view_angles"], dtype=torch.double)
-        angles_rad = torch.deg2rad(angles_deg)
-        R = rotation_matrix_3d_batch(angles_rad)  # (N, 3, 3)
+        all_angles_deg = torch.tensor(cfg["view_angles"], dtype=torch.double)  # All view angles
+        view_indices = cfg.get("view_indices", list(range(len(all_angles_deg))))  # Defaults to all
+
+        selected_angles_deg = all_angles_deg[view_indices]
+        selected_angles_rad = torch.deg2rad(selected_angles_deg)
+        R = rotation_matrix_3d_batch(selected_angles_rad)  # (N, 3, 3)
 
     elif mode == "planes":
-        normals = torch.tensor(cfg["view_normals"], dtype=torch.double)  # (N, 3)
+        all_normals = torch.tensor(cfg["view_normals"], dtype=torch.double)
+        view_indices = cfg.get("view_indices", list(range(len(all_normals))))
+        selected_normals = all_normals[view_indices]
         use_zaxis = cfg.get("use_zaxis_projection", False)
-        R = torch.empty((len(normals), 3, 3), dtype=torch.double)
-        for i, n in enumerate(normals):
+
+        R = torch.empty((len(selected_normals), 3, 3), dtype=torch.double)
+        for i, n in enumerate(selected_normals):
             z = F.normalize(n, dim=0)
             u, w = find_orthonormal_basis(z, use_zaxis_projection=use_zaxis)
             R[i] = torch.stack([u, w, z], dim=0)

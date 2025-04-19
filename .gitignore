@@ -18,6 +18,7 @@ readings.syn*
 
 # System files
 *.DS_Store*
+.DS_Store
 
 wandb/
 __pycache__
