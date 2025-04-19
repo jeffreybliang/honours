@@ -3,6 +3,7 @@ import json
 from .node import *
 from .chamfer import *
 from .utils import *
+from .io import *
 from typing import List, Tuple, Union
 import random
 import wandb
