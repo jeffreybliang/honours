@@ -32,14 +32,14 @@
         }    
     },
     "training": {
-    "n_iters": 50,
+    "n_iters": 5,
     "lr": 1e-6,
     "momentum": 0.8
     },
     "verbose": false,
     "vis": {
         "enabled": true,
-        "frequency": 10
+        "frequency": 1
     },
     "wandb": true
 }
