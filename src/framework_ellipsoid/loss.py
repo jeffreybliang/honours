@@ -105,15 +105,12 @@ class SampledProjectionChamferLoss(nn.Module):
         ellipses = homogeneous_projection_batch_torch(A, R)  # (N, 2, 2)
         matrix_sqrts = pos_sqrt(ellipses)
         sampled_pts = sample_pts(matrix_sqrts, m=self.m)
-        return self.chamfer(sampled_pts)
-
-    def chamfer(self, sampled_pts):
         res, _ = chamfer_distance(
             sampled_pts.float(), self.target_pts.float(),
             batch_reduction=None,
             point_reduction="mean"
         )
-        return res.sum()
+        return res
 
 def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
     """
@@ -203,4 +200,4 @@ class BoundaryProjectionChamferLoss(nn.Module):
             point_reduction="mean"
         )
 
-        return res.sum()
+        return res

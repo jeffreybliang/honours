@@ -3,6 +3,7 @@
     "name": "chamfer-boundary-default",
     "offline": true,
     "sqrt_m": 25,
+    "seed": 42,
     "noise": 1e-4,
     "p": 1.6075,
     "initial_axes": [0.5, 0.6, 0.7],
