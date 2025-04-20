@@ -4,27 +4,51 @@ import torch
 from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
 from torch import nn
+from shapely.ops      import unary_union
+from shapely.geometry import Polygon
+import numpy as np
 
-def get_boundary(projected_pts, alpha=10.0):
-    # Create a detached copy for Alpha_Shaper
-    projected_pts_detached = projected_pts.detach().clone()
+
+def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Tensor, P: torch.Tensor, eps=1e-3):
+    """
+    Args:
+        projverts: (V, 2) projected 2D points
+        faces: (F, 3) long tensor of face indices
+        fnorms: (F, 3) face normals (in world coordinates)
+        P: (3, 4) projection matrix
+    Returns:
+        (L_total, 2) tensor of boundary points (torch, differentiable)
+    """
+    # 1) Compute visibility mask (front-facing)
+    R = P[:, :3]  # (3, 3)
+    dot_z = (fnorms @ R.T)[:, 2]
+    visible = dot_z > 0
+    vis_idx = torch.nonzero(visible).squeeze(-1)
     
-    # Use the detached copy with Alpha_Shaper
-    shaper = Alpha_Shaper(projected_pts_detached)
-    alpha_shape = shaper.get_shape(alpha)
-    while isinstance(alpha_shape, shapely.MultiPolygon) or isinstance(alpha_shape, shapely.GeometryCollection):
-        alpha -= 1
-        alpha_shape = shaper.get_shape(alpha)
-    boundary = torch.tensor(alpha_shape.exterior.coords.xy, dtype=torch.double)
-    
-    # Find indices of boundary points
-    boundary_indices = torch.where(
-        torch.any(torch.isclose(projected_pts_detached[:, None], boundary.T, atol=1e-6).all(dim=-1), dim=1)
-    )[0]
-    
-    # Index back into the original tensor with gradients
-    boundary_pts = projected_pts[boundary_indices]
-    return boundary_pts
+    # 2) Project each visible triangle as a Polygon
+    V2 = projverts.detach().cpu().numpy()
+    F_np = faces[vis_idx].cpu().numpy()
+    tris = [Polygon(V2[f]) for f in F_np]
+    unioned = unary_union(tris).buffer(eps).buffer(-eps)
+
+    # 3) Extract exterior + interior rings
+    rings = [np.array(unioned.exterior.coords)]
+    for interior in unioned.interiors:
+        rings.append(np.array(interior.coords))
+
+    # 4) Snap rings to closest projected vertices
+    loops = []
+    for ring in rings:
+        coords_t = torch.from_numpy(ring).to(projverts)           # (L, 2)
+        diffs = coords_t[:, None, :] - projverts[None, :, :]      # (L, V, 2)
+        d2 = (diffs ** 2).sum(dim=2)                              # (L, V)
+        idx = torch.argmin(d2, dim=1)
+        idx_u = torch.unique_consecutive(idx)
+        if idx_u.numel() > 1 and idx_u[0] == idx_u[-1]:
+            idx_u = idx_u[:-1]
+        loops.append(projverts[idx_u])
+
+    return torch.cat(loops, dim=0)
 
 class PyTorchChamferLoss(nn.Module):
     def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info):
@@ -69,12 +93,20 @@ class PyTorchChamferLoss(nn.Module):
             projected_vertices.append(projverts)  # Store without padding
 
         # get boundaries
+        faces_padded = self.src.faces_padded()              # (B, F_max, 3)
+        deformed_meshes = self.src.update_padded(y)
+        fnorms_padded = deformed_meshes.faces_normals_padded()  # (B, F_max, 3)
+
         boundaries = [] 
         boundary_lengths = torch.zeros(B, P)
+        num_faces = self.src.num_faces_per_mesh()  # list of length B
         for b, batch in enumerate(projected_vertices):
             boundaries_b = []
+            faces_b = faces_padded[b][:num_faces[b]]
+            fnorms_b = fnorms_padded[b][:num_faces[b]]
+
             for p, projverts in enumerate(batch):
-                boundary = get_boundary(projverts)
+                boundary = get_boundary(projverts, faces_b, fnorms_b, self.projmatrices[p])
                 boundaries_b.append(boundary)
                 boundary_lengths[b,p] = len(boundary)
             padded_boundaries = torch.nn.utils.rnn.pad_sequence(boundaries_b, batch_first=True, padding_value=0.0)
@@ -92,5 +124,5 @@ class PyTorchChamferLoss(nn.Module):
                                         batch_reduction="mean",
                                         point_reduction="mean")
             chamfer_loss[b] = res.sum()
-        return chamfer_loss.double() * 10
+        return chamfer_loss.double()
 
