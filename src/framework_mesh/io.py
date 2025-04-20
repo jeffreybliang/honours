@@ -11,47 +11,39 @@ from scipy.interpolate import splprep, splev
 def load_camera_matrices(path, matrix_types=None):
     """
     Loads camera matrices from .npy files in the specified directory.
-
-    Parameters:
-        path (str): Path to the directory containing camera matrix files.
-        matrix_types (set or list, optional): Specifies which matrix types to load (e.g., {'K', 'RT'}).
-        If None, all available matrices ('K', 'RT', 'P') will be loaded.
-
-    Returns:
-        dict: A dictionary mapping camera numbers to their respective matrices.
+    Returns a nested dict: cameras[obj_name][cam_name][K/RT/P]
     """
-    cameras = defaultdict(dict)
-    file_pattern = re.compile(r"^Camera_(\d+)_(K|RT|P)\.npy$")
-    
+    cameras = defaultdict(lambda: defaultdict(dict))
+    file_pattern = re.compile(r"^(Cam_([A-Za-z]+_\d+)_(K|RT|P)\.npy$")
+
     if matrix_types is not None:
-        matrix_types = set(matrix_types)  # Ensure it's a set for quick lookup
-    
-    for filename in sorted(os.listdir(path)):  # Sort filenames alphabetically
+        matrix_types = set(matrix_types)
+
+    for filename in sorted(os.listdir(path)):
         match = file_pattern.match(filename)
         if match:
-            cam_number, matrix_type = match.groups()
-            cam_number = int(cam_number)  # Convert camera number to integer
+            cam_name, matrix_type = match.groups()
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
-                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath))
-    
+                cameras[cam_name][matrix_type] = torch.tensor(np.load(filepath))
+
     return cameras
 
 def load_renders(renders_path):
-    renders = defaultdict(dict)
-    pattern = re.compile(r"([a-zA-Z]+)(\d+)\.png")
-    for filename in sorted(os.listdir(renders_path), key=lambda x: (re.match(pattern, x).group(1), int(re.match(pattern, x).group(2))) if re.match(pattern, x) else (x, float('inf'))):
+    renders = defaultdict(lambda: defaultdict(dict))
+    pattern = re.compile(r"^(Oblique_[^_]+)_Cam_([A-Za-z]+_\d+)\.png$")
+
+    for filename in sorted(os.listdir(renders_path)):
         match = pattern.match(filename)
         if match:
-            word, number = match.groups()
-            number = int(number)  # Convert number to integer for sorting
-
+            obj_name, cam_name = match.groups()
             image_path = os.path.join(renders_path, filename)
-            image = cv2.imread(image_path)  # Load image using OpenCV
+            image = cv2.imread(image_path)
             if image is not None:
-                renders[word][number] = image  # Store image in the nested dictionary
+                renders[obj_name][cam_name] = image
 
     return renders
+
 
 def get_projmats_and_edgemap_info(view_idx, target_mesh: str, matrices, edgemaps, edgemaps_len):
     """
