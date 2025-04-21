@@ -18,7 +18,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         target_pts = build_target_circle(radius, m_pts).expand(self.rot_mats.size(0), -1, -1)
         self.views = (self.rot_mats, target_pts)
 
-        initial_angles_deg = cfg.get("initial_angles", [0, 0, 0])
+        initial_angles_deg = torch.tensor(cfg.get("initial_angles", [0, 0, 0]), dtype=torch.double)
         self.initial_angles = torch.deg2rad(initial_angles_deg)
         self.m_pts = m_pts
 
@@ -28,7 +28,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
-        return UnitVolConstrainedProjectionNode(self.m)
+        return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
         return BoundaryProjectionChamferLoss(self.views, m=self.m_pts)

@@ -5,6 +5,9 @@ from framework_ellipsoid.utils import sample_ellipsoid_surface
 from .innernodes import NAAUnitSAConstrainedProjectionNode, EllipseConstrainedProjectionFunction
 
 class InverseProductLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
     def forward(self, input):
         return 1 / (input[:, 0] * input[:, 1] * input[:, 2] + 1e-8)
 
@@ -12,7 +15,7 @@ class InverseProductLoss(nn.Module):
 class NonAxisAlignedProblem(BaseEllipsoidProblem):
     def __init__(self, cfg):
         super().__init__(cfg)
-        initial_angles_deg = cfg.get("initial_angles", [0, 0, 0])
+        initial_angles_deg = torch.tensor(cfg.get("initial_angles", [0, 0, 0]), dtype=torch.double)
         self.initial_angles = torch.deg2rad(initial_angles_deg)
         self.m = self.sqrt_m * self.sqrt_m
 
@@ -22,7 +25,7 @@ class NonAxisAlignedProblem(BaseEllipsoidProblem):
         return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
-        return NAAUnitSAConstrainedProjectionNode(self.m, self.p)
+        return NAAUnitSAConstrainedProjectionNode(self.m,  self.wandb, self.p)
 
     def get_loss(self):
         return InverseProductLoss()

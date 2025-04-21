@@ -2,9 +2,9 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
-from .utils import *
 import plotly.graph_objects as go
 from matplotlib.patches import Polygon
+from framework_ellipsoid.utils import rotation_matrix_3d
 
 
 def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=True):
@@ -17,7 +17,7 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
     z = c * torch.cos(v)
     ellipsoid = torch.stack((x, y, z), dim=-1).reshape(-1, 3).T  # (3, N)
 
-    angles_rad = torch.deg2rad(torch.tensor([yaw, pitch, roll]))
+    angles_rad = torch.deg2rad(torch.tensor([yaw, pitch, roll], dtype=torch.double))
     R = rotation_matrix_3d(angles_rad)
     rotated = (R @ ellipsoid.double()).T.reshape(x.shape + (3,))
     ellipsoid_xyz = rotated.reshape(-1, 3).T
@@ -31,23 +31,28 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
     cmap = plt.colormaps["RdBu_r"]
     facecolors = cmap(norm(residuals))
 
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection="3d")
+    plt.tight_layout()
 
     ax.plot_surface(
         rotated[..., 0], rotated[..., 1], rotated[..., 2],
         facecolors=facecolors,
         rstride=1, cstride=1,
         antialiased=True, linewidth=0,
-        alpha=0.8, shade=False
+        alpha=0.5, shade=False
     )
 
     # Rotate points to align with ellipsoid
     points = (R @ points.double()).detach()
-    ax.scatter(points[0], points[1], points[2], s=1, alpha=0.3, color="black")
+    ax.scatter(points[0], points[1], points[2], s=1, alpha=0.8, color="black")
     ax.set_axis_off()
-    ax.set_xlim(-1, 1); ax.set_ylim(-1, 1); ax.set_zlim(-1, 1)
+    margin = 0.1
+    ax.set_xlim(rotated[..., 0].min() - margin, rotated[..., 0].max() + margin)
+    ax.set_ylim(rotated[..., 1].min() - margin, rotated[..., 1].max() + margin)
+    ax.set_zlim(rotated[..., 2].min() - margin, rotated[..., 2].max() + margin)
     ax.set_box_aspect([1, 1, 1])
+    ax.set_aspect("equal")
 
     mappable = cm.ScalarMappable(norm=norm, cmap=cmap)
     mappable.set_array([])
@@ -62,14 +67,14 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
 
         ax.plot_surface(
             x_gt, y_gt, z_gt,
-            color="gray", alpha=0.05
+            color="gray", alpha=0.1
         )
+    # plt.show()
+    return fig, vmin, vmax
 
-    return fig
 
 
-
-def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, show_gt=True):
+def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=True):
     u, v = torch.linspace(0, 2 * torch.pi, 60), torch.linspace(0, torch.pi, 30)
     u, v = torch.meshgrid(u, v, indexing="ij")
     x = a * torch.cos(u) * torch.sin(v)
@@ -86,6 +91,8 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, show_gt=Tru
     ellipsoid_xyz = rotated.reshape(-1, 3).T
     radii = torch.norm(ellipsoid_xyz, dim=0)
     residuals = (radii - r).reshape(rotated.shape[:2]).cpu().numpy()
+    if vmin is None or vmax is None:
+        vmin, vmax = residuals.min().item(), residuals.max().item()
 
     surface = go.Surface(
         x=rotated[..., 0].cpu().numpy(),
@@ -93,8 +100,8 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, show_gt=Tru
         z=rotated[..., 2].cpu().numpy(),
         surfacecolor=residuals,
         colorscale='RdBu',
-        cmin=-0.5,
-        cmax=0.5,
+        cmin=vmin,
+        cmax=vmax,
         opacity=1,
         showscale=True
     )
@@ -138,7 +145,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, show_gt=Tru
             zaxis =dict(visible=False)
             )
         )
-    return fig
+    return fig, vmin, vmax
 
 
 
