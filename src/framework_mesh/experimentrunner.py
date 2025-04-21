@@ -49,14 +49,16 @@ class ExperimentRunner:
         # Use the DataLoader to load data
         self.data_loader = data_loader
         edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
-        self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options)
+        self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options, device=data_loader.device)
         
         self.wandb = self.cfg["wandb"]
 
     def run(self):
-        return self.pipeline(self.src_mesh, self.target_meshes)
+        device = self.data_loader.device
+        print(f"Running on device: {device}")
+        return self.pipeline(self.src_mesh, self.target_meshes, device)
 
-    def pipeline(self, src_name: str, tgt_names: List[str]):
+    def pipeline(self, src_name: str, tgt_names: List[str], device: torch.device):
         """Pipeline function to run the experiment on a source mesh and a list of target meshes."""
         if self.wandb:
             run = wandb.init(
@@ -80,19 +82,26 @@ class ExperimentRunner:
         view_idxs = {}
         step_offset = 0
 
-        src_mesh = self.get_mesh(src_name)
+        src_mesh = self.get_mesh(src_name).to(device)
         for tgt_name in tgt_names:
-            tgt_mesh = self.get_gt_mesh(tgt_name)
+            tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
 
             # Select the view points and get corresponding projmats
-            projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name)
-            gt_projmats, gt_edgemap_info, _ = self.get_gt_projmats_and_edgemap_info(tgt_name)
+            projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name, device)
+            gt_projmats, gt_edgemap_info, _ = self.get_gt_projmats_and_edgemap_info(tgt_name, device)
 
             view_idxs[tgt_name] = view_idx
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
             # Train the mesh transformation
-            final_verts = self.train_loop(src_mesh, tgt_mesh, projmats, edgemap_info, gt_projmats, gt_edgemap_info, n_iters=self.n_iters, step_offset = step_offset, lr=self.lr, moment=self.momentum)
+            final_verts = self.train_loop(src_mesh, tgt_mesh,
+                                        projmats, edgemap_info,
+                                        gt_projmats, gt_edgemap_info,
+                                        n_iters=self.n_iters,
+                                        step_offset=step_offset,
+                                        lr=self.lr,
+                                        moment=self.momentum,
+                                        device=device)
             
             # update step offset
             step_offset += self.n_iters
@@ -107,14 +116,14 @@ class ExperimentRunner:
         run.finish()
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
-                   n_iters, step_offset, lr, moment, verbose=False):
+                   n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
         node = ConstrainedProjectionNode(src, self.wandb)
-        verts_init = src.verts_padded() # (B, max Vi, 3)
+        verts_init = src.verts_padded()
         verts_init.requires_grad = True
         projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
         chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info)
         history = [projverts_init]
-        verts = verts_init.clone().detach().requires_grad_(True)
+        verts = verts_init.clone().detach().requires_grad_(True).to(device)
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
@@ -136,13 +145,14 @@ class ExperimentRunner:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
-            history.append(projverts.detach().clone())
             loss = chamfer_loss(projverts)
+
             colour = bcolors.FAIL
             if loss.item() < min_loss:
                 min_loss = loss.item()
                 best_verts = projverts.detach().clone()
                 colour = bcolors.OKGREEN
+                
             loss.backward()
             optimiser.step()
 
@@ -185,28 +195,31 @@ class ExperimentRunner:
     def get_camera_matrices(self):
         return self.data_loader.camera_matrices
 
-    def get_projmats_and_edgemap_info(self, mesh_name):
+    def get_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         camera_matrices = self.get_camera_matrices()
         edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
 
         if self.views_config[mesh_name]["mode"] == "manual":
             view_idx = self.views_config[mesh_name]["view_idx"]
-        else: # random
+        else:  # random
             num_views = self.views_config[mesh_name]["num_views"]
             view_idx = random.sample(self.views_config[mesh_name]["view_idx"], num_views)
         print(f"{view_idx} from {self.views_config[mesh_name]['view_idx']}")
-        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx])
-        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx])
+
+        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
+        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)
+        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx], device=device)
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
 
-    def get_gt_projmats_and_edgemap_info(self, mesh_name):
+
+    def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         camera_matrices = self.get_camera_matrices()
         edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
+
         view_idx = list(range(len(camera_matrices)))
-        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx])
-        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx])
+        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
+        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)
+        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx], device=device)
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
