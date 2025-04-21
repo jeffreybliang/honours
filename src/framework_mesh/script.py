@@ -5,9 +5,7 @@ warnings.filterwarnings('ignore')
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # device=torch.device("cpu")
-    torch.autograd.profiler.profile(use_cuda=True)
-
+    device=torch.device("cpu") 
     data_path = "/home/jeffrey/honours/src/framework_mesh/skyconfig_gpu.json"
     with open(data_path, 'r') as f:
         config = json.load(f)
