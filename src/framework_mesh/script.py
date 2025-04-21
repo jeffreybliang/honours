@@ -3,15 +3,6 @@ from .experimentrunner import *
 import warnings
 warnings.filterwarnings('ignore')
 
-def main():
-    # from source S to target T, vary the number of views randomly
-    dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig_balloon.json")
-    runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_spline.json", dataloader)
-    runner.run()
-from .dataloader import *
-from .experimentrunner import *
-import warnings
-warnings.filterwarnings('ignore')
 
 def main():
     data_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/skyconfig_local.json"

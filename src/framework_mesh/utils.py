@@ -100,7 +100,7 @@ def plot_projections(projverts, projmats, edgemaps):
     plt.close(fig)
 
 
-def plot_projections(projverts, projmats, edgemaps):
+def plot_projections(mesh, projverts, projmats, edgemaps):
     # Disable interactive mode
     plt.ioff()
 
@@ -113,12 +113,15 @@ def plot_projections(projverts, projmats, edgemaps):
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 2, rows * 2))
     axes = axes.flatten()  # Flatten for easy indexing
+    faces = mesh.faces_packed()                     # (F, 3)
+    mesh.update_padded(projverts.unsqueeze(0))
+    fnorms = mesh.faces_normals_packed()            # (F, 3)
 
     for i in range(P):
         proj_2d_hom = (projmats[i] @ torch.cat([projverts, torch.ones(projverts.shape[0], 1)], dim=1).T).T
         proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]  # Normalize by depth
 
-        boundary_pts = get_boundary(proj_2d)
+        boundary_pts = get_boundary(proj_2d, faces, fnorms, projmats[i])
         valid_edges = edge_coords[i, :edge_lens[i]]
 
         ax = axes[i]

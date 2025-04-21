@@ -8,6 +8,7 @@ from typing import List, Tuple, Union
 import random
 import wandb
 import os
+from tqdm import trange
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -35,6 +36,8 @@ class ExperimentRunner:
                 "view_idx": view_config["view_idx"],
                 "num_views": view_config["num_views"]
             }
+            self.num_views = view_config["num_views"]
+
         
         # Training settings
         self.n_iters = self.cfg["training"]["n_iters"]
@@ -47,7 +50,7 @@ class ExperimentRunner:
         self.data_loader = data_loader
         edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
         self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options)
-        
+
         self.wandb = self.cfg["wandb"]
 
     def run(self):
@@ -55,31 +58,32 @@ class ExperimentRunner:
 
     def pipeline(self, src_name: str, tgt_names: List[str]):
         """Pipeline function to run the experiment on a source mesh and a list of target meshes."""
-        if self.wandb:
-            run = wandb.init(
-                project=self.project,
-                name=self.experiment_name,
-                notes=self.experiment_description,
-                group="clean",
-                config={
-                    "iters":    self.n_iters,
-                    "lr":       self.lr,
-                    "momentum": self.momentum,
-                    "source": src_name,
-                    "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
-                    "num_views": self.num_views,
-                }
-            )
-            wandb.define_metric("outer/chamfer", summary="min")
-            wandb.define_metric("outer/gt/chamfer", summary="min")
-            wandb.define_metric("outer/gt/iou", summary="max")
+        
+        run = wandb.init(
+            project=self.project,
+            name=self.experiment_name,
+            notes=self.experiment_description,
+            group="clean",
+            config={
+                "iters":    self.n_iters,
+                "lr":       self.lr,
+                "momentum": self.momentum,
+                "source": src_name,
+                "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
+                "num_views": self.num_views,
+            }
+        )
+        wandb.define_metric("outer/chamfer", summary="min")
+        wandb.define_metric("outer/gt/chamfer", summary="min")
+        # wandb.define_metric("outer/gt/sse", summary="min")
+        wandb.define_metric("outer/gt/iou", summary="max")
 
         view_idxs = {}
         step_offset = 0
 
         src_mesh = self.get_mesh(src_name)
         for tgt_name in tgt_names:
-            tgt_mesh = self.get_mesh(tgt_name)
+            tgt_mesh = self.get_gt_mesh(tgt_name)
 
             # Select the view points and get corresponding projmats
             projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name)
@@ -99,7 +103,7 @@ class ExperimentRunner:
             src_name = tgt_name
             # Visualization step (optional)
             # if self.vis_enabled:
-                # visualise_meshes(src_mesh, tgt_mesh)
+            #     visualise_meshes(src_mesh, tgt_mesh)
         run.config["view_idxs"] = view_idxs
         run.finish()
 
@@ -108,26 +112,25 @@ class ExperimentRunner:
         node = ConstrainedProjectionNode(src, self.wandb)
         verts_init = src.verts_padded() # (B, max Vi, 3)
         verts_init.requires_grad = True
-        projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
+        # projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
         chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info)
-        history = [projverts_init]
+        history = []
         verts = verts_init.clone().detach().requires_grad_(True)
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
-        
-        # aa, bb = gt_edgemap_info
-        # gt_edgemap_info = aa[0], bb[0]
-        projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+        projectionplot = plot_projections(src, verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
                         "plt/heatmap": wandb.Plotly(initheatmap)}, step= step_offset)
-
+ 
         min_loss = float("inf")
         best_verts = None
-        for i in range(n_iters):
+    
+        pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
+        for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
@@ -141,24 +144,25 @@ class ExperimentRunner:
             loss.backward()
             optimiser.step()
 
+            pbar.set_description(f"Loss: {loss.item():.4f}")
+
             # log
-            if self.wandb:
-                wandb.log(
-                    data = {
-                    "outer/chamfer": loss,
-                    "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
-                    "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0],
-                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
-                    },
-                    step = i + step_offset
-                )
+            wandb.log(
+                data = {
+                "outer/chamfer": loss,
+                "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
+                "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0],
+                "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
+                },
+                step = i + step_offset
+            )
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(projverts, src, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             if self.vis_enabled and i % self.vis_freq == self.vis_freq-1:
-                projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+                projectionplot = plot_projections(src, projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
                 heatmap,cmin,cmax = create_heatmap(Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
                 if self.wandb:
                     wandb.log({"plt/projections": wandb.Image(projectionplot),
@@ -166,12 +170,14 @@ class ExperimentRunner:
                                 step=i + step_offset)   
         return best_verts
 
+    def get_gt_mesh(self,name):
+        return self.data_loader.gt_meshes[name]
+
     def get_mesh(self, name):
         return self.data_loader.meshes[name]
     
     def get_edgemaps(self, name):
-        dataloader = self.data_loader
-        return dataloader.edgemaps[name], dataloader.edgemaps_len[name]
+        return self.edgemaps[name], self.edgemaps_len[name]
 
     def get_camera_matrices(self):
         return self.data_loader.camera_matrices
@@ -191,7 +197,7 @@ class ExperimentRunner:
         tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx])
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
-
+    
     def get_gt_projmats_and_edgemap_info(self, mesh_name):
         camera_matrices = self.get_camera_matrices()
         edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)

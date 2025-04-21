@@ -21,7 +21,7 @@ def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Ten
     """
     # 1) Compute visibility mask (front-facing)
     R = P[:, :3]  # (3, 3)
-    dot_z = (fnorms @ R.T)[:, 2]
+    dot_z = (fnorms.double() @ R.T)[:, 2]
     visible = dot_z > 0
     vis_idx = torch.nonzero(visible).squeeze(-1)
     
@@ -32,9 +32,17 @@ def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Ten
     unioned = unary_union(tris).buffer(eps).buffer(-eps)
 
     # 3) Extract exterior + interior rings
-    rings = [np.array(unioned.exterior.coords)]
-    for interior in unioned.interiors:
-        rings.append(np.array(interior.coords))
+    rings = []
+    if unioned.geom_type == 'Polygon':
+        rings.append(np.array(unioned.exterior.coords))
+        for interior in unioned.interiors:
+            rings.append(np.array(interior.coords))
+    elif unioned.geom_type == 'MultiPolygon':
+        print("unioned.geom_type == 'MultiPolygon'")
+        unioned = max(unioned.geoms, key=lambda p: p.area)
+        rings.append(np.array(unioned.exterior.coords))
+    else:
+        raise ValueError(f"Unexpected geometry type: {unioned.geom_type}")
 
     # 4) Snap rings to closest projected vertices
     loops = []
@@ -124,5 +132,5 @@ class PyTorchChamferLoss(nn.Module):
                                         batch_reduction="mean",
                                         point_reduction="mean")
             chamfer_loss[b] = res.sum()
-        return chamfer_loss.double()
+        return chamfer_loss.double() * 10
 
