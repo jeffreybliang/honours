@@ -21,11 +21,7 @@ def vol_constraint_function_grad(u):
     with torch.enable_grad():
         res = vol_constraint_function(u)
     constr_grad = torch.autograd.grad(res, u)[0]
-<<<<<<< HEAD
-
-=======
-    return  constr_grad
->>>>>>> main
+    return constr_grad
 
 def sa_constraint_function(u, p=1.6075):
     if not torch.is_tensor(u):

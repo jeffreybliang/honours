@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import torch
->>>>>>> main
 import abc
 
 class BaseEllipsoidProblem(abc.ABC):

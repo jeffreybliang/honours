@@ -32,13 +32,8 @@
         }    
     },
     "training": {
-<<<<<<< HEAD
     "n_iters": 60,
     "lr": 1e-5,
-=======
-    "n_iters": 50,
-    "lr": 1e-6,
->>>>>>> main
     "momentum": 0.8
     },
     "verbose": false,

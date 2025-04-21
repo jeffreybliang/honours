@@ -3,6 +3,7 @@ import math
 import numpy as np
 from torch import cos, sin
 import torch.nn.functional as F
+<<<<<<< HEAD
 from scipy.interpolate import interp1d, interp2d
 
 def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
@@ -26,6 +27,17 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, 
         z = c * torch.cos(theta)
         coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
 
+=======
+
+def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4):
+    phi = 2.0 * math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
+    theta = math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
+    phi, theta = torch.meshgrid(phi, theta, indexing='ij')
+    x = a * torch.sin(theta) * torch.cos(phi)
+    y = b * torch.sin(theta) * torch.sin(phi)
+    z = c * torch.cos(theta)
+    coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
+>>>>>>> 31fb6a8 (debugging grr)
     angles = torch.tensor([yaw, pitch, roll])
     if torch.any(angles != 0):
         R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
