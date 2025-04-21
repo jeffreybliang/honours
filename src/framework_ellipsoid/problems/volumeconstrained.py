@@ -19,7 +19,7 @@ class SurfaceAreaLoss(nn.Module):
 class VolumeConstrainedProblem(BaseEllipsoidProblem):
     def __init__(self, cfg):
         super().__init__(cfg)
-        initial_angles_deg = cfg.get("initial_angles", [0, 0, 0])
+        initial_angles_deg = torch.tensor(cfg.get("initial_angles", [0, 0, 0]), dtype=torch.double)
         self.initial_angles = torch.deg2rad(initial_angles_deg)
 
     def generate_data(self):
@@ -29,7 +29,7 @@ class VolumeConstrainedProblem(BaseEllipsoidProblem):
         return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
-        return UnitVolConstrainedProjectionNode(self.m)
+        return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
         return SurfaceAreaLoss(p=self.p)

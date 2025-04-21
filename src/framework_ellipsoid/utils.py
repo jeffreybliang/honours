@@ -1,10 +1,8 @@
 import torch
 import math
-from .utils import rotation_matrix_3d
 import numpy as np
 from torch import cos, sin
 import torch.nn.functional as F
-from framework_ellipsoid.loss import rotation_matrix_3d_batch
 
 def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4):
     phi = 2.0 * math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
@@ -14,9 +12,11 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4):
     y = b * torch.sin(theta) * torch.sin(phi)
     z = c * torch.cos(theta)
     coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
-    R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
-    rotated = R @ coords
-    noisy = rotated + noise_std * torch.randn_like(rotated)
+    angles = torch.tensor([yaw, pitch, roll])
+    if torch.any(angles != 0):
+        R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
+        coords = R @ coords
+    noisy = coords + noise_std * torch.randn_like(coords)
     return noisy.unsqueeze(0)  # shape: (1, 3, N)
 
 
@@ -36,6 +36,27 @@ def rotation_matrix_3d(angles):
         torch.stack([sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)]),
         torch.stack([-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)])
     ])
+    return R
+
+def rotation_matrix_3d_batch(angles):
+    alpha, beta, gamma = angles[:, 0], angles[:, 1], angles[:, 2]
+    R = torch.stack([
+        torch.stack([
+            torch.cos(alpha) * torch.cos(beta),
+            torch.cos(alpha) * torch.sin(beta) * torch.sin(gamma) - torch.sin(alpha) * torch.cos(gamma),
+            torch.cos(alpha) * torch.sin(beta) * torch.cos(gamma) + torch.sin(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            torch.sin(alpha) * torch.cos(beta),
+            torch.sin(alpha) * torch.sin(beta) * torch.sin(gamma) + torch.cos(alpha) * torch.cos(gamma),
+            torch.sin(alpha) * torch.sin(beta) * torch.cos(gamma) - torch.cos(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            -torch.sin(beta),
+            torch.cos(beta) * torch.sin(gamma),
+            torch.cos(beta) * torch.cos(gamma)
+        ], dim=1)
+    ], dim=1)
     return R
 
 def get_angles(rotation):

@@ -1,0 +1,44 @@
+{
+    "project": "ellipsoid-experiments",
+    "name": "test axis aligned",
+    "problem": "axisaligned",
+    "sqrt_m": 25,
+    "seed": 42,
+    "noise": 1e-4,
+    "p": 1.6075,
+    "initial_axes": [0.2, 0.1, 0.4],
+    "initial_angles": [30, 40, 50],
+      "target": {
+      "radius": 0.2820947918,
+      "m": 50
+    },
+    "view_mode": "angles",
+    "view_angles": [
+      [0, 0, 0],
+      [0, 0, 90]
+    ],
+    "view_normals": [
+      [1, 0, 0],
+      [0, 1, 0],       
+      [0, 0, 1],       
+      [1, 1, 1],
+      [1, -1, 1], 
+      [-1, 1, 1],
+      [-1, -1, 1],
+      [-1, 1, 1]
+    ],
+    "view_indices": [0, 1],
+    "training": {
+      "n_iters": 50,
+      "lr": 1e-3,
+      "momentum": 0.9
+    },
+    "verbose": false,
+    "vis": {
+      "enabled": true,
+      "frequency": 5,
+      "backend": "mpl"
+    },
+    "wandb": true
+  }
+  

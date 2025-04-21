@@ -123,6 +123,7 @@ class ExperimentRunner:
 
         min_loss = float("inf")
         best_verts = None
+        pbar = trange(n_iters, desc="Training", leave=True) 
         for i in range(n_iters):
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset

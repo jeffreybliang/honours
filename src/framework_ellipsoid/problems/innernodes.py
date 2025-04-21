@@ -13,15 +13,17 @@ class EllipseConstrainedProjectionFunction(DeclarativeFunction):
         super().__init__(*args, **kwargs)
 
 class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
-    def __init__(self, m, p=1.6075):
+    def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-4)
         self.m = m
         self.n = (3 * m,)
         self.p = p
+        self.wandb = wandbBool
 
     def objective(self, xs, y):
-        data = xs.view(-1, 3, self.m).transpose(1, 2).pow(2)
-        A = data  # shape: (B, m, 3)
+        n_batches = xs.size(0)
+        data = xs.view(n_batches, 3, -1)  # reshape to (n_batches, 3, m)
+        A = torch.transpose(data, 1, 2).pow(2)  # A has shape [n_batches, m, 3]        
         b = torch.ones((A.shape[0], A.shape[1], 1), dtype=torch.double, device=xs.device)
         y = y.view(-1, 3, 1)
         return torch.sum((A @ y - b).pow(2), dim=(1, 2))
@@ -32,43 +34,48 @@ class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         u1, u2, u3 = sqrt_y[:, 0], sqrt_y[:, 1], sqrt_y[:, 2]
         avg = (u1**p + u2**p + u3**p) / 3
         return 4 * math.pi * avg**(1/p) - u1*u2*u3
-
+    
     def solve(self, xs):
         n_batches = xs.size(0)
-        data = xs.view(n_batches, 3, self.m)
+        data = xs.view(n_batches, 3, -1)
         A_np = data.detach().cpu().numpy().transpose(0, 2, 1)**2
-        b_np = np.ones((self.m,))
+        b_np = np.ones((A_np.shape[1]))
         results = torch.zeros(n_batches, 3, dtype=torch.double)
 
         for b in range(n_batches):
-            u0 = np.linalg.lstsq(A_np[b], b_np, rcond=None)[0]
+            u0 = np.linalg.lstsq(A_np[b], b_np,rcond=None)[0]
             def constraint(u):
-                return 4 * math.pi * (1/3 * (math.sqrt(u[0])**self.p + math.sqrt(u[1])**self.p + math.sqrt(u[2])**self.p))**(1/self.p) - math.sqrt(u[0]*u[1]*u[2])
-            cons = {'type': 'eq', 'fun': constraint}
-            res = opt.minimize(lambda u: np.sum((A_np[b] @ u - b_np)**2), u0, constraints=[cons])
+                if (np.any(u < 0.0)):
+                    return np.array([1]) 
+                else:
+                    return 4 * math.pi * (1/3 * (math.sqrt(u[0])**self.p + math.sqrt(u[1])**self.p + math.sqrt(u[2])**self.p))**(1/self.p) - math.sqrt(u[0]*u[1]*u[2])
+            cons = {'type': 'eq', 'fun': lambda u: constraint(u)}
+            res = opt.minimize(lambda u: np.sum((A_np[b] @ u - b_np)**2), u0, method='SLSQP', constraints=[cons], options={'ftol': 1e-9, 'disp': False})
             results[b] = torch.tensor(res.x, dtype=torch.double, requires_grad=True)
-            wandb.log({"inner/loss": res.fun}, commit=False)
+            if self.wandb:
+                wandb.log({"inner/loss": res.fun}, commit=False)
 
         return results, None
 
 class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
-    def __init__(self, m):
+    def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-4)
         self.m = m
         self.n = (3 * m,)
+        self.p = p
+        self.wandb = wandbBool
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         n_batches = xs.size(0)
-        data = xs.view(n_batches, 3, self.m)
+        data = xs.view(n_batches, 3, -1)
         y = y.view(n_batches, 6)
         semiaxes = y[:, :3]
-        angles = y[:, 3:]
         L_diag = 1 / semiaxes ** 2
         L = torch.diag_embed(L_diag)
 
-        angles_rad = torch.deg2rad(angles)
-        cos = torch.cos(angles_rad)
-        sin = torch.sin(angles_rad)
+        angles = y[:, 3:]
+        cos = torch.cos(angles)
+        sin = torch.sin(angles)
 
         R = torch.zeros((n_batches, 3, 3), dtype=torch.double, device=xs.device)
         cy, cp, cr = cos[:, 0], cos[:, 1], cos[:, 2]
@@ -121,7 +128,7 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
 
             eq_const = {
                 'type': 'eq',
-                'fun': lambda u: sa_constraint_function(u).item()
+                'fun': lambda u: sa_constraint_function(u).cpu().numpy()
             }
             if with_jac:
                 eq_const['jac'] = lambda u: sa_constraint_function_grad(u).numpy()
@@ -132,7 +139,7 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
             }
 
             res = opt.minimize(
-                lambda u: objective_function(u, X).item(),
+                lambda u: objective_function(u, X).cpu().numpy(),
                 u0,
                 jac=(lambda u: objective_function_grad(u, X).numpy()) if with_jac else None,
                 constraints=[eq_const, ineq_const],
@@ -144,17 +151,20 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
                 print("SOLVE failed:", res.message)
 
             results[b] = torch.tensor(res.x, dtype=torch.double, requires_grad=True)
-            wandb.log({"inner/loss": res.fun}, commit=False)
+            if self.wandb:
+                wandb.log({"inner/loss": res.fun}, commit=False)
 
         return results, None
 
 
 class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
-    def __init__(self, m):
+    def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-6)
         self.m = m
         self.n = (3 * m,)
         self.u_prev = None
+        self.wandb = wandbBool
+        self.p=p
 
     def objective(self, xs, y):
         n_batches = xs.size(0)
@@ -236,6 +246,7 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
                 print("SOLVE failed:", res.message)
 
             results[b] = torch.tensor(res.x, dtype=torch.double, requires_grad=True)
-            wandb.log({"inner/loss": res.fun}, commit=False)
+            if self.wandb:
+                wandb.log({"inner/loss": res.fun}, commit=False)
 
         return results, None
