@@ -32,9 +32,9 @@
         }    
     },
     "training": {
-    "n_iters": 5,
+    "n_iters": 150,
     "lr": 1e-6,
-    "momentum": 0.8
+    "momentum": 0.7
     },
     "verbose": false,
     "vis": {
