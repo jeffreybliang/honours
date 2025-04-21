@@ -10,24 +10,22 @@ def least_squares(u0, tgt_vtxs):
     """
     u0 are vertices
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not torch.is_tensor(u0):
-        u0 = torch.tensor(u0, device=device)
+        u0 = torch.tensor(u0)
     if not torch.is_tensor(tgt_vtxs):
-        tgt_vtxs = torch.tensor(tgt_vtxs, device=device)
+        tgt_vtxs = torch.tensor(tgt_vtxs)
     res = torch.square(u0 - tgt_vtxs.flatten()).sum()
     return res.double()
 
 def least_squares_grad(u0, tgt_vtxs):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.is_tensor(u0):
         u0 = u0.detach().clone()
     else:
-        u0 = torch.tensor(u0, device=device)
+        u0 = torch.tensor(u0)
     if torch.is_tensor(tgt_vtxs):
         tgt_vtxs = tgt_vtxs.detach().clone()
     else:
-        tgt_vtxs = torch.tensor(tgt_vtxs, device=device)
+        tgt_vtxs = torch.tensor(tgt_vtxs)
         
     # Ensure that u0 requires gradients
     gradient = 2 * (u0 - tgt_vtxs.flatten())
@@ -53,14 +51,12 @@ def volume_constraint(x, faces, tgt_vol):
     Returns:
         volume: Total volume of the mesh as a PyTorch scalar
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     if not torch.is_tensor(x):
-        x = torch.tensor(x, device=device)
+        x = torch.tensor(x)
     if not torch.is_tensor(faces):
-        faces = torch.tensor(faces, device=device)
+        faces = torch.tensor(faces)
     if not torch.is_tensor(tgt_vol):
-        tgt_vol = torch.tensor(tgt_vol, device=device)
+        tgt_vol = torch.tensor(tgt_vol)
 
     vertices = x.view(-1,3)
     faces = faces.view(-1,3).int()
@@ -69,15 +65,14 @@ def volume_constraint(x, faces, tgt_vol):
     return res.double()
 
 def volume_constraint_grad(x, faces):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.is_tensor(x):
         x = x.detach().clone()
     else:
-        x = torch.tensor(x, device=device)
+        x = torch.tensor(x)
     if torch.is_tensor(faces):
         faces = faces.detach().clone()
     else:
-        faces = torch.tensor(faces, device=device)
+        faces = torch.tensor(faces)
     faces = faces.to(dtype=torch.int64)
 
     vertices_torch = x.view(-1, 3)

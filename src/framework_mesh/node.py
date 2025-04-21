@@ -87,8 +87,8 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
         """
         n_batches = len(self.src)
         num_verts_per_mesh = self.src.num_verts_per_mesh()
-        results = torch.zeros((n_batches, num_verts_per_mesh.max(), 3), dtype=torch.double, device=xs.device)
-        losses = torch.zeros(n_batches, dtype=torch.double, device=xs.device)
+        results = torch.zeros((n_batches, num_verts_per_mesh.max(), 3), dtype=torch.double)
+        losses = torch.zeros(n_batches, dtype=torch.double)
         for batch in range(n_batches):
             n_verts = num_verts_per_mesh[batch]
             verts = xs[batch][:n_verts].flatten().detach().double().cpu().numpy()
@@ -120,7 +120,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
 
             if not res.success:
                 print("FAILED:", res.message)
-            results[batch] = torch.tensor(res.x, dtype=torch.double).view(-1,3).to(xs.device)
+            results[batch] = torch.tensor(res.x, dtype=torch.double, requires_grad=True).view(-1,3)
             losses[batch] = res.fun
         results = torch.nn.utils.rnn.pad_sequence(results, batch_first=True)
         

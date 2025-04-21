@@ -8,7 +8,7 @@ from cv2.typing import MatLike
 from scipy.interpolate import splprep, splev
 
 
-def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
+def load_camera_matrices(path, matrix_types=None):
     """
     Loads camera matrices from .npy files in the specified directory.
 
@@ -22,8 +22,7 @@ def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
     """
     cameras = defaultdict(dict)
     file_pattern = re.compile(r"^Camera_(\d+)_(K|RT|P)\.npy$")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
     if matrix_types is not None:
         matrix_types = set(matrix_types)  # Ensure it's a set for quick lookup
     
@@ -34,7 +33,7 @@ def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
             cam_number = int(cam_number)  # Convert camera number to integer
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
-                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath), device=device)
+                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath))
     
     return cameras
 
@@ -93,7 +92,7 @@ def canny_edge_map(img: MatLike, options):
     # return edge map
     return edge_map
 
-def load_edgemaps(renders, options, device=torch.device("cpu")):
+def load_edgemaps(renders, options):
     edgemaps = {}
     edgemaps_len = {}
 
@@ -138,7 +137,7 @@ def load_edgemaps(renders, options, device=torch.device("cpu")):
                                 print(f"Skipping a contour due to error: {e}")
                                 continue
 
-                    views[num] = torch.tensor(edge_coords, device=device)
+                    views[num] = torch.tensor(edge_coords)
                     views_len[num] = len(edge_coords)
 
         # Store the results for the current mesh

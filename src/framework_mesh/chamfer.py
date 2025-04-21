@@ -4,11 +4,10 @@ import torch
 from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
 from torch import nn
-import numpy as np
 
 def get_boundary(projected_pts, alpha=10.0):
     # Create a detached copy for Alpha_Shaper
-    projected_pts_detached = projected_pts.detach().clone().cpu()
+    projected_pts_detached = projected_pts.detach().clone()
     
     # Use the detached copy with Alpha_Shaper
     shaper = Alpha_Shaper(projected_pts_detached)
@@ -16,13 +15,14 @@ def get_boundary(projected_pts, alpha=10.0):
     while isinstance(alpha_shape, shapely.MultiPolygon) or isinstance(alpha_shape, shapely.GeometryCollection):
         alpha -= 1
         alpha_shape = shaper.get_shape(alpha)
-    coords_xy = np.stack(alpha_shape.exterior.coords.xy, axis=-1)
-    boundary = torch.tensor(coords_xy, dtype=torch.double)
+    boundary = torch.tensor(alpha_shape.exterior.coords.xy, dtype=torch.double)
     
     # Find indices of boundary points
-    matches = torch.isclose(projected_pts_detached[:, None], boundary[None, :], atol=1e-6)
-    boundary_indices = torch.where(torch.all(matches, dim=-1).any(dim=1))[0]
-    boundary_indices = boundary_indices.to(projected_pts.device)
+    boundary_indices = torch.where(
+        torch.any(torch.isclose(projected_pts_detached[:, None], boundary.T, atol=1e-6).all(dim=-1), dim=1)
+    )[0]
+    
+    # Index back into the original tensor with gradients
     boundary_pts = projected_pts[boundary_indices]
     return boundary_pts
 
@@ -70,8 +70,7 @@ class PyTorchChamferLoss(nn.Module):
 
         # get boundaries
         boundaries = [] 
-        boundary_lengths = torch.zeros(B, P, device=vertices.device)
-        chamfer_loss = torch.zeros(B, device=vertices.device)
+        boundary_lengths = torch.zeros(B, P)
         for b, batch in enumerate(projected_vertices):
             boundaries_b = []
             for p, projverts in enumerate(batch):
@@ -82,6 +81,7 @@ class PyTorchChamferLoss(nn.Module):
             boundaries.append(padded_boundaries)
 
         # perform chamfer
+        chamfer_loss = torch.zeros(B)
         for b in range(B):
             boundaries_b = boundaries[b].float()
             edgemaps_b = self.edgemaps[b].float()
