@@ -1,21 +1,21 @@
 {
     "project": "ellipsoid-experiments",
-    "name": "test non-axis aligned",
-    "problem": "nonaxisaligned",
+    "name": "test volume constrained non-axis aligned",
+    "problem": "volumeconstrained",
     "sqrt_m": 25,
     "seed": 42,
     "noise": 1e-4,
     "p": 1.6075,
-    "initial_axes": [0.2, 0.4, 0.3],
-    "initial_angles": [30,30,30],
+    "initial_axes": [0.5, 0.6, 0.7],
+    "initial_angles": [20,30,40],
       "target": {
-      "radius": 0.2820947918,
+      "radius": 0.6203504909,
       "m": 50
     },
     "training": {
-      "n_iters": 30,
-      "lr": 5e-2,
-      "momentum": 0.4
+      "n_iters": 50,
+      "lr": 5e-1,
+      "momentum": 0.8
     },
     "verbose": true,
     "vis": {

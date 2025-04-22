@@ -21,7 +21,7 @@ def vol_constraint_function_grad(u):
     with torch.enable_grad():
         res = vol_constraint_function(u)
     constr_grad = torch.autograd.grad(res, u)[0]
-
+    return  constr_grad
 
 def sa_constraint_function(u, p=1.6075):
     if not torch.is_tensor(u):
@@ -52,6 +52,8 @@ def objective_function(u, X, u_prev=None):
     b = torch.ones(X.shape[1])
     if u_prev is None:
         u_prev = u 
+        return torch.sum((XT_AX - b) ** 2)
+    
     elif not torch.is_tensor(u_prev):   
         u_prev = torch.tensor(u_prev).double()
     res = torch.sum((XT_AX - b) ** 2) + torch.norm(u_prev - u)**2
@@ -79,6 +81,14 @@ def objective_function_grad(u, X, u_prev=None):
     obj_grad = torch.autograd.grad(res, u)[0].double()
     return obj_grad
 
+def get_bounding_box_dims(points):
+    min_x, min_y, min_z = np.min(points, axis=1)
+    max_x, max_y, max_z = np.max(points, axis=1)
+    height = max_z - min_z
+    width = max_x - min_x
+    length = max_y - min_y
+    return np.sort([height, width, length])
+
 def initialise_u(data, method="default"):
     if method == "default":
         return np.ones(6)
@@ -86,7 +96,7 @@ def initialise_u(data, method="default"):
         h, w, l = get_bounding_box_dims(data) / 2
         u0 = np.zeros(6)
         u0[:3] = np.array([h, w, l])
-        u0[3:] = np.random.uniform(low=0, high=90, size=3)
+        u0[3:] = np.random.uniform(low=0, high=np.pi/2, size=3)
         return u0
     elif method == "pca":
         return pca(data)
@@ -100,10 +110,3 @@ def pca(data):
     angles = np.array(get_angles(rotation))
     return np.concatenate([semiaxes, angles])
 
-def get_bounding_box_dims(points):
-    min_x, min_y, min_z = np.min(points, axis=1)
-    max_x, max_y, max_z = np.max(points, axis=1)
-    height = max_z - min_z
-    width = max_x - min_x
-    length = max_y - min_y
-    return np.sort([height, width, length])

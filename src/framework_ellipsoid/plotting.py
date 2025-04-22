@@ -5,7 +5,7 @@ import matplotlib.colors as colors
 import plotly.graph_objects as go
 from matplotlib.patches import Polygon
 from framework_ellipsoid.utils import rotation_matrix_3d
-
+import math
 
 def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=True):
     u = torch.linspace(0, 2 * torch.pi, 80)
@@ -44,7 +44,7 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
     )
 
     # Rotate points to align with ellipsoid
-    points = (R @ points.double()).detach()
+    points = (points.double()).detach()
     ax.scatter(points[0], points[1], points[2], s=1, alpha=0.8, color="black")
     ax.set_axis_off()
     margin = 0.1
@@ -160,31 +160,41 @@ def plot_silhouettes(projected_pts, target_pts, step=None,
     show_alpha:     Whether to show alpha shape + boundary points
     """
     n_batches, n_views, _, _ = projected_pts.shape
-    fig, axs = plt.subplots(n_batches, n_views, figsize=(4 * n_views, 4 * n_batches), squeeze=False)
+    total = n_batches * n_views
+    cols = 3
+    rows = math.ceil(total / cols)
 
-    for b in range(n_batches):
-        for v in range(n_views):
-            ax = axs[b, v]
+    fig, axs = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False)
+    axs = axs.flatten()
 
-            proj = projected_pts[b, v].detach().cpu().numpy()     # (2, N)
-            targ = target_pts[v].detach().cpu().numpy().T         # (2, M)
+    for subplot_idx in range(total):
+        b = subplot_idx // n_views
+        v = subplot_idx % n_views
+        ax = axs[subplot_idx]
 
-            ax.scatter(*proj, color='orange', s=2, label='Projected Points')
-            ax.scatter(*targ, color='blue', s=2, label='Target Points')
+        proj = projected_pts[b, v].detach().cpu().numpy()     # (2, N)
+        targ = target_pts[v].detach().cpu().numpy().T         # (2, M)
 
-            if show_alpha and boundary_points is not None and hulls is not None:
-                boundary = boundary_points[b][v].detach().cpu().numpy()
-                ax.scatter(*boundary, color='red', s=2, label='Boundary Points')
+        ax.scatter(*proj, color='orange', s=2, label='Projected Points')
+        ax.scatter(*targ, color='blue', s=2, label='Target Points')
 
-                polygon = Polygon(hulls[b][v].exterior.coords,
-                                  facecolor='lightblue', edgecolor='blue', alpha=0.4)
-                ax.add_patch(polygon)
+        if show_alpha and boundary_points is not None and hulls is not None:
+            boundary = boundary_points[b][v].detach().cpu().numpy()
+            ax.scatter(*boundary, color='red', s=2, label='Boundary Points')
 
-            ax.set_title(f'Batch {b+1}, View {v+1}')
-            ax.set_xlim(-1, 1); ax.set_ylim(-1, 1)
-            ax.set_xlabel('X'); ax.set_ylabel('Y')
-            ax.grid(True)
-            ax.legend(loc='lower right', fontsize='x-small')
+            polygon = Polygon(hulls[b][v].exterior.coords,
+                              facecolor='lightblue', edgecolor='blue', alpha=0.4)
+            ax.add_patch(polygon)
+
+        ax.set_title(f'Batch {b+1}, View {v+1}')
+        ax.set_xlim(-1, 1); ax.set_ylim(-1, 1)
+        ax.set_xlabel('X'); ax.set_ylabel('Y')
+        ax.grid(True)
+        ax.legend(loc='lower right', fontsize='x-small')
+
+    # Hide any unused axes
+    for ax in axs[total:]:
+        ax.axis('off')
 
     plt.tight_layout()
     return fig
