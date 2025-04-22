@@ -76,7 +76,7 @@ class EllipsoidExperiment:
             if self.wandb:
                 self.log_geometry_and_errors(y_detached, self.cfg, i)
                 if vis_enabled and i % vis_freq == 0:
-                    self.log_visualisations_if_enabled(self.problem, self.cfg, y_detached, x, i)
+                    self.log_visualisations_if_enabled(self.problem, loss_fn, self.cfg, y_detached, x, i)
 
             if self.cfg.get("verbose", False):
                 if y_detached.numel() >= 6:  # check if angles exist
@@ -131,7 +131,7 @@ class EllipsoidExperiment:
             }, step=step)
 
 
-    def log_visualisations_if_enabled(self, problem, cfg, y_detached, x, step):
+    def log_visualisations_if_enabled(self, problem, loss_fn, cfg, y_detached, x, step):
         vis_cfg = cfg.get("vis", {})
         a, b, c = y_detached[0:3].tolist()
         if y_detached.numel() >= 6:
@@ -158,8 +158,8 @@ class EllipsoidExperiment:
             self.vmax = vmax
 
         if isinstance(problem, (ChamferSampledProblem, ChamferBoundaryProblem)):
-            silhouette = getattr(problem.get_loss(), "plot_silhouettes", None)
+            silhouette = getattr(loss_fn, "plot_silhouettes", None)
             if callable(silhouette):
                 fig = silhouette(step=step)
-                wandb.log({f"vis/silhouettes": fig}, step=step)
+                wandb.log({f"vis/silhouettes": wandb.Image(fig)}, step=step)
                 plt.close(fig)

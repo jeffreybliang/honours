@@ -64,6 +64,7 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         self.n = (3 * m,)
         self.p = p
         self.wandb = wandbBool
+        self.u_prev = None
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         n_batches = xs.size(0)
@@ -93,7 +94,15 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
 
         A = torch.bmm(R, torch.bmm(L, R.transpose(1, 2)))
         XT_AX = torch.einsum('bji,bjk,bki->bi', data, A, data)
-        return ((XT_AX - 1) ** 2).sum(dim=1)
+        b_ones = torch.ones_like(XT_AX)        
+        if self.u_prev is None or torch.equal(y[:,:], self.u_prev):
+            obj_val = torch.sum((XT_AX - b_ones).pow(2), dim=1)
+        else:
+            obj_val = torch.sum((XT_AX - b_ones).pow(2), dim=1) + torch.norm(y[:,:] - self.u_prev, p=2)**2
+        self.u_prev = y
+        if torch.isnan(obj_val).any():
+            raise ValueError("NaNs detected in objective function")
+        return obj_val
 
     def equality_constraints(self, xs, y):
         p = self.p
@@ -139,9 +148,9 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
             }
 
             res = opt.minimize(
-                lambda u: objective_function(u, X).cpu().numpy(),
+                lambda u: objective_function(u, X,self.u_prev).cpu().numpy(),
                 u0,
-                jac=(lambda u: objective_function_grad(u, X).numpy()) if with_jac else None,
+                jac=(lambda u: objective_function_grad(u, X, self.u_prev).numpy()) if with_jac else None,
                 constraints=[eq_const, ineq_const],
                 method='SLSQP',
                 options={'ftol': 1e-9, 'disp': False, 'maxiter': 200}
@@ -168,16 +177,15 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
 
     def objective(self, xs, y):
         n_batches = xs.size(0)
-        data = xs.view(n_batches, 3, self.m)
+        data = xs.view(n_batches, 3, -1)
         y = y.view(n_batches, 6)
         semiaxes = y[:, :3]
         angles = y[:, 3:]
         L_diag = 1 / semiaxes ** 2
         L = torch.diag_embed(L_diag)
 
-        angles_rad = torch.deg2rad(angles)
-        cos = torch.cos(angles_rad)
-        sin = torch.sin(angles_rad)
+        cos = torch.cos(angles)
+        sin = torch.sin(angles)
 
         R = torch.zeros((n_batches, 3, 3), dtype=torch.double, device=xs.device)
         cy, cp, cr = cos[:, 0], cos[:, 1], cos[:, 2]
@@ -213,14 +221,13 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
         constraint_val = 4/3 * torch.pi * a * b * c - 1
         return constraint_val
 
-    def solve(self, xs: torch.Tensor, method="pca", with_jac=True):
+    def solve(self, xs: torch.Tensor, method="bb", with_jac=True):
         n_batches = xs.size(0)
         results = torch.zeros(n_batches, 6, dtype=torch.double)
 
         for b in range(n_batches):
             X = xs[b].view(3, -1).detach().cpu().numpy()
             u0 = initialise_u(X, method)
-
             eq_const = {
                 'type': 'eq',
                 'fun': lambda u: vol_constraint_function(u).item()
@@ -234,9 +241,9 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
             }
 
             res = opt.minimize(
-                lambda u: objective_function(u, X).item(),
+                lambda u: objective_function(u, X, self.u_prev).item(),
                 u0,
-                jac=(lambda u: objective_function_grad(u, X).numpy()) if with_jac else None,
+                jac=(lambda u: objective_function_grad(u, X, self.u_prev).numpy()) if with_jac else None,
                 constraints=[eq_const, ineq_const],
                 method='SLSQP',
                 options={'ftol': 1e-9, 'disp': False, 'maxiter': 200}

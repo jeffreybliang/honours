@@ -32,7 +32,7 @@ def main():
     #     cfg["name"] = f"{cfg['problem']}-{args.param.replace('.', '_')}-{param_value_str}"
 
     #     print(f"Running with {args.param} = {v}")
-        config_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_ellipsoid/config_nonaxisaligned.json"
+        config_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_ellipsoid/config_chamferboundary.json"
     
         with open(config_path, 'r') as f:
             cfg = json.load(f)

@@ -134,19 +134,20 @@ def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
 
 
 class BoundaryProjectionChamferLoss(nn.Module):
-    def __init__(self, views, m=50, alpha=0.0):
+    def __init__(self, views, m=50, sqrt_m=25, alpha=0.0):
         super().__init__()
         self.rot_mats, self.target_pts = views  # target_pts: (N, M, 2)
         self.m = m
+        self.sqrt_m = sqrt_m
         self.alpha = alpha
         self.last_projected_pts = None         # (B, V, 2, N)
         self.last_boundary_points = None       # list[list[Tensor]] of shape B × V
         self.last_hulls = None                 # list[list[Polygon]] of shape B × V
 
-    def sample_unit_sphere(self, m, device):
+    def sample_unit_sphere(self, sqrt_m, device):
         """Sample m points on the unit sphere S²"""
-        phi = 2 * math.pi * torch.linspace(0.0, 1.0, m, device=device)
-        theta = math.acos(1 - 2 * torch.linspace(0.0, 1.0, m, device=device))
+        phi = 2 * math.pi * torch.linspace(0.0, 1.0, sqrt_m, dtype=torch.double, device=device)
+        theta = torch.acos(1 - 2 * torch.linspace(0.0, 1.0, sqrt_m, dtype=torch.double, device=device))
         phi, theta = torch.meshgrid(phi, theta, indexing="ij")
         x = torch.sin(theta) * torch.cos(phi)
         y = torch.sin(theta) * torch.sin(phi)
@@ -160,34 +161,43 @@ class BoundaryProjectionChamferLoss(nn.Module):
         L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
         Binv = torch.inverse(L)        # B⁻¹ (3×3)
 
-        # Step 1–4: Sample Z ∈ S² and transform to ellipsoid surface points
-        z = self.sample_unit_sphere(self.m, device=input.device)  # (3, M)
+        z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
         E = Binv @ z  # (3, M), ellipsoid surface points
 
         # Step 5: Loop over each view
         boundary_pts = []
         boundary_lengths = []
+        hulls = []
+        projections = []
+
         max_len = 0
         for k in range(B):
             Rk = self.rot_mats[k]  # (3, 3)
             y = Rk @ E             # rotate: (3, M)
-            proj = y[:2, :]        # project: orthographic π_k(x)
-            proj_np = proj.T.detach().cpu().numpy()  # (M, 2)
+            proj = y[:2, :]        # (2, M)
+            projections.append(proj)  # store for (B, 2, M) → stack later
 
-            # Alpha shape boundary
+            proj_np = proj.T.detach().cpu().numpy()  # (M, 2)
             shaper = alpha_shapes.Alpha_Shaper(proj_np)
             shape = shaper.get_shape(alpha=0.0)
             coords = np.stack(shape.exterior.coords.xy, axis=-1)  # (P, 2)
 
             boundary = nearest_boundary_points(proj, coords)  # (2, P)
             boundary_pts.append(boundary)
+            hulls.append(shape)
             boundary_lengths.append(boundary.size(1))
             max_len = max(max_len, boundary.size(1))
+
+        # Store projected_pts (B, 2, M) → (B, 2, M) → (B, 2, M)
+        self.last_projected_pts = torch.stack(projections, dim=0).unsqueeze(0) 
+        # For consistent interface with silhouette plotter: (B, V=1)
+        self.last_boundary_points = [boundary_pts]
+        self.last_hulls = [hulls]                 
 
         # Step 6: Pad and batch
         padded = torch.full((B, max_len, 2), float('nan'), dtype=torch.double, device=input.device)
         for i, b in enumerate(boundary_pts):
-            padded[i, :b.shape[0]] = b
+            padded[i, :b.shape[1]] = b.T  # (2, N) → (N, 2)
 
         x_lengths = torch.tensor(boundary_lengths, dtype=torch.int64, device=input.device)
         y_lengths = torch.full((B,), self.target_pts.shape[1], dtype=torch.int64, device=input.device)
