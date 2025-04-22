@@ -9,6 +9,8 @@ import random
 import wandb
 import os
 from tqdm import trange
+from .gradient import *
+
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -120,16 +122,36 @@ class ExperimentRunner:
         node = ConstrainedProjectionNode(src, self.wandb)
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
-        projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
-        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info)
-        history = [projverts_init]
+        # projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
+        
+        faces      = src[0].faces_packed().to(device)            # (F,3)
+        edge_src, edge_dst = build_edge_lists(faces, device)     # (E,) each
+
+        V_max   = src.num_verts_per_mesh().max().item()     # padded V
+        boundary_mask = torch.zeros(V_max,                 # (V,) bool
+                            dtype=torch.bool,
+                            device=device,
+                            requires_grad=False)
+
+
+        k_max   = 10
+        # temporary dummy boundary_idx to allocate shape; will be overwritten
+        dummy_b = torch.tensor([0], device=device)
+        D_hop   = bfs_hop_distance(boundary_mask.numel(),
+                                edge_src, edge_dst, dummy_b,
+                                k_max=k_max).to(device)
+
+        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
+        # history = [projverts_init]
         verts = verts_init.clone().detach().requires_grad_(True).to(device)
+        hook = make_jacobi_hook_debug(edge_src, edge_dst,
+                        boundary_mask,      # the tensor you pass to loss
+                        k_iter=6,
+                        every=1)
+        verts.register_hook(hook)
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
-        
-        # aa, bb = gt_edgemap_info
-        # gt_edgemap_info = aa[0], bb[0]
         projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
@@ -156,15 +178,15 @@ class ExperimentRunner:
             loss.backward()
             optimiser.step()
 
-            pbar.set_description(f"Loss: {loss.item():.4f}")
+            pbar.set_description(f"Loss: {loss.item()*10:.4f}")
 
             # log
             if self.wandb:
                 wandb.log(
                     data = {
-                    "outer/chamfer": loss,
+                    "outer/chamfer": loss * 10,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
-                    "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0],
+                    "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0] * 10,
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
                     },
                     step = i + step_offset

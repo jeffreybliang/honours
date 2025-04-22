@@ -66,7 +66,7 @@ def plot_projections(projverts, projmats, edgemaps):
         # Detach and move to CPU before plotting
         proj_2d = proj_2d.detach().cpu()
 
-        boundary_pts = get_boundary(proj_2d)  # already on CPU
+        boundary_pts,_ = get_boundary(proj_2d)  # already on CPU
         valid_edges = edge_coords[i, :edge_lens[i]].cpu()
 
         ax = axes[i]
