@@ -13,6 +13,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         target_cfg = cfg.get("target", {})
         radius = target_cfg.get("radius", 1.0)
         m_pts = target_cfg.get("m", 50)
+        self.sqrt_m_pts = target_cfg.get("sqrt_m", 50)
 
         target_pts = build_target_circle(radius, m_pts).expand(self.rot_mats.size(0), -1, -1)
         self.views = (self.rot_mats, target_pts)
