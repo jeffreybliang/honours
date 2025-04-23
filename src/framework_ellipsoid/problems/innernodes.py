@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import scipy.optimize as opt
-from ddn.pytorch.node import EqConstDeclarativeNode, DeclarativeFunction
+from ddn.pytorch.node import *
 import math
 import wandb
 from framework_ellipsoid.functions import *
@@ -35,6 +35,10 @@ class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         avg = (u1**p + u2**p + u3**p) / 3
         return 4 * math.pi * avg**(1/p) - u1*u2*u3
     
+    # def inequality_constraints(self, *xs, y):
+    #     print("y", y)
+    #     return y
+
     def solve(self, xs):
         n_batches = xs.size(0)
         data = xs.view(n_batches, 3, -1)
@@ -50,7 +54,8 @@ class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
                 else:
                     return 4 * math.pi * (1/3 * (math.sqrt(u[0])**self.p + math.sqrt(u[1])**self.p + math.sqrt(u[2])**self.p))**(1/self.p) - math.sqrt(u[0]*u[1]*u[2])
             cons = {'type': 'eq', 'fun': lambda u: constraint(u)}
-            res = opt.minimize(lambda u: np.sum((A_np[b] @ u - b_np)**2), u0, method='SLSQP', constraints=[cons], options={'ftol': 1e-9, 'disp': False})
+            ineq = {'type': 'ineq', 'fun': lambda u: u}
+            res = opt.minimize(lambda u: np.sum((A_np[b] @ u - b_np)**2), u0, method='SLSQP', constraints=[cons, ineq], options={'ftol': 1e-9, 'disp': False})
             results[b] = torch.tensor(res.x, dtype=torch.double, requires_grad=True)
             if self.wandb:
                 wandb.log({"inner/loss": res.fun}, commit=False)

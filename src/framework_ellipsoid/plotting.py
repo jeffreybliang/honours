@@ -82,7 +82,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     z = c * torch.cos(v)
 
     # Rotation
-    angles = torch.tensor([yaw, pitch, roll])
+    angles = torch.tensor([yaw, pitch, roll],dtype=torch.double)
     R = rotation_matrix_3d(torch.deg2rad(angles))
     ellipsoid = torch.stack([x, y, z], dim=-1).reshape(-1, 3).T.double()  # (3, N)
     rotated = (R @ ellipsoid).T.reshape(x.shape + (3,))

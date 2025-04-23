@@ -6,7 +6,7 @@
     "seed": 42,
     "noise": 1e-4,
     "p": 1.6075,
-    "initial_axes": [0.2, 0.1, 0.4],
+    "initial_axes": [0.2, 0.2, 0.3],
     "initial_angles": [30, 40, 50],
       "target": {
       "radius": 0.2820947918,

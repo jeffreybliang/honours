@@ -32,13 +32,30 @@ def main():
     #     cfg["name"] = f"{cfg['problem']}-{args.param.replace('.', '_')}-{param_value_str}"
 
     #     print(f"Running with {args.param} = {v}")
-        config_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_ellipsoid/config_chamferboundary.json"
+        # config_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_ellipsoid/config_chamferboundary.json"
     
-        with open(config_path, 'r') as f:
-            cfg = json.load(f)
+        # with open(config_path, 'r') as f:
+        #     cfg = json.load(f)
 
-        experiment = EllipsoidExperiment(cfg)
-        experiment.run()
+        # experiment = EllipsoidExperiment(cfg)
+        # experiment.run()
+    parser = argparse.ArgumentParser(description="Run ellipsoid experiment with given config file.")
+    parser.add_argument("config_path", type=str, help="Path to the configuration JSON file")
+    parser.add_argument("--wandb", type=str, choices=["true", "false"], default=None,
+                        help="Override wandb usage: 'true' or 'false'")
+
+    args = parser.parse_args()
+
+    with open(args.config_path, 'r') as f:
+        cfg = json.load(f)
+
+    # Override wandb setting if provided
+    if args.wandb is not None:
+        cfg["wandb"] = args.wandb.lower() == "true"
+
+    experiment = EllipsoidExperiment(cfg)
+    experiment.run()
+
 
 if __name__ == "__main__":
     main()
