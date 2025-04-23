@@ -42,28 +42,28 @@ def create_padded_tensor(vertices, vert2mesh, max_V, B):
         padded[i, :num_vertices, :] = mesh_vertices
     return padded
 
-def plot_vertices(verts_list):
-    fig = plt.figure(figsize=(5, 5))
-    ax = fig.add_subplot(111, projection='3d')
+# def plot_vertices(verts_list):
+#     fig = plt.figure(figsize=(5, 5))
+#     ax = fig.add_subplot(111, projection='3d')
     
-    if not isinstance(verts_list, list):
-        x, y, z = verts_list.clone().detach().cpu().squeeze().unbind(1)
-        ax.scatter3D(x, z, -y)
-    else:
-        colors = ['b',  'g', 'r' , 'm', 'c', 'y']  # Define some colors for different sets
-        marker_size = 5  # Make points smaller
+#     if not isinstance(verts_list, list):
+#         x, y, z = verts_list.clone().detach().cpu().squeeze().unbind(1)
+#         ax.scatter3D(x, z, -y)
+#     else:
+#         colors = ['b',  'g', 'r' , 'm', 'c', 'y']  # Define some colors for different sets
+#         marker_size = 5  # Make points smaller
     
-        for i, verts in enumerate(verts_list):
-            x, y, z = verts.clone().detach().cpu().squeeze().unbind(1)
-            ax.scatter3D(x, z, -y, color=colors[i % len(colors)], s=marker_size, label=f"Set {i+1}")    
+#         for i, verts in enumerate(verts_list):
+#             x, y, z = verts.clone().detach().cpu().squeeze().unbind(1)
+#             ax.scatter3D(x, z, -y, color=colors[i % len(colors)], s=marker_size, label=f"Set {i+1}")    
     
-    ax.set_xlabel('x')
-    ax.set_ylabel('z')
-    ax.set_zlabel('y')
-    ax.set_aspect("equal")
-    ax.view_init(190, 30)
-    ax.legend()
-    plt.show()
+#     ax.set_xlabel('x')
+#     ax.set_ylabel('z')
+#     ax.set_zlabel('y')
+#     ax.set_aspect("equal")
+#     ax.view_init(190, 30)
+#     ax.legend()
+#     plt.show()
 
 def plot_projections(projverts, projmats, edgemaps):
     plt.ioff()  # Disable interactive mode
@@ -248,6 +248,7 @@ def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None):
         scene=dict(aspectmode='data')
     )
     fig.show()
+    return cmin,cmax
 
 
 def crop_img(img, bg_color=(255, 255, 255), threshold=5):
@@ -274,7 +275,7 @@ def compute_signed_distances(src, tgt):
     X_vertices = mesh_X.vertices
     Y_tree = trimesh.proximity.ProximityQuery(mesh_Y)
     closest_points, _, _ = Y_tree.on_surface(X_vertices)
-    
+
     X_norms = np.linalg.norm(X_vertices, axis=1)
     Y_norms = np.linalg.norm(closest_points, axis=1)
     return X_norms - Y_norms
@@ -283,7 +284,7 @@ def compute_signed_distances(src, tgt):
 def generate_3d_visualization(src, tgt, signed_dists, cmin, cmax):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().cpu().numpy(), faces=src[0].faces_packed().cpu().numpy())
     i, j, k = mesh_X.faces.T
-    fig = go.Figure(data=[
+    return go.Figure(data=[
         go.Mesh3d(
             x=mesh_X.vertices[:, 0],
             y=mesh_X.vertices[:, 1],
@@ -294,22 +295,13 @@ def generate_3d_visualization(src, tgt, signed_dists, cmin, cmax):
             reversescale=True,
             cmin=cmin, cmax=cmax,
             colorbar=dict(title='Signed Distance'),
-            showscale=True,
+            showscale=False,
             flatshading=True,
             lighting=dict(ambient=0.8, diffuse=0.7),
             lightposition=dict(x=100, y=200, z=0),
             opacity=1.0
         )
     ])
-    fig.update_layout(
-        # title='Mesh X Colored by Signed Distance from Mesh Y',
-        scene=dict(
-            aspectmode='data',
-            xaxis=dict(title="X"),
-            yaxis=dict(title="Y"),
-            zaxis=dict(title="Z")),         
-    )
-    return fig
 
 
 def capture_camera_views(fig, camera_views, target_w, target_h):
@@ -355,17 +347,16 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
         cmin, cmax = -max_val, max_val
 
     fig = generate_3d_visualization(src, tgt, signed_dists, cmin, cmax)
-    if False:
-        camera_views = [
-            dict(eye=dict(x=1.2, y=1.2, z=1.2)),
-            dict(eye=dict(x=-1.2, y=1.2, z=1.2)),
-            dict(eye=dict(x=1.2, y=-1.2, z=1.2)),
-            dict(eye=dict(x=0.0, y=0.0, z=2.4)),
-        ]
-        
-        images = capture_camera_views(fig, camera_views, 256, 256)
-        colorbar_img = create_colorbar(cmin, cmax)
-        final_img = create_final_image(images, colorbar_img, 256, 256)
+    camera_views = [
+        dict(eye=dict(x=1.2, y=1.2, z=1.2)),
+        dict(eye=dict(x=-1.2, y=1.2, z=1.2)),
+        dict(eye=dict(x=1.2, y=-1.2, z=1.2)),
+        dict(eye=dict(x=0.0, y=0.0, z=2.4)),
+    ]
+    
+    images = capture_camera_views(fig, camera_views, 256, 256)
+    colorbar_img = create_colorbar(cmin, cmax)
+    final_img = create_final_image(images, colorbar_img, 256, 256)
 
     # # Display the final image
     # dpi = 100  # You can adjust this if needed
@@ -378,5 +369,5 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
     # ax.imshow(final_img)
     # plt.show()
 
-    return fig, cmin, cmax
+    return final_img, cmin, cmax
 
