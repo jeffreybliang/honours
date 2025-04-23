@@ -7,7 +7,7 @@ from matplotlib.patches import Polygon
 from framework_ellipsoid.utils import rotation_matrix_3d
 import math
 
-def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=True):
+def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=False):
     u = torch.linspace(0, 2 * torch.pi, 80)
     v = torch.linspace(0, torch.pi, 40)
     u, v = torch.meshgrid(u, v, indexing="ij")
@@ -74,7 +74,7 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
 
 
 
-def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=True):
+def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=False):
     u, v = torch.linspace(0, 2 * torch.pi, 60), torch.linspace(0, torch.pi, 30)
     u, v = torch.meshgrid(u, v, indexing="ij")
     x = a * torch.cos(u) * torch.sin(v)
@@ -102,7 +102,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
         colorscale='RdBu',
         cmin=vmin,
         cmax=vmax,
-        opacity=1,
+        opacity=0.95,
         showscale=True
     )
 
@@ -111,7 +111,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     scatter = go.Scatter3d(
         x=pts[0], y=pts[1], z=pts[2],
         mode='markers',
-        marker=dict(size=2, color='black', opacity=0.5)
+        marker=dict(size=1, color='black', opacity=0.5)
     )
 
     # Optional: GT sphere wireframe
