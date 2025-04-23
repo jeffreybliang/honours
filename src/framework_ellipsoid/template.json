@@ -1,0 +1,21 @@
+{
+    "project": "ellipsoid-experiments",
+    "name": "chamfer-boundary-default",
+    "offline": true,
+    "sqrt_m": 25,
+    "noise": 1e-4,
+    "p": 1.6075,
+    "initial_axes": [0.5, 0.6, 0.7],
+    "initial_angles": [30, 40, 50],
+    "target": {
+      "radius": 0.620350490899,
+      "m": 50
+    },
+    "view_mode": "angles",
+    "view_angles": [
+      [0, 0, 0],
+      [0, 0, 90]
+    ],
+    "verbose": false
+  }
+  
