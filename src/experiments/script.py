@@ -23,6 +23,3 @@ def main():
     dataloader = DataLoader("/home/jeffrey/honours/src/experiments/skyconfig_balloon.json")
     runner = ExperimentRunner("/home/jeffrey/honours/src/experiments/experiment_spline.json", dataloader)
     runner.run()
-
-if __name__ == "__main__":
-    main()
