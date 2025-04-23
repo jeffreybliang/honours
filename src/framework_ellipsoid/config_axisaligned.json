@@ -43,7 +43,7 @@
     "vis": {
       "enabled": true,
       "frequency": 5,
-      "backend": "mpl"
+      "backend": "plotly"
     },
     "wandb": true
   }
