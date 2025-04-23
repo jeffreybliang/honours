@@ -1,22 +1,36 @@
 import torch
 import math
-from .utils import rotation_matrix_3d
 import numpy as np
 from torch import cos, sin
 import torch.nn.functional as F
-from framework_ellipsoid.loss import rotation_matrix_3d_batch
+from scipy.interpolate import interp1d, interp2d
 
-def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4):
-    phi = 2.0 * math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
-    theta = math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
-    phi, theta = torch.meshgrid(phi, theta, indexing='ij')
-    x = a * torch.sin(theta) * torch.cos(phi)
-    y = b * torch.sin(theta) * torch.sin(phi)
-    z = c * torch.cos(theta)
-    coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
-    R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
-    rotated = R @ coords
-    noisy = rotated + noise_std * torch.randn_like(rotated)
+def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
+    if uniform:
+        m = sqrt_m * sqrt_m
+        def ellipsoid_func(t, u, a=1.0, b=1.0, c=1.0):
+            x = a * torch.sin(t) * torch.cos(u)
+            y = b * torch.sin(t) * torch.sin(u)
+            z = c * torch.cos(t)
+            return torch.stack([x, y, z], dim=0)  # (3, ...)
+        t_min, t_max = 0, torch.pi
+        u_min, u_max = 0, 2 * torch.pi
+        coords = r_surface(m, ellipsoid_func, t_min, t_max, u_min, u_max, 100, 100).double()
+
+    else:
+        phi = 2.0 * math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
+        theta = math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
+        phi, theta = torch.meshgrid(phi, theta, indexing='ij')
+        x = a * torch.sin(theta) * torch.cos(phi)
+        y = b * torch.sin(theta) * torch.sin(phi)
+        z = c * torch.cos(theta)
+        coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
+
+    angles = torch.tensor([yaw, pitch, roll])
+    if torch.any(angles != 0):
+        R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
+        coords = R @ coords
+    noisy = coords + noise_std * torch.randn_like(coords)
     return noisy.unsqueeze(0)  # shape: (1, 3, N)
 
 
@@ -36,6 +50,27 @@ def rotation_matrix_3d(angles):
         torch.stack([sin(alpha)*cos(beta), sin(alpha)*sin(beta)*sin(gamma)+cos(alpha)*cos(gamma), sin(alpha)*sin(beta)*cos(gamma)-cos(alpha)*sin(gamma)]),
         torch.stack([-sin(beta), cos(beta)*sin(gamma), cos(beta)*cos(gamma)])
     ])
+    return R
+
+def rotation_matrix_3d_batch(angles):
+    alpha, beta, gamma = angles[:, 0], angles[:, 1], angles[:, 2]
+    R = torch.stack([
+        torch.stack([
+            torch.cos(alpha) * torch.cos(beta),
+            torch.cos(alpha) * torch.sin(beta) * torch.sin(gamma) - torch.sin(alpha) * torch.cos(gamma),
+            torch.cos(alpha) * torch.sin(beta) * torch.cos(gamma) + torch.sin(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            torch.sin(alpha) * torch.cos(beta),
+            torch.sin(alpha) * torch.sin(beta) * torch.sin(gamma) + torch.cos(alpha) * torch.cos(gamma),
+            torch.sin(alpha) * torch.sin(beta) * torch.cos(gamma) - torch.cos(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            -torch.sin(beta),
+            torch.cos(beta) * torch.sin(gamma),
+            torch.cos(beta) * torch.cos(gamma)
+        ], dim=1)
+    ], dim=1)
     return R
 
 def get_angles(rotation):
@@ -115,3 +150,32 @@ def build_view_matrices(cfg):
         raise ValueError(f"Unsupported view_mode: {mode}")
 
     return R
+
+
+def r_surface(n, func, t0, t1, u0, u1, t_precision=50, u_precision=50, device='cpu'):
+    # Create t and u grids
+    t_vals = torch.linspace(t0, t1, t_precision, device=device).double()
+    u_vals = torch.linspace(u0, u1, u_precision, device=device).double()
+    t, u = torch.meshgrid(t_vals, u_vals, indexing='ij')  # (t_precision, u_precision)
+
+    coords = func(t, u)  # (3, t_precision, u_precision)
+
+    dt = torch.zeros_like(coords)
+    du = torch.zeros_like(coords)
+    dt[:, 1:, :] = coords[:, 1:, :] - coords[:, :-1, :]
+    du[:, :, 1:] = coords[:, :, 1:] - coords[:, :, :-1]
+
+    cross = torch.cross(dt, du, dim=0)  # (3, t_precision, u_precision)
+    dS = torch.norm(cross, dim=0)       # (t_precision, u_precision)
+
+    cum_S_t = torch.cumsum(dS.sum(dim=1), dim=0)  # (t_precision,)
+    cum_S_u = torch.cumsum(dS.sum(dim=0), dim=0)  # (u_precision,)
+
+    rand_S_t = torch.rand(n, device=device) * cum_S_t[-1]
+    rand_S_u = torch.rand(n, device=device) * cum_S_u[-1]
+
+    rand_t = torch.interp(rand_S_t, cum_S_t, t_vals)
+    rand_u = torch.interp(rand_S_u, cum_S_u, u_vals)
+
+    rand_coords = func(rand_t, rand_u)  # (3, n)
+    return rand_coords
