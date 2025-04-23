@@ -9,11 +9,8 @@ import random
 import wandb
 import os
 from tqdm import trange
-<<<<<<< HEAD
 from .gradient import *
 
-=======
->>>>>>> 0ff635c (fixed main branch experimentrunner)
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
