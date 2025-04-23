@@ -107,7 +107,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     )
 
     # Noisy points (rotated)
-    pts = (R @ points.double()).detach().cpu().numpy()
+    pts = points.double().detach().cpu().numpy()
     scatter = go.Scatter3d(
         x=pts[0], y=pts[1], z=pts[2],
         mode='markers',

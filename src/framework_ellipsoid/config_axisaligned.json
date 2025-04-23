@@ -39,7 +39,7 @@
       "lr": 1e-3,
       "momentum": 0.9
     },
-    "verbose": false,
+    "verbose": true,
     "vis": {
       "enabled": true,
       "frequency": 5,

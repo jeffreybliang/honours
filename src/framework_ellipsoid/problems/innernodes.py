@@ -12,7 +12,7 @@ class EllipseConstrainedProjectionFunction(DeclarativeFunction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
+class UnitSAConstrainedProjectionNode(IneqConstDeclarativeNode):
     def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-4)
         self.m = m
@@ -35,9 +35,8 @@ class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         avg = (u1**p + u2**p + u3**p) / 3
         return 4 * math.pi * avg**(1/p) - u1*u2*u3
     
-    # def inequality_constraints(self, *xs, y):
-    #     print("y", y)
-    #     return y
+    def inequality_constraints(self, *xs, y):
+        return -y
 
     def solve(self, xs):
         n_batches = xs.size(0)
@@ -62,7 +61,7 @@ class UnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
 
         return results, None
 
-class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
+class NAAUnitSAConstrainedProjectionNode(IneqConstDeclarativeNode):
     def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-4)
         self.m = m
@@ -131,6 +130,13 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         constraint_val = 4 * torch.pi * (1/3 * (a_p*b_p + a_p*c_p + b_p*c_p))**(1/p) - 1
         return constraint_val
     
+    def inequality_constraints(self, *xs, y):
+        return torch.cat([
+            -y,
+            (y[:, 3].unsqueeze(1) - 2 * torch.pi),
+            (y[:, 4].unsqueeze(1) - torch.pi),
+            (y[:, 5].unsqueeze(1) - 2 * torch.pi)
+        ], dim=1)
 
     def solve(self, xs: torch.Tensor, method="bb", with_jac=True):
         n_batches = xs.size(0)
@@ -149,7 +155,7 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
 
             ineq_const = {
                 'type': 'ineq',
-                'fun': lambda u: np.array([np.pi - u[3], np.pi - u[4], np.pi - u[5], u[3], u[4], u[5]])
+                'fun': lambda u: np.concatenate([u, [2*np.pi - u[3], np.pi - u[4], 2*np.pi - u[5]]])
             }
 
             res = opt.minimize(
@@ -171,7 +177,7 @@ class NAAUnitSAConstrainedProjectionNode(EqConstDeclarativeNode):
         return results, None
 
 
-class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
+class UnitVolConstrainedProjectionNode(IneqConstDeclarativeNode):
     def __init__(self, m, wandbBool, p=1.6075):
         super().__init__(eps=1e-6)
         self.m = m
@@ -225,6 +231,14 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
         c = y[:,2]
         constraint_val = 4/3 * torch.pi * a * b * c - 1
         return constraint_val
+    
+    def inequality_constraints(self, *xs, y):
+        return torch.cat([
+            -y,
+            (y[:, 3].unsqueeze(1) - 2 * torch.pi),
+            (y[:, 4].unsqueeze(1) - torch.pi),
+            (y[:, 5].unsqueeze(1) - 2 * torch.pi)
+        ], dim=1)
 
     def solve(self, xs: torch.Tensor, method="bb", with_jac=True):
         n_batches = xs.size(0)
@@ -242,7 +256,7 @@ class UnitVolConstrainedProjectionNode(EqConstDeclarativeNode):
 
             ineq_const = {
                 'type': 'ineq',
-                'fun': lambda u: np.array([np.pi - u[3], np.pi - u[4], np.pi - u[5], u[3], u[4], u[5]])
+                'fun': lambda u: np.concatenate([u, [2*np.pi - u[3], np.pi - u[4], 2*np.pi - u[5]]])
             }
 
             res = opt.minimize(
