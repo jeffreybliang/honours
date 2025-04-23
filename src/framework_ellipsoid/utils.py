@@ -3,6 +3,7 @@ import math
 import numpy as np
 from torch import cos, sin
 import torch.nn.functional as F
+from scipy.interpolate import interp1d, interp2d
 
 def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
     if uniform:
