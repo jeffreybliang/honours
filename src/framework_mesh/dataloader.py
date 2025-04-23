@@ -36,6 +36,7 @@ class DataLoader:
         Returns a dictionary of PyTorch3D Meshes objects.
         """
         meshes = {}
+        gt_meshes = {}
         for mesh_info in self.cfg["meshes"]:
             mesh_name = mesh_info["name"]
             if mesh_name == "sphere":

@@ -19,7 +19,7 @@ class ExperimentRunner:
             self.cfg = experiment_config
         else:
             raise ValueError("Invalid experiment_config. Must be a path or dict.")
-
+        
         # Store the experiment details
         self.project = self.cfg["project"]
         self.experiment_name = self.cfg["name"]
@@ -62,12 +62,8 @@ class ExperimentRunner:
                 notes=self.experiment_description,
                 group="clean",
                 config={
-                    "iters":    self.n_iters,
-                    "lr":       self.lr,
-                    "momentum": self.momentum,
-                    "source": src_name,
-                    "targets": tgt_names[0] if len(tgt_names) == 1 else tgt_names,
-                    "num_views": self.num_views,
+                    "data":    self.data_loader.cfg,
+                    "experiment":       self.cfg
                 }
             )
             wandb.define_metric("outer/chamfer", summary="min")
