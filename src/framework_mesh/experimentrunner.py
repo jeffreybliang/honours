@@ -8,6 +8,7 @@ from typing import List, Tuple, Union
 import random
 import wandb
 import os
+from tqdm import trange
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -35,6 +36,8 @@ class ExperimentRunner:
                 "view_idx": view_config["view_idx"],
                 "num_views": view_config["num_views"]
             }
+            self.num_views = view_config["num_views"]
+
         
         # Training settings
         self.n_iters = self.cfg["training"]["n_iters"]
@@ -123,8 +126,9 @@ class ExperimentRunner:
 
         min_loss = float("inf")
         best_verts = None
-        pbar = trange(n_iters, desc="Training", leave=True) 
-        for i in range(n_iters):
+    
+        pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
+        for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
@@ -137,6 +141,8 @@ class ExperimentRunner:
                 colour = bcolors.OKGREEN
             loss.backward()
             optimiser.step()
+
+            pbar.set_description(f"Loss: {loss.item():.4f}")
 
             # log
             if self.wandb:
@@ -170,8 +176,7 @@ class ExperimentRunner:
         return self.data_loader.meshes[name]
     
     def get_edgemaps(self, name):
-        dataloader = self.data_loader
-        return dataloader.edgemaps[name], dataloader.edgemaps_len[name]
+        return self.edgemaps[name], self.edgemaps_len[name]
 
     def get_camera_matrices(self):
         return self.data_loader.camera_matrices

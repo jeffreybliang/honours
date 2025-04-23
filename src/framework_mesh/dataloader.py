@@ -24,11 +24,10 @@ class DataLoader:
         self.edgemap_options = {mesh["name"]: {int(k): v for k,v in mesh["edgemap_options"].items()} for mesh in self.cfg["meshes"]}
         
         self.camera_matrices = load_camera_matrices(path=self.matrices_path, matrix_types="P")
-        renders = load_renders(self.renders_path)
-        self.edgemaps, self.edgemaps_len = load_edgemaps(renders, self.edgemap_options)
+        self.renders = load_renders(self.renders_path)
 
         # Load meshes using PyTorch3D
-        self.meshes = self.load_meshes()
+        self.meshes, self.gt_meshes = self.load_meshes()
 
     def load_meshes(self):
         """
