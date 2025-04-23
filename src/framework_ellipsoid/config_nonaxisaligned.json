@@ -1,0 +1,28 @@
+{
+    "project": "ellipsoid-experiments",
+    "name": "test non-axis aligned",
+    "problem": "nonaxisaligned",
+    "sqrt_m": 25,
+    "seed": 42,
+    "noise": 1e-4,
+    "p": 1.6075,
+    "initial_axes": [0.2, 0.4, 0.3],
+    "initial_angles": [30,30,30],
+      "target": {
+      "radius": 0.2820947918,
+      "m": 50
+    },
+    "training": {
+      "n_iters": 30,
+      "lr": 5e-2,
+      "momentum": 0.4
+    },
+    "verbose": true,
+    "vis": {
+      "enabled": true,
+      "frequency": 2,
+      "backend": "plotly"
+    },
+    "wandb": true
+  }
+  

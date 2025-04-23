@@ -1,4 +1,7 @@
+<<<<<<< HEAD
+=======
 import torch
+>>>>>>> main
 import abc
 
 class BaseEllipsoidProblem(abc.ABC):
@@ -11,6 +14,7 @@ class BaseEllipsoidProblem(abc.ABC):
         self.p = cfg.get("p", 1.6075)
         self.initial_axes = cfg["initial_axes"]  # [a, b, c]
         self.m = self.sqrt_m * self.sqrt_m
+        self.wandb = cfg.get("wandb", False)
 
     @abc.abstractmethod
     def generate_data(self):

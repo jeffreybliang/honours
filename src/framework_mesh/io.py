@@ -5,8 +5,10 @@ import re
 from collections import defaultdict
 import cv2
 from cv2.typing import MatLike
+from scipy.interpolate import splprep, splev
 
-def load_camera_matrices(path, matrix_types=None):
+
+def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
     """
     Loads camera matrices from .npy files in the specified directory.
 
@@ -20,7 +22,8 @@ def load_camera_matrices(path, matrix_types=None):
     """
     cameras = defaultdict(dict)
     file_pattern = re.compile(r"^Camera_(\d+)_(K|RT|P)\.npy$")
-    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     if matrix_types is not None:
         matrix_types = set(matrix_types)  # Ensure it's a set for quick lookup
     
@@ -31,7 +34,7 @@ def load_camera_matrices(path, matrix_types=None):
             cam_number = int(cam_number)  # Convert camera number to integer
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
-                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath))
+                cameras[cam_number][matrix_type] = torch.tensor(np.load(filepath), device=device)
     
     return cameras
 
@@ -90,7 +93,7 @@ def canny_edge_map(img: MatLike, options):
     # return edge map
     return edge_map
 
-def load_edgemaps(renders, options):
+def load_edgemaps(renders, options, device=torch.device("cpu")):
     edgemaps = {}
     edgemaps_len = {}
 
@@ -109,10 +112,33 @@ def load_edgemaps(renders, options):
                 if num in edgemap_options:
                     edge_option = edgemap_options[num]
                     edges = canny_edge_map(img, edge_option)
-                    edge_coords = np.argwhere(edges > 0)
-                    edge_coords = edge_coords[:, [1, 0]]  # Convert to (x, y) coordinates
-                    
-                    views[num] = torch.tensor(edge_coords)
+                    if True:
+                        edge_coords = np.argwhere(edges > 0)
+                        edge_coords = edge_coords[:, [1, 0]]  # Convert to (x, y) coordinates
+                    else:
+                        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                        all_subpixel_edges = []
+                        print("number of contours", len(contours))
+                        for contour in contours:
+                            if len(contour) < 5:
+                                continue
+                            contour = contour.squeeze()  # Remove single-dim (N,1,2) -> (N,2)
+                            x, y = contour[:, 0], contour[:, 1]
+
+                            # Fit a spline to the contour
+                            try:
+                                tck, u = splprep([x, y], s=1.0)  # s controls smoothing
+                                u_fine = np.linspace(0, 1, len(x)*5)  # More points = higher "resolution"
+                                x_fine, y_fine = splev(u_fine, tck)
+
+                                subpixel_points = np.vstack((x_fine, y_fine)).T
+                                all_subpixel_edges.append(subpixel_points)
+                                edge_coords = np.concatenate(all_subpixel_edges)
+                            except Exception as e:
+                                print(f"Skipping a contour due to error: {e}")
+                                continue
+
+                    views[num] = torch.tensor(edge_coords, device=device)
                     views_len[num] = len(edge_coords)
 
         # Store the results for the current mesh
@@ -120,3 +146,5 @@ def load_edgemaps(renders, options):
         edgemaps_len[mesh_name] = views_len
 
     return edgemaps, edgemaps_len
+
+
