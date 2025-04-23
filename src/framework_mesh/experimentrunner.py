@@ -54,6 +54,12 @@ class ExperimentRunner:
         
         self.wandb = self.cfg["wandb"]
 
+        self.smoothing = self.cfg["gradient"]["smoothing"]
+        self.smoothing_type = self.cfg["gradient"]["type"]
+        self.smoothing_k = self.cfg["gradient"]["k"]
+        self.smoothing_constrained = self.cfg["gradient"]["constrained"]
+        self.smoothing_debug = self.cfg["gradient"]["debug"]
+
     def run(self):
         device = self.data_loader.device
         print(f"Running on device: {device}")
@@ -117,33 +123,32 @@ class ExperimentRunner:
         node = ConstrainedProjectionNode(src, self.wandb)
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
-        # projverts_init = ConstrainedProjectionFunction.apply(node, verts_init) # (B, max Vi, 3)
-        
-        faces      = src[0].faces_packed().to(device)            # (F,3)
-        edge_src, edge_dst = build_edge_lists(faces, device)     # (E,) each
+        verts = verts_init.clone().detach().requires_grad_(True).to(device)
 
-        V_max   = src.num_verts_per_mesh().max().item()     # padded V
-        boundary_mask = torch.zeros(V_max,                 # (V,) bool
-                            dtype=torch.bool,
-                            device=device,
-                            requires_grad=False)
+        if self.smoothing:
+            faces = src[0].faces_packed().to(device)
+            edge_src, edge_dst = build_edge_lists(faces, device)
 
+            V_max = src.num_verts_per_mesh().max().item()
+            boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
 
-        k_max   = 10
-        # temporary dummy boundary_idx to allocate shape; will be overwritten
-        dummy_b = torch.tensor([0], device=device)
-        D_hop   = bfs_hop_distance(boundary_mask.numel(),
-                                edge_src, edge_dst, dummy_b,
-                                k_max=k_max).to(device)
+            V = verts.size(1)
+            all_idx = torch.arange(V, device=device)
+            D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
+
+            hook = select_hook(
+                method=self.smoothing_type,         # "jacobi", "invhop", or "khop"
+                edge_src=edge_src,
+                edge_dst=edge_dst,
+                boundary_mask=boundary_mask,
+                D_all=D_all,
+                k=self.smoothing_k,
+                constrained=self.smoothing_constrained,
+                debug=self.smoothing_debug,
+            )
+            verts.register_hook(hook)
 
         chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
-        # history = [projverts_init]
-        verts = verts_init.clone().detach().requires_grad_(True).to(device)
-        hook = make_jacobi_hook_debug(edge_src, edge_dst,
-                        boundary_mask,      # the tensor you pass to loss
-                        k_iter=6,
-                        every=1)
-        verts.register_hook(hook)
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
