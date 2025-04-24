@@ -60,6 +60,9 @@ class ExperimentRunner:
         self.smoothing_constrained = self.cfg["gradient"]["constrained"]
         self.smoothing_debug = self.cfg["gradient"]["debug"]
 
+        self.lambda_proj = self.cfg["penalty"]["lambda_proj"]
+        self.lambda_vol = self.cfg["penalty"]["lambda_vol"]
+
     def run(self):
         device = self.data_loader.device
         print(f"Running on device: {device}")
@@ -148,9 +151,10 @@ class ExperimentRunner:
             )
             xs.register_hook(hook)
 
-        penalty_loss = PenaltyMethod(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
-        params = [y] if penalty_loss.lambda_proj == 0 and penalty_loss.lambda_vol == 0 else [xs, y]
+        penalty_loss = PenaltyMethod(src, tgt, projmats, edgemap_info, lambda_proj=self.lambda_proj, lambda_vol=self.lambda_vol,boundary_mask=boundary_mask)
+        params = [y] if self.lambda_proj == 0 and self.lambda_vol == 0 else [xs, y]
         optimiser = torch.optim.SGD(params, lr=lr, momentum=moment)
+        
         a,b = edgemap_info
         a,b = a[0], b[0]
         projectionplot = plot_projections(xs.detach().squeeze().double(), gt_projmats, gt_edgemap_info)

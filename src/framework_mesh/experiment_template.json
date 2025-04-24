@@ -31,6 +31,10 @@
         "constrained": false,
         "debug": true
     },
+    "penalty": {
+        "lambda_proj": 100,
+        "lambda_vol": 100
+    },
     "verbose": true,
     "vis": {
         "enabled": false,

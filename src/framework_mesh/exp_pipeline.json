@@ -36,6 +36,10 @@
     "lr": 1e-5,
     "momentum": 0.8
     },
+    "penalty": {
+        "lambda_proj": 100,
+        "lambda_vol": 100
+    },
     "verbose": false,
     "vis": {
         "enabled": true,
