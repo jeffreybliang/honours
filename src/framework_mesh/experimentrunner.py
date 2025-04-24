@@ -10,7 +10,7 @@ import wandb
 import os
 from tqdm import trange
 from .gradient import *
-
+from .penalty import *
 
 class ExperimentRunner:
     def __init__(self, experiment_config: Union[str, dict], data_loader: DataLoader) -> None:
@@ -120,21 +120,21 @@ class ExperimentRunner:
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
                    n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
-        node = ConstrainedProjectionNode(src, self.wandb)
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
-        verts = verts_init.clone().detach().requires_grad_(True).to(device)
+
+        xs = verts_init.clone().detach().requires_grad_(True).to(device)
+        y = verts_init.clone().detach().requires_grad_(True).to(device)
 
         if self.smoothing:
             faces = src[0].faces_packed().to(device)
             edge_src, edge_dst = build_edge_lists(faces, device)
 
-            V_max = src.num_verts_per_mesh().max().item()
-            boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
+            V = xs.size(1)
+            boundary_mask = torch.zeros(V, dtype=torch.bool, device=device)
 
-            V = verts.size(1)
             all_idx = torch.arange(V, device=device)
-            D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
+            D_all = bfs_hop_distance(V, edge_src, edge_dst, all_idx, k_max=10)
 
             hook = select_hook(
                 method=self.smoothing_type,         # "jacobi", "invhop", or "khop"
@@ -146,15 +146,16 @@ class ExperimentRunner:
                 constrained=self.smoothing_constrained,
                 debug=self.smoothing_debug,
             )
-            verts.register_hook(hook)
+            xs.register_hook(hook)
 
-        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
-        optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
+        penalty_loss = PenaltyMethod(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
+        params = [y] if penalty_loss.lambda_proj == 0 and penalty_loss.lambda_vol == 0 else [xs, y]
+        optimiser = torch.optim.SGD(params, lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
-        projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+        projectionplot = plot_projections(xs.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
-        initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
+        initheatmap,cmin,cmax = create_heatmap(Meshes(verts=xs.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
                         "plt/heatmap": wandb.Plotly(initheatmap)}, step= step_offset)
@@ -165,14 +166,13 @@ class ExperimentRunner:
         pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
-            node.iter = i + step_offset
-            projverts = ConstrainedProjectionFunction.apply(node, verts)
-            loss = chamfer_loss(projverts)
+            penalty_loss.iter = i + step_offset
+            loss = penalty_loss(xs,y)
 
             colour = bcolors.FAIL
             if loss.item() < min_loss:
                 min_loss = loss.item()
-                best_verts = projverts.detach().clone()
+                best_verts = y.detach().clone()
                 colour = bcolors.OKGREEN
                 
             loss.backward()
@@ -184,25 +184,25 @@ class ExperimentRunner:
             if self.wandb:
                 wandb.log(
                     data = {
-                    "outer/chamfer": loss * 10,
-                    "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
-                    "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0] * 10,
-                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
+                    "outer/chamfer": loss,
+                    "outer/vol": calculate_volume(y[0], src[0].faces_packed()),
+                    "outer/gt/chamfer": chamfer_gt(y, src, tgt)[0],
+                    "outer/gt/iou": iou_gt(y, src, tgt)[0]
                     },
                     step = i + step_offset
                 )
 
             if self.verbose:
-                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
-                print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(projverts, src, tgt))}] "
-                    f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
+                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(y[0], src[0].faces_packed()):.3f}")
+                print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(y, src, tgt))}] "
+                    f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(y, src, tgt))}]")
             if self.vis_enabled and i % self.vis_freq == self.vis_freq-1:
-                projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
-                heatmap,cmin,cmax = create_heatmap(Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
+                projectionplot = plot_projections(y.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+                heatmap,cmin,cmax = create_heatmap(Meshes(verts=y.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
                 if self.wandb:
                     wandb.log({"plt/projections": wandb.Image(projectionplot),
                                 "plt/heatmap": wandb.Plotly(heatmap)}, 
-                                step=i + step_offset)   
+                                step=i + step_offset)
         return best_verts
 
     def get_gt_mesh(self,name):
