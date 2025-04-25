@@ -59,14 +59,15 @@ def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Ten
     return torch.cat(loops, dim=0)
 
 class PyTorchChamferLoss(nn.Module):
-    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info):
+    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, boundary_mask=None):
         super().__init__()
         self.src = src  # (B meshes)
         self.tgt = tgt  # (B meshes)
         self.projmatrices = projmatrices # (P, 3, 4)
         self.edgemaps = edgemap_info[0] # (P, max_Ni, 2)
         self.edgemaps_len = edgemap_info[1] # (P,)
-    
+        self.boundary_mask = boundary_mask    # keep the reference
+
     def project_vertices(self, vertices):
         """
         Projects a set of vertices into multiple views using different projection matrices.
@@ -88,49 +89,50 @@ class PyTorchChamferLoss(nn.Module):
 
         return projected_cartesian
 
-        
     def forward(self, y):
         B, P = len(self.src), self.projmatrices.size(0)
         vertices = y
-        # project vertices
         num_verts_per_mesh = self.src.num_verts_per_mesh()
-        projected_vertices = [] # (B, P, V, 2)
+
+        # 1) project every mesh into every view
+        projected = []
         for b in range(B):
-            end = num_verts_per_mesh[b]
-            projverts = self.project_vertices(vertices[b][:end,:])  # Shape: (P, V, 2)
-            projected_vertices.append(projverts)  # Store without padding
+            Vb = num_verts_per_mesh[b]
+            projected.append(self.project_vertices(vertices[b, :Vb]))  # (P, Vb, 2)
 
-        # get boundaries
-        faces_padded = self.src.faces_padded()              # (B, F_max, 3)
-        deformed_meshes = self.src.update_padded(y)
-        fnorms_padded = deformed_meshes.faces_normals_padded()  # (B, F_max, 3)
+        # 2) reset the shared boundary mask
+        with torch.no_grad():
+            self.boundary_mask.zero_()
 
-        boundaries = [] 
-        boundary_lengths = torch.zeros(B, P)
-        num_faces = self.src.num_faces_per_mesh()  # list of length B
-        for b, batch in enumerate(projected_vertices):
+        boundaries_pad   = []                              # list of (P, B_max, 2)
+        boundary_lengths = torch.zeros(B, P, device=y.device)
+
+        # 3) per‑mesh → per‑view boundary extraction
+        for b in range(B):
+            Vb = num_verts_per_mesh[b]
             boundaries_b = []
-            faces_b = faces_padded[b][:num_faces[b]]
-            fnorms_b = fnorms_padded[b][:num_faces[b]]
+            for p in range(P):
+                boundary_p, mask_p = get_boundary(projected[b][p])      # (B_p,2)
+                with torch.no_grad():
+                    self.boundary_mask[:Vb].logical_or_(mask_p)      # OR merge
+                boundaries_b.append(boundary_p)                         # collect
+                boundary_lengths[b, p] = boundary_p.size(0)
 
-            for p, projverts in enumerate(batch):
-                boundary = get_boundary(projverts, faces_b, fnorms_b, self.projmatrices[p])
-                boundaries_b.append(boundary)
-                boundary_lengths[b,p] = len(boundary)
-            padded_boundaries = torch.nn.utils.rnn.pad_sequence(boundaries_b, batch_first=True, padding_value=0.0)
-            boundaries.append(padded_boundaries)
+            padded = torch.nn.utils.rnn.pad_sequence(boundaries_b,
+                                                    batch_first=True,
+                                                    padding_value=0.0)
+            boundaries_pad.append(padded)                               # (P, B_max, 2)
 
-        # perform chamfer
-        chamfer_loss = torch.zeros(B)
+        # 4) Chamfer distance per mesh
+        chamfer_loss = torch.zeros(B, device=y.device)
         for b in range(B):
-            boundaries_b = boundaries[b].float()
-            edgemaps_b = self.edgemaps[b].float()
-            res, _ = chamfer_distance(  x=boundaries_b,
-                                        y=edgemaps_b,
-                                        x_lengths=boundary_lengths[b].long(),
-                                        y_lengths=self.edgemaps_len[b].long(),
-                                        batch_reduction="mean",
-                                        point_reduction="mean")
+            res, _ = chamfer_distance(
+                        x=boundaries_pad[b].float(),
+                        y=self.edgemaps[b].float(),
+                        x_lengths=boundary_lengths[b].long(),
+                        y_lengths=self.edgemaps_len[b].long(),
+                        batch_reduction="mean",
+                        point_reduction="mean")
             chamfer_loss[b] = res.sum()
-        return chamfer_loss.double() * 10
 
+        return chamfer_loss.double()

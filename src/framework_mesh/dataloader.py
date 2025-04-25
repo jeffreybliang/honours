@@ -5,7 +5,8 @@ from pytorch3d.structures import Meshes
 from .io import *
 
 class DataLoader:
-    def __init__(self, config: str) -> None:
+    def __init__(self, config, device=torch.device("cpu")) -> None:
+
         if isinstance(config, str) and os.path.exists(config):
             with open(config, "r") as f:
                 self.cfg = json.load(f)
@@ -13,7 +14,9 @@ class DataLoader:
             self.cfg = config
         else:
             raise ValueError("Invalid experiment_config. Must be a path or dict.")
-
+        
+        self.device = device
+        
         # Set up paths and other config settings
         self.mesh_dir = self.cfg["paths"]["mesh_dir"]
         self.mesh_res = self.cfg["paths"]["mesh_res"]
@@ -22,7 +25,7 @@ class DataLoader:
         
         self.edgemap_options = {mesh["name"]: {int(k): v for k,v in mesh.get("edgemap_options", {}).items()} for mesh in self.cfg["meshes"]}
         
-        self.camera_matrices = load_camera_matrices(path=self.matrices_path, matrix_types="P")
+        self.camera_matrices = load_camera_matrices(path=self.matrices_path, matrix_types="P", device=self.device)
         self.renders = load_renders(self.renders_path)
 
         # Load meshes using PyTorch3D
@@ -37,14 +40,14 @@ class DataLoader:
         gt_meshes = {}
         for mesh_info in self.cfg["meshes"]:
             mesh_name = mesh_info["name"]
-            mesh_path = os.path.join(self.mesh_dir, f"{mesh_name}_{self.mesh_res}.obj")
-            verts, faces, aux = load_obj(mesh_path)
-            # Create Meshes object in PyTorch3D
-            meshes[mesh_name] = Meshes(verts=[verts], faces=[faces.verts_idx])
-
+            if mesh_name == "sphere":
+                mesh_path = os.path.join(self.mesh_dir, f"{mesh_name}_{self.mesh_res}.obj")
+                verts, faces, aux = load_obj(mesh_path, device=self.device)
+                # Create Meshes object in PyTorch3D
+                meshes[mesh_name] = Meshes(verts=[verts], faces=[faces.verts_idx])
 
             gt_mesh_path = os.path.join(self.mesh_dir, f"{mesh_name}.obj")
-            gt_verts, gt_faces, aux = load_obj(gt_mesh_path)
+            gt_verts, gt_faces, aux = load_obj(gt_mesh_path, device=self.device)
             gt_meshes[mesh_name] = Meshes(verts=[gt_verts], faces=[gt_faces.verts_idx])
 
         return meshes, gt_meshes

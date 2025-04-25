@@ -121,8 +121,8 @@ def plot_projections(mesh, projverts, projmats, edgemaps):
         proj_2d_hom = (projmats[i] @ torch.cat([projverts, torch.ones(projverts.shape[0], 1)], dim=1).T).T
         proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]  # Normalize by depth
 
-        boundary_pts = get_boundary(proj_2d, faces, fnorms, projmats[i])
-        valid_edges = edge_coords[i, :edge_lens[i]]
+        boundary_pts,_ = get_boundary(proj_2d, faces, fnorms, projmats[i])  # already on CPU
+        valid_edges = edge_coords[i, :edge_lens[i]].cpu()
 
         ax = axes[i]
         ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='b', s=8, label="Projected Vertices")
@@ -251,6 +251,7 @@ def visualise_heatmap(src: Meshes, tgt: Meshes, cmin=None, cmax=None):
         scene=dict(aspectmode='data')
     )
     fig.show()
+    return cmin,cmax
 
 
 def crop_img(img, bg_color=(255, 255, 255), threshold=5):
