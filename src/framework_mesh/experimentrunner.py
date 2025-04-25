@@ -59,6 +59,8 @@ class ExperimentRunner:
         self.smoothing_k = self.cfg["gradient"]["k"]
         self.smoothing_constrained = self.cfg["gradient"]["constrained"]
         self.smoothing_debug = self.cfg["gradient"]["debug"]
+        if self.smoothing_debug:
+            print("Smoothing debug is on")
 
     def run(self):
         device = self.data_loader.device
@@ -124,18 +126,15 @@ class ExperimentRunner:
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
         verts = verts_init.clone().detach().requires_grad_(True).to(device)
+        V_max = src.num_verts_per_mesh().max().item()
+        boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
 
         if self.smoothing:
             faces = src[0].faces_packed().to(device)
             edge_src, edge_dst = build_edge_lists(faces, device)
 
-            V_max = src.num_verts_per_mesh().max().item()
-            boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
-
-            V = verts.size(1)
-            all_idx = torch.arange(V, device=device)
+            all_idx = torch.arange(V_max, device=device)
             D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
-
             hook = select_hook(
                 method=self.smoothing_type,         # "jacobi", "invhop", or "khop"
                 edge_src=edge_src,

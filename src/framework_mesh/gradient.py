@@ -49,11 +49,8 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
 
         if debug:
             g_diff = (g - grad_in.view(-1, 3)).abs()
-            num_changed = (g_diff.sum(-1) > 1e-6).sum().item()
-            num_nonzero = (grad_in.norm(dim=-1) > 1e-6).sum().item()
-            print(f"   boundary_mask.sum()     = {boundary_mask.sum().item()}")
-            print(f"   nonzero grad_in         = {num_nonzero}")
-            print(f"   verts with Δg > 1e-6    = {num_changed}")
+            print("[Jacobi] Δg > 1e-6:", (g_diff.norm(dim=-1) > 1e-6).sum().item(),
+                  "| mean Δg:", g_diff.mean().item())
 
         return g.view_as(grad_in)
 

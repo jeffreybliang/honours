@@ -1,6 +1,6 @@
 {
     "project": "Test",
-    "name": "pipeline_b_rs_ls_p",
+    "name": "pipeline_jacobiunconstrained",
     "description": "sky, sphere to balloon, rstrawberry, lstrawberry, parabola, all manual",
     "src_mesh": "sphere",
     "target_meshes": [
@@ -32,14 +32,16 @@
         }    
     },
     "training": {
-<<<<<<< HEAD
-    "n_iters": 60,
-    "lr": 1e-5,
-=======
-    "n_iters": 50,
-    "lr": 1e-6,
->>>>>>> main
+    "n_iters": 200,
+    "lr": 2e-5,
     "momentum": 0.8
+    },
+    "gradient": {
+        "smoothing": true,
+        "type": "jacobi",
+        "k": 5,
+        "constrained": false,
+        "debug": true
     },
     "verbose": false,
     "vis": {
