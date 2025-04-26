@@ -151,7 +151,7 @@ class ExperimentRunner:
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
-        projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+        projectionplot = plot_projections(src, verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:

@@ -38,14 +38,21 @@ def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Ten
         for interior in unioned.interiors:
             rings.append(np.array(interior.coords))
     elif unioned.geom_type == 'MultiPolygon':
+        # unioned = max(unioned.geoms, key=lambda p: p.area)
+        # rings.append(np.array(unioned.exterior.coords))
         print("unioned.geom_type == 'MultiPolygon'")
-        unioned = max(unioned.geoms, key=lambda p: p.area)
-        rings.append(np.array(unioned.exterior.coords))
+        for geom in unioned.geoms:
+            rings.append(np.array(geom.exterior.coords))
+            for interior in geom.interiors:
+                rings.append(np.array(interior.coords))
+
     else:
         raise ValueError(f"Unexpected geometry type: {unioned.geom_type}")
 
     # 4) Snap rings to closest projected vertices
     loops = []
+    boundary_indices = []
+
     for ring in rings:
         coords_t = torch.from_numpy(ring).to(projverts)           # (L, 2)
         diffs = coords_t[:, None, :] - projverts[None, :, :]      # (L, V, 2)
@@ -55,8 +62,14 @@ def get_boundary(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Ten
         if idx_u.numel() > 1 and idx_u[0] == idx_u[-1]:
             idx_u = idx_u[:-1]
         loops.append(projverts[idx_u])
+        boundary_indices.append(idx_u)
 
-    return torch.cat(loops, dim=0)
+    boundary_indices = torch.cat(boundary_indices)
+    boundary_mask = torch.zeros(projverts.shape[0], dtype=torch.bool, device=projverts.device)
+    boundary_mask[boundary_indices] = True
+
+    boundary_pts = torch.cat(loops, dim=0)
+    return boundary_pts, boundary_mask
 
 class PyTorchChamferLoss(nn.Module):
     def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, boundary_mask=None):
@@ -106,13 +119,21 @@ class PyTorchChamferLoss(nn.Module):
 
         boundaries_pad   = []                              # list of (P, B_max, 2)
         boundary_lengths = torch.zeros(B, P, device=y.device)
+        
+        faces_padded = self.src.faces_padded()              # (B, F_max, 3)
+        deformed_meshes = self.src.update_padded(y)
+        fnorms_padded = deformed_meshes.faces_normals_padded()  # (B, F_max, 3)
+        num_faces = self.src.num_faces_per_mesh()  # list of length B
 
         # 3) per‑mesh → per‑view boundary extraction
         for b in range(B):
-            Vb = num_verts_per_mesh[b]
             boundaries_b = []
+            Vb = num_verts_per_mesh[b]
+            faces_b = faces_padded[b][:num_faces[b]]
+            fnorms_b = fnorms_padded[b][:num_faces[b]]
+
             for p in range(P):
-                boundary_p, mask_p = get_boundary(projected[b][p])      # (B_p,2)
+                boundary_p, mask_p = get_boundary(projected[b][p],faces_b, fnorms_b, self.projmatrices[p])      # (B_p,2)
                 with torch.no_grad():
                     self.boundary_mask[:Vb].logical_or_(mask_p)      # OR merge
                 boundaries_b.append(boundary_p)                         # collect
