@@ -60,7 +60,7 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
 # -------------------------------
 # 2. Inverse-hop smoother
 # -------------------------------
-def make_invhop_hook(D_all, boundary_mask,   eps=1e-3, constrained=True, debug=False):
+def make_invhop_hook(D_all, boundary_mask, eps=1e-4, constrained=True, debug=False):
     V = boundary_mask.size(0)
 
     def hook(grad_in):

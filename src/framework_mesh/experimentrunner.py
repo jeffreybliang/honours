@@ -55,7 +55,7 @@ class ExperimentRunner:
         self.wandb = self.cfg["wandb"]
 
         self.smoothing = self.cfg["gradient"]["smoothing"]
-        self.smoothing_type = self.cfg["gradient"]["type"]
+        self.smoothing_method = self.cfg["gradient"]["method"]
         self.smoothing_k = self.cfg["gradient"]["k"]
         self.smoothing_constrained = self.cfg["gradient"]["constrained"]
         self.smoothing_debug = self.cfg["gradient"]["debug"]
@@ -112,7 +112,7 @@ class ExperimentRunner:
             step_offset += self.n_iters
 
             # Update source mesh for warmstarting
-            src_mesh = Meshes(verts=final_verts, faces=src_mesh.faces_padded())
+            src_mesh = Meshes(verts=final_verts.float(), faces=src_mesh.faces_padded())
             src_name = tgt_name
             # Visualization step (optional)
             # if self.vis_enabled:
@@ -136,7 +136,7 @@ class ExperimentRunner:
             all_idx = torch.arange(V_max, device=device)
             D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
             hook = select_hook(
-                method=self.smoothing_type,         # "jacobi", "invhop", or "khop"
+                method=self.smoothing_method,         # "jacobi", "invhop", or "khop"
                 edge_src=edge_src,
                 edge_dst=edge_dst,
                 boundary_mask=boundary_mask,
