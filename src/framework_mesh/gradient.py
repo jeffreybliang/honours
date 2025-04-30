@@ -108,12 +108,15 @@ def make_khop_hook(D_all, boundary_mask, k=5, eps=1e-3, constrained=True, debug=
             boundary_idx = boundary_mask.nonzero(as_tuple=False).view(-1)
             D_hop = D_all[:, boundary_idx].to(g.device)  # (V, B)
 
-        mask = D_hop <= k                               # (V, B)
-        W = mask.float()
-        W = W / W.sum(1, keepdim=True).clamp_min_(eps)  # (V, B)
+        mask = D_hop <= k
+        W_boundary = mask.float()  # (V, B)
 
-        g_b = g[boundary_idx]                           # (B, 3)
-        g_new = W @ g_b                                 # (V, 3)
+        row_sum = W_boundary.sum(1, keepdim=True) + 1  # +1 for self
+        W_boundary = W_boundary / row_sum.clamp_min(eps)  # (V, B)
+        w_self = 1.0 / row_sum.clamp_min(eps)            # (V, 1)
+
+        g_b = g[boundary_idx]  # (B, 3)
+        g_new = W_boundary @ g_b + w_self * g  # (V, 3)
 
         if constrained:
             bmask = torch.zeros(V, dtype=torch.bool, device=g.device)
@@ -122,13 +125,12 @@ def make_khop_hook(D_all, boundary_mask, k=5, eps=1e-3, constrained=True, debug=
 
         if debug:
             g_diff = (g_new - g).abs()
-            print("[Khop-cached] Δg > 1e-6:", (g_diff.norm(dim=-1) > 1e-6).sum().item(),
+            print("[Khop+Self] Δg > 1e-6:", (g_diff.norm(dim=-1) > 1e-6).sum().item(),
                   "| max Δg:", g_diff.max().item())
 
         return g_new.view_as(grad_in)
 
     return hook
-
 
 # -------------------------------
 # Unified selector
