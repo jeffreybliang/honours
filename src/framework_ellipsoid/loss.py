@@ -4,19 +4,14 @@ import torch.nn as nn
 from pytorch3d.loss import chamfer_distance
 import alpha_shapes
 import numpy as np
-<<<<<<< HEAD
-
-=======
 from .plotting import *
 from .utils import rotation_matrix_3d_batch
->>>>>>> main
 
 def A_from_u_batch(u):
     Lambda = torch.diag_embed(1 / u[:, :3] ** 2)
     Q = rotation_matrix_3d_batch(u[:, 3:])
     return Q @ Lambda @ Q.transpose(-1, -2)
 
-<<<<<<< HEAD
 def rotation_matrix_3d_batch(angles):
     alpha, beta, gamma = angles[:, 0], angles[:, 1], angles[:, 2]
     R = torch.stack([
@@ -38,8 +33,6 @@ def rotation_matrix_3d_batch(angles):
     ], dim=1)
     return R
 
-=======
->>>>>>> main
 def schur_complement_batch(M):
     A, B, C, D, E, F = M[:, 0, 0], M[:, 1, 1], M[:, 2, 2], M[:, 0, 1], M[:, 0, 2], M[:, 1, 2]
     return torch.stack([

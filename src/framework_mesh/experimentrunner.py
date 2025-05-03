@@ -237,7 +237,6 @@ class ExperimentRunner:
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         camera_matrices = self.get_camera_matrices()
         edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
-
         view_idx = list(range(len(camera_matrices)))
         projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)

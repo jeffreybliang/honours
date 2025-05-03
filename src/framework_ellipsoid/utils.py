@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d, interp2d
 def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
     if uniform:
         m = sqrt_m * sqrt_m
-        def ellipsoid_func(t, u, a=1.0, b=1.0, c=1.0):
+        def ellipsoid_func(t, u):
             x = a * torch.sin(t) * torch.cos(u)
             y = b * torch.sin(t) * torch.sin(u)
             z = c * torch.cos(t)
