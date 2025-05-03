@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from matplotlib.patches import Polygon
 from framework_ellipsoid.utils import rotation_matrix_3d
 import math
+import numpy as np
 
 def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=False):
     u = torch.linspace(0, 2 * torch.pi, 80)
@@ -26,7 +27,8 @@ def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vma
 
     # Normalize residuals for coloring
     if vmin is None or vmax is None:
-        vmin, vmax = residuals.min().item(), residuals.max().item()
+        absmax = torch.abs(residuals).item()
+        vmin, vmax = -absmax, absmax
     norm = colors.Normalize(vmin=vmin, vmax=vmax)
     cmap = plt.colormaps["RdBu_r"]
     facecolors = cmap(norm(residuals))
@@ -92,6 +94,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     radii = torch.norm(ellipsoid_xyz, dim=0)
     residuals = (radii - r).reshape(rotated.shape[:2]).cpu().numpy()
     if vmin is None or vmax is None:
+        
         vmin, vmax = residuals.min().item(), residuals.max().item()
 
     surface = go.Surface(

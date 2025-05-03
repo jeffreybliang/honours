@@ -36,7 +36,7 @@ def main():
                 exp_config['gradient']['constrained'] = constrained
 
                 # Update experiment name to be descriptive
-                exp_config['name'] = f"pipeline_{method}_constrained_{constrained}_res_{mesh_res}"
+                exp_config['name'] = f"jaconlyboundary_pipeline_{method}_constrained_{constrained}_res_{mesh_res}"
 
                 # Create runner and run
                 runner = ExperimentRunner(exp_config, dataloader)

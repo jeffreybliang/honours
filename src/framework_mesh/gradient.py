@@ -36,12 +36,29 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
         g = grad_in.view(-1, 3).clone()
         for _ in range(k):
             g_nb = torch.zeros_like(g)
-            g_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), g[edge_src])
-            deg = torch.zeros(V, 1, device=g.device)
-            deg.scatter_add_(0, edge_dst[:, None], onesE)
+
+            if constrained:
+                # Mask: only use boundary vertices for smoothing
+                mask_src = boundary_mask[edge_src]  # shape (E,)
+                g_src_masked = g[edge_src] * mask_src[:, None].float()
+                g_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), g_src_masked)
+
+                # Degree should count only boundary neighbors
+                deg_masked = mask_src.float()
+                deg = torch.zeros(V, 1, device=g.device)
+                deg.scatter_add_(0, edge_dst[:, None], deg_masked[:, None])
+            else:
+                # Use all neighbors
+                g_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), g[edge_src])
+                deg = torch.zeros(V, 1, device=g.device)
+                deg.scatter_add_(0, edge_dst[:, None], onesE)
+
+            # Add self-contribution
             g_nb += g
             deg += 1.0
-            g_nb = g_nb / (deg.clamp_min_(1.0)+1)
+            g_nb = g_nb / (deg.clamp_min_(1.0) + 1)
+
+            # Update gradients
             if constrained:
                 g = torch.where(boundary_mask[:, None], g, g_nb)
             else:

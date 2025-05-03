@@ -403,7 +403,7 @@ def compute_boundary_distance_heatmap(src: Meshes, boundary_mask, D_all, cmin=No
         heatmap_values = min_dist.float().cpu().numpy()
 
     if cmin is None or cmax is None:
-        max_val = np.percentile(heatmap_values, 95)
+        max_val = max(1,np.percentile(heatmap_values, 95))
         cmin, cmax = 0, max_val
 
     mesh = trimesh.Trimesh(vertices=verts3d.cpu().numpy(), faces=faces.cpu().numpy())

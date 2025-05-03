@@ -1,6 +1,6 @@
 {
     "project": "Test",
-    "name": "pipeline_jacobiunconstrained",
+    "name": "vis_boundarydistance",
     "description": "sky, sphere to balloon, rstrawberry, lstrawberry, parabola, all manual",
     "src_mesh": "sphere",
     "target_meshes": [
@@ -32,15 +32,15 @@
         }    
     },
     "training": {
-    "n_iters": 2,
+    "n_iters": 100,
     "lr": 1e-5,
     "momentum": 0.9
     },
     "gradient": {
         "smoothing": true,
         "type": "jacobi",
-        "k": 5,
-        "constrained": false,
+        "k": 2,
+        "constrained": true,
         "debug": true
     },
     "verbose": false,
@@ -48,5 +48,5 @@
         "enabled": true,
         "frequency": 1
     },
-    "wandb": false
+    "wandb": true
 }
