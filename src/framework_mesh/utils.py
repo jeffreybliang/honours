@@ -385,3 +385,53 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
     # plt.show()
 
     return fig, cmin, cmax
+
+
+def compute_boundary_distance_heatmap(src: Meshes, boundary_mask, D_all, cmin=None, cmax=None):
+    """
+    Computes a 3D heatmap coloring each vertex in `src` based on its geodesic distance to the nearest boundary vertex.
+    """
+    verts3d = src.verts_padded()[0]  # (V, 3)
+    V = verts3d.shape[0]
+    faces = src.faces_packed()
+
+    with torch.no_grad():
+        boundary_ids = torch.where(boundary_mask[:V])[0]
+        D = D_all[:V, :V]
+        boundary_dists = D[:, boundary_ids]  # (V, B)
+        min_dist, _ = torch.min(boundary_dists, dim=1)
+        heatmap_values = min_dist.float().cpu().numpy()
+
+    if cmin is None or cmax is None:
+        max_val = np.percentile(heatmap_values, 95)
+        cmin, cmax = 0, max_val
+
+    mesh = trimesh.Trimesh(vertices=verts3d.cpu().numpy(), faces=faces.cpu().numpy())
+    i, j, k = mesh.faces.T
+
+    fig = go.Figure(data=[
+        go.Mesh3d(
+            x=mesh.vertices[:, 0],
+            y=mesh.vertices[:, 1],
+            z=mesh.vertices[:, 2],
+            i=i, j=j, k=k,
+            intensity=heatmap_values,
+            colorscale='Greens',
+            cmin=cmin, cmax=cmax,
+            colorbar=dict(title='Hop Distance to Boundary'),
+            showscale=True,
+            lighting=dict(ambient=0.8, diffuse=0.9),
+            lightposition=dict(x=100, y=200, z=0),
+            opacity=1.0
+        )
+    ])
+    fig.update_layout(
+        # title='Mesh X Colored by Signed Distance from Mesh Y',
+        scene=dict(
+            aspectmode='data',
+            xaxis=dict(title="X"),
+            yaxis=dict(title="Y"),
+            zaxis=dict(title="Z")),         
+    )
+    fig.update_layout(title='Distance to Nearest Boundary (3D Geodesic)', scene=dict(aspectmode='data'))
+    return fig, cmin, cmax

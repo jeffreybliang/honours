@@ -117,8 +117,9 @@ class ExperimentRunner:
             # Visualization step (optional)
             # if self.vis_enabled:
                 # visualise_meshes(src_mesh, tgt_mesh)
-        run.config["view_idxs"] = view_idxs
-        run.finish()
+        if self.wandb:
+            run.config["view_idxs"] = view_idxs
+            run.finish()
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
                    n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
@@ -153,6 +154,7 @@ class ExperimentRunner:
         a,b = a[0], b[0]
         projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
+        bmin,bmax = None,None
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
@@ -197,11 +199,19 @@ class ExperimentRunner:
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             if self.vis_enabled and i % self.vis_freq == self.vis_freq-1:
                 projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
-                heatmap,cmin,cmax = create_heatmap(Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
+                tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
+                heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
+                boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
+                    tmp_mesh, boundary_mask, D_all, bmin, bmax
+                )
+
                 if self.wandb:
-                    wandb.log({"plt/projections": wandb.Image(projectionplot),
-                                "plt/heatmap": wandb.Plotly(heatmap)}, 
-                                step=i + step_offset)   
+                    wandb.log({
+                        "plt/projections": wandb.Image(projectionplot),
+                        "plt/heatmap": wandb.Plotly(heatmap),
+                        "plt/boundary_heatmap": wandb.Plotly(boundary_fig)
+                        }, 
+                        step=i + step_offset)
         return best_verts
 
     def get_gt_mesh(self,name):

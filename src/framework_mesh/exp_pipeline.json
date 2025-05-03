@@ -32,7 +32,7 @@
         }    
     },
     "training": {
-    "n_iters": 50,
+    "n_iters": 2,
     "lr": 1e-5,
     "momentum": 0.9
     },
@@ -48,5 +48,5 @@
         "enabled": true,
         "frequency": 1
     },
-    "wandb": true
+    "wandb": false
 }
