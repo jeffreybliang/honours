@@ -385,4 +385,3 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
     # plt.show()
 
     return fig, cmin, cmax
-

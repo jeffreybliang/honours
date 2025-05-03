@@ -12,6 +12,27 @@ def A_from_u_batch(u):
     Q = rotation_matrix_3d_batch(u[:, 3:])
     return Q @ Lambda @ Q.transpose(-1, -2)
 
+def rotation_matrix_3d_batch(angles):
+    alpha, beta, gamma = angles[:, 0], angles[:, 1], angles[:, 2]
+    R = torch.stack([
+        torch.stack([
+            torch.cos(alpha) * torch.cos(beta),
+            torch.cos(alpha) * torch.sin(beta) * torch.sin(gamma) - torch.sin(alpha) * torch.cos(gamma),
+            torch.cos(alpha) * torch.sin(beta) * torch.cos(gamma) + torch.sin(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            torch.sin(alpha) * torch.cos(beta),
+            torch.sin(alpha) * torch.sin(beta) * torch.sin(gamma) + torch.cos(alpha) * torch.cos(gamma),
+            torch.sin(alpha) * torch.sin(beta) * torch.cos(gamma) - torch.cos(alpha) * torch.sin(gamma)
+        ], dim=1),
+        torch.stack([
+            -torch.sin(beta),
+            torch.cos(beta) * torch.sin(gamma),
+            torch.cos(beta) * torch.cos(gamma)
+        ], dim=1)
+    ], dim=1)
+    return R
+
 def schur_complement_batch(M):
     A, B, C, D, E, F = M[:, 0, 0], M[:, 1, 1], M[:, 2, 2], M[:, 0, 1], M[:, 0, 2], M[:, 1, 2]
     return torch.stack([
