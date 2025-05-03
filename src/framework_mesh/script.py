@@ -11,8 +11,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("cpu")
     
-    data_path = "/home/jeffrey/honours/src/framework_mesh/skyconfig_gpu.json"
-    exp_config_path = "/home/jeffrey/honours/src/framework_mesh/exp_gradients.json"
+    data_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/skyconfig_local.json"
+    exp_config_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/exp_pipeline.json"
 
     with open(data_path, 'r') as f:
         data_config = json.load(f)
@@ -20,9 +20,9 @@ def main():
     with open(exp_config_path, 'r') as f:
         exp_config = json.load(f)
 
-    methods = ["invhop", "khop"]
-    constrained_options = [True, False]
-    mesh_resolutions = [2, 3]
+    methods = ["jacobi"]
+    constrained_options = [False]
+    mesh_resolutions = [2]
 
     for mesh_res in mesh_resolutions:
         # Update mesh resolution

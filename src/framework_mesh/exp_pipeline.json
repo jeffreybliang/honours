@@ -32,9 +32,9 @@
         }    
     },
     "training": {
-    "n_iters": 200,
-    "lr": 2e-5,
-    "momentum": 0.8
+    "n_iters": 50,
+    "lr": 1e-5,
+    "momentum": 0.9
     },
     "gradient": {
         "smoothing": true,
