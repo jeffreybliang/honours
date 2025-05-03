@@ -32,13 +32,13 @@
         }    
     },
     "training": {
-    "n_iters": 50,
+    "n_iters": 200,
     "lr": 1e-5,
-    "momentum": 0.9
+    "momentum": 0.8
     },
     "gradient": {
         "smoothing": true,
-        "type": "jacobi",
+        "method": "khop",
         "k": 5,
         "constrained": false,
         "debug": true

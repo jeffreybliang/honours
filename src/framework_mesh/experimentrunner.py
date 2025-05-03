@@ -55,10 +55,12 @@ class ExperimentRunner:
         self.wandb = self.cfg["wandb"]
 
         self.smoothing = self.cfg["gradient"]["smoothing"]
-        self.smoothing_type = self.cfg["gradient"]["type"]
+        self.smoothing_method = self.cfg["gradient"]["method"]
         self.smoothing_k = self.cfg["gradient"]["k"]
         self.smoothing_constrained = self.cfg["gradient"]["constrained"]
         self.smoothing_debug = self.cfg["gradient"]["debug"]
+        if self.smoothing_debug:
+            print("Smoothing debug is on")
 
     def run(self):
         device = self.data_loader.device
@@ -110,7 +112,7 @@ class ExperimentRunner:
             step_offset += self.n_iters
 
             # Update source mesh for warmstarting
-            src_mesh = Meshes(verts=final_verts, faces=src_mesh.faces_padded())
+            src_mesh = Meshes(verts=final_verts.float(), faces=src_mesh.faces_padded())
             src_name = tgt_name
             # Visualization step (optional)
             # if self.vis_enabled:
@@ -124,20 +126,17 @@ class ExperimentRunner:
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
         verts = verts_init.clone().detach().requires_grad_(True).to(device)
+        V_max = src.num_verts_per_mesh().max().item()
+        boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
 
         if self.smoothing:
             faces = src[0].faces_packed().to(device)
             edge_src, edge_dst = build_edge_lists(faces, device)
 
-            V_max = src.num_verts_per_mesh().max().item()
-            boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
-
-            V = verts.size(1)
-            all_idx = torch.arange(V, device=device)
+            all_idx = torch.arange(V_max, device=device)
             D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
-
             hook = select_hook(
-                method=self.smoothing_type,         # "jacobi", "invhop", or "khop"
+                method=self.smoothing_method,         # "jacobi", "invhop", or "khop"
                 edge_src=edge_src,
                 edge_dst=edge_dst,
                 boundary_mask=boundary_mask,
@@ -238,7 +237,6 @@ class ExperimentRunner:
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         camera_matrices = self.get_camera_matrices()
         edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
-
         view_idx = list(range(len(camera_matrices)))
         projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)
