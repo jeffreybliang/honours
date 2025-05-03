@@ -154,16 +154,46 @@ class BoundaryProjectionChamferLoss(nn.Module):
         z = torch.cos(theta)
         return torch.stack([x.flatten(), y.flatten(), z.flatten()], dim=0)
 
+    def sample_ellipsoid_surface_uniform(self, A: torch.Tensor, n: int, oversample: float = 2.0):
+        """
+        Sample n points uniformly from the surface {x | xᵀ A x = 1}.
+        """
+        eigvals, eigvecs = torch.linalg.eigh(A)
+        A_inv_sqrt = eigvecs @ torch.diag(1.0 / torch.sqrt(eigvals)) @ eigvecs.T
+
+        samples = []
+        batch = int(n * oversample)
+
+        while sum(p.shape[1] for p in samples) < n:
+            u = torch.randn(3, batch, dtype=torch.double)
+            u /= torch.norm(u, dim=0, keepdim=True)
+            
+            x = A_inv_sqrt @ u
+            # norm_A = torch.sqrt(torch.sum(x_tilde * (A @ x_tilde), dim=0))  # correct A-norm
+            # x = x_tilde / norm_A.unsqueeze(0)
+
+            # weights = torch.norm(x_tilde, dim=0)  # ||M u|| (used for density correction)
+            # probs = 1.0 / weights**3
+            # probs /= probs.max()
+
+            accept = torch.rand(batch) < 1
+            samples.append(x[:, accept])
+
+        result = torch.cat(samples, dim=1)[:, :n]
+        return result  # (3, n)
+
+
     def forward(self, input, p=1.6075):
         B = len(self.rot_mats)
         A = A_from_u_batch(input).double()  # (1, 3, 3)
         Au = A[0]
-        L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
-        Binv = torch.inverse(L)        # B⁻¹ (3×3)
+        # L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
+        # Binv = torch.inverse(L)        # B⁻¹ (3×3)
 
-        z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
-        E = Binv @ z  # (3, M), ellipsoid surface points
-
+        # z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
+        # E = Binv @ z  # (3, M), ellipsoid surface points
+        n = self.sqrt_m ** 2
+        E = self.sample_ellipsoid_surface_uniform(Au, n)
         # Step 5: Loop over each view
         boundary_pts = []
         boundary_lengths = []

@@ -147,8 +147,7 @@ class EllipsoidExperiment:
         if backend == "mpl":
             fig,vmin,vmax = plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points.cpu(), r=r, vmin=self.vmin, vmax=self.vmax)
             wandb.log({f"vis/ellipsoid": wandb.Image(fig)}, step=step)
-            plt.close(fig)
-
+            plt.close()
         elif backend == "plotly":
             fig,vmin,vmax = plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points.cpu(), r=r, vmin=self.vmin, vmax=self.vmax)
             wandb.log({f"vis/ellipsoid": wandb.Plotly(fig)}, step=step)
@@ -162,4 +161,4 @@ class EllipsoidExperiment:
             if callable(silhouette):
                 fig = silhouette(step=step)
                 wandb.log({f"vis/silhouettes": wandb.Image(fig)}, step=step)
-                plt.close(fig)
+                plt.close()
