@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from matplotlib.patches import Polygon
 from framework_ellipsoid.utils import rotation_matrix_3d
 import math
+import numpy as np
 
 def plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, vmax=None, show_gt=False):
     u = torch.linspace(0, 2 * torch.pi, 80)
@@ -92,7 +93,8 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     radii = torch.norm(ellipsoid_xyz, dim=0)
     residuals = (radii - r).reshape(rotated.shape[:2]).cpu().numpy()
     if vmin is None or vmax is None:
-        vmin, vmax = residuals.min().item(), residuals.max().item()
+        absmax = np.abs(residuals).max().item()
+        vmin, vmax = -absmax, absmax
 
     surface = go.Surface(
         x=rotated[..., 0].cpu().numpy(),
@@ -100,9 +102,10 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
         z=rotated[..., 2].cpu().numpy(),
         surfacecolor=residuals,
         colorscale='RdBu',
+        reversescale=True,
         cmin=vmin,
         cmax=vmax,
-        opacity=0.95,
+        opacity=0.98,
         showscale=True
     )
 
@@ -111,7 +114,7 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
     scatter = go.Scatter3d(
         x=pts[0], y=pts[1], z=pts[2],
         mode='markers',
-        marker=dict(size=1, color='black', opacity=0.5)
+        marker=dict(size=1.2, color='black', opacity=0.5)
     )
 
     # Optional: GT sphere wireframe
@@ -133,11 +136,11 @@ def plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points, r=0.62, vmin=None, 
 
     fig = go.Figure(data=data)
     fig.update_layout(scene=dict(
-        xaxis=dict(range=[-1, 1]),
-        yaxis=dict(range=[-1, 1]),
-        zaxis=dict(range=[-1, 1]),
-        aspectmode='cube'
+        aspectmode='data'
     ))
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
     fig.update_layout(
         scene = dict(
             xaxis = dict(visible=False),

@@ -2,7 +2,7 @@
     "project": "ellipsoid-experiments",
     "name": "test volume constrained non-axis aligned",
     "problem": "volumeconstrained",
-    "sqrt_m": 25,
+    "sqrt_m": 30,
     "seed": 42,
     "noise": 1e-4,
     "p": 1.6075,
@@ -13,14 +13,14 @@
       "m": 50
     },
     "training": {
-      "n_iters": 50,
+      "n_iters": 100,
       "lr": 5e-1,
-      "momentum": 0.8
+      "momentum": 0.7
     },
     "verbose": true,
     "vis": {
       "enabled": true,
-      "frequency": 2,
+      "frequency": 1,
       "backend": "plotly"
     },
     "wandb": true

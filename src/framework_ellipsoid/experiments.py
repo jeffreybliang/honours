@@ -36,7 +36,13 @@ class EllipsoidExperiment:
             run = wandb.init(
                 project=self.cfg.get("project", "ellipsoid-exp"),
                 name=self.cfg.get("name", f"{self.cfg['problem']}-{self.cfg.get('target', {}).get('m', 'unknown')}"),
-                config=self.cfg,    
+                config={
+                    "problem": self.cfg["problem"],
+                    # "axes_id": self.cfg["axes_id"],         # letter like "A"
+                    # "rotation_id": self.cfg["rotation_id"], # letter like "R2"
+                    # "trial": self.cfg["trial"],
+                    **self.cfg
+                },
                 reinit=True,
             )
             wandb.define_metric("outer/loss", summary="min")
@@ -55,7 +61,6 @@ class EllipsoidExperiment:
             res = loss_fn(y)
             outer_loss = res.sum()
             outer_loss.backward()
-            optimiser.step()
             pbar.set_description(f"Loss: {outer_loss.item():.4f}")
             if self.wandb:
                 wandb.log({
@@ -72,6 +77,7 @@ class EllipsoidExperiment:
             c_hat = y_detached[2].item()
             if y_detached.numel() >= 6:  # check if angles exist
                     yaw_hat, pitch_hat, roll_hat = torch.rad2deg(y_detached[3:6]).tolist()
+
 
             if self.wandb:
                 self.log_geometry_and_errors(y_detached, self.cfg, i)
@@ -90,6 +96,9 @@ class EllipsoidExperiment:
                         f"has volume {ellipsoid_volume(a_hat, b_hat, c_hat):.3f} and "
                         f"surface area {ellipsoid_surface_area(a_hat, b_hat, c_hat, self.problem.p):.5f}. "
                         f"LR {optimiser.param_groups[0]['lr']}")
+                    
+            optimiser.step()
+
         if self.wandb:
             run.finish()
 
@@ -140,14 +149,13 @@ class EllipsoidExperiment:
             yaw = pitch = roll = 0.0
 
         r = cfg["target"]["radius"]
-        backend = vis_cfg.get("backend", "mpl")
+        backend = vis_cfg.get("backend", "plotly")
 
         points = x[0].detach().view(3,-1)
 
         if backend == "mpl":
             fig,vmin,vmax = plot_ellipsoid_mpl(a, b, c, yaw, pitch, roll, points.cpu(), r=r, vmin=self.vmin, vmax=self.vmax)
             wandb.log({f"vis/ellipsoid": wandb.Image(fig)}, step=step)
-            plt.close(fig)
 
         elif backend == "plotly":
             fig,vmin,vmax = plot_ellipsoid_plotly(a, b, c, yaw, pitch, roll, points.cpu(), r=r, vmin=self.vmin, vmax=self.vmax)
@@ -161,5 +169,7 @@ class EllipsoidExperiment:
             silhouette = getattr(loss_fn, "plot_silhouettes", None)
             if callable(silhouette):
                 fig = silhouette(step=step)
-                wandb.log({f"vis/silhouettes": wandb.Image(fig)}, step=step)
-                plt.close(fig)
+                try:
+                    wandb.log({f"vis/silhouettes": wandb.Image(fig)}, step=step)
+                except Exception as e:
+                    print(f"[WARN] Failed to log vis/silhouettes to wandb: {e}")
