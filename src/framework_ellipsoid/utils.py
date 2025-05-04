@@ -5,6 +5,7 @@ from torch import cos, sin
 import torch.nn.functional as F
 from scipy.interpolate import interp1d
 
+# Main sampling function
 def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
     if uniform:
         m = sqrt_m * sqrt_m
@@ -12,20 +13,22 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, 
             x = a * torch.sin(t) * torch.cos(u)
             y = b * torch.sin(t) * torch.sin(u)
             z = c * torch.cos(t)
-            return torch.stack([x, y, z], dim=0)  # shape (3, ...)
-        t_min, t_max = 0, torch.pi
+            return torch.stack([x, y, z], dim=0)  # (3, ...)
         u_min, u_max = 0, 2 * torch.pi
-        coords = r_surface(m, ellipsoid_func, t_min, t_max, u_min, u_max, 100, 100)
+        t_min, t_max = 0, torch.pi
+        coords = r_surface(m, ellipsoid_func, t_min, t_max, u_min, u_max, m, m).double()
 
     else:
-        phi = 2.0 * math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
-        theta = math.pi * torch.linspace(0.0, 1.0, sqrt_m).double()
-        phi, theta = torch.meshgrid(phi, theta, indexing='ij')
-        x = a * torch.sin(theta) * torch.cos(phi)
-        y = b * torch.sin(theta) * torch.sin(phi)
-        z = c * torch.cos(theta)
-        coords = torch.stack((x.flatten(), y.flatten(), z.flatten()), dim=0)
-    
+        def ellipsoid_func(theta, phi):
+            x = a * torch.sin(theta) * torch.cos(phi)
+            y = b * torch.sin(theta) * torch.sin(phi)
+            z = c * torch.cos(theta)
+            return torch.stack([x, y, z], dim=0)
+
+        theta = torch.linspace(0, math.pi, sqrt_m).double()
+        phi = torch.linspace(0, 2 * math.pi, sqrt_m).double()
+        theta, phi = torch.meshgrid(theta, phi, indexing='ij')
+        coords = ellipsoid_func(theta, phi).reshape(3, -1)
     angles = torch.tensor([yaw, pitch, roll], dtype=yaw.dtype)
     if torch.any(angles != 0):
         R = rotation_matrix_3d(torch.tensor([yaw, pitch, roll]))
@@ -158,22 +161,20 @@ def build_view_matrices(cfg):
     return R
 
 def r_surface(n, func, t0, t1, u0, u1, t_precision=50, u_precision=50, device='cpu'):
-    # Create t, u grids
-    t_vals = 2.0 * torch.pi * torch.linspace(0,1, t_precision, device=device).double()
-    u_vals = torch.pi * torch.linspace(0,1, u_precision, device=device).double()
-    t, u = torch.meshgrid(t_vals, u_vals, indexing='ij')  # (t_precision, u_precision)
+    theta_vals = torch.linspace(t0, t1, t_precision, device=device).double()
+    phi_vals = torch.linspace(u0, u1, u_precision, device=device).double()
+    theta, phi = torch.meshgrid(theta_vals, phi_vals, indexing='ij')  # (t, u)
 
-    coords = func(t, u)  # (3, t_precision, u_precision)
+    coords = func(theta, phi)  # (3, t, u)
 
-    # Compute differential vectors
+    # Area elements
     dt = torch.zeros_like(coords)
     du = torch.zeros_like(coords)
     dt[:, 1:, :] = coords[:, 1:, :] - coords[:, :-1, :]
     du[:, :, 1:] = coords[:, :, 1:] - coords[:, :, :-1]
 
-    dS = torch.norm(torch.cross(dt, du, dim=0), dim=0)  # (t_precision, u_precision)
+    dS = torch.norm(torch.cross(dt, du, dim=0), dim=0)  # (t, u)
 
-    # Cumulative area for sampling
     cum_S_t = torch.cumsum(dS.sum(dim=1), dim=0)
     cum_S_u = torch.cumsum(dS.sum(dim=0), dim=0)
 
@@ -181,15 +182,14 @@ def r_surface(n, func, t0, t1, u0, u1, t_precision=50, u_precision=50, device='c
     rand_S_u = torch.rand(n, device=device) * cum_S_u[-1]
 
     def interp(x, xp, fp):
-        idx = torch.searchsorted(xp, x, right=True).clamp(min=1, max=len(xp)-1)
+        idx = torch.searchsorted(xp, x, right=True).clamp(min=1, max=len(xp) - 1)
         x0 = xp[idx - 1]
         x1 = xp[idx]
         y0 = fp[idx - 1]
         y1 = fp[idx]
         return y0 + (x - x0) * (y1 - y0) / (x1 - x0)
 
-    rand_t = interp(rand_S_t, cum_S_t, t_vals)
-    rand_u = interp(rand_S_u, cum_S_u, u_vals)
+    rand_theta = interp(rand_S_t, cum_S_t, theta_vals)
+    rand_phi = interp(rand_S_u, cum_S_u, phi_vals)
 
-    rand_coords = func(rand_t, rand_u)  # (3, n)
-    return rand_coords
+    return func(rand_theta, rand_phi)  # (3, n)

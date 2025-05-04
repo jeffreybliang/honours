@@ -4,10 +4,10 @@
     "problem": "axisaligned",
     "sqrt_m": 25,
     "seed": 42,
-    "noise": 1e-4,
+    "noise": 1e-3,
     "p": 1.6075,
     "initial_axes": [0.2, 0.2, 0.3],
-    "initial_angles": [30, 40, 50],
+    "initial_angles": [0,0,0],
       "target": {
       "radius": 0.2820947918,
       "m": 50
@@ -35,14 +35,14 @@
     ],
     "view_indices": [0, 1],
     "training": {
-      "n_iters": 50,
-      "lr": 1e-3,
-      "momentum": 0.9
+      "n_iters": 2,
+      "lr": 1e-2,
+      "momentum": 0.7
     },
     "verbose": true,
     "vis": {
       "enabled": true,
-      "frequency": 5,
+      "frequency": 1,
       "backend": "plotly"
     },
     "wandb": true
