@@ -187,12 +187,12 @@ class BoundaryProjectionChamferLoss(nn.Module):
         B = len(self.rot_mats)
         A = A_from_u_batch(input).double()  # (1, 3, 3)
         Au = A[0]
-        L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
-        Binv = torch.linalg.inv(L)        # B⁻¹ (3×3)
+        # L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
+        # Binv = torch.inverse(L)        # B⁻¹ (3×3)
 
         # z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
         # E = Binv @ z  # (3, M), ellipsoid surface points
-        n = self.sqrt_m * self.sqrt_m
+        n = self.sqrt_m ** 2
         E = self.sample_ellipsoid_surface_uniform(Au, n)
         # Step 5: Loop over each view
         boundary_pts = []

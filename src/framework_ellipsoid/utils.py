@@ -13,8 +13,11 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, 
             x = a * torch.sin(t) * torch.cos(u)
             y = b * torch.sin(t) * torch.sin(u)
             z = c * torch.cos(t)
-            return torch.stack([x, y, z], dim=0)
-        coords = r_surface(m, ellipsoid_func, 0, torch.pi, 0, 2*torch.pi, 100, 100)
+            return torch.stack([x, y, z], dim=0)  # (3, ...)
+        u_min, u_max = 0, 2 * torch.pi
+        t_min, t_max = 0, torch.pi
+        coords = r_surface(m, ellipsoid_func, t_min, t_max, u_min, u_max, m, m).double()
+
     else:
         def ellipsoid_func(theta, phi):
             x = a * torch.sin(theta) * torch.cos(phi)
@@ -170,8 +173,7 @@ def r_surface(n, func, t0, t1, u0, u1, t_precision=50, u_precision=50, device='c
     dt[:, 1:, :] = coords[:, 1:, :] - coords[:, :-1, :]
     du[:, :, 1:] = coords[:, :, 1:] - coords[:, :, :-1]
 
-    crossed = torch.cross(dt, du, dim=0)       # → (n_θ, n_φ, 3)
-    dS = torch.norm(crossed, dim=0)            # → (n_θ, n_φ)
+    dS = torch.norm(torch.cross(dt, du, dim=0), dim=0)  # (t, u)
 
     cum_S_t = torch.cumsum(dS.sum(dim=1), dim=0)
     cum_S_u = torch.cumsum(dS.sum(dim=0), dim=0)
@@ -191,5 +193,3 @@ def r_surface(n, func, t0, t1, u0, u1, t_precision=50, u_precision=50, device='c
     rand_phi = interp(rand_S_u, cum_S_u, phi_vals)
 
     return func(rand_theta, rand_phi)  # (3, n)
-
-
