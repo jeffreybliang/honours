@@ -1,7 +1,7 @@
 {
     "project": "Video Sequence",
     "name": "res_2_sphere_init",
-    "description": "sky, sphere to balloon dropping on ground",
+    "description": "sky background, sphere to balloon dropping on ground",
     "src_mesh": "sphere",
     "target_meshes": [
         "Oblique0", 
@@ -100,7 +100,7 @@
     },
     "training": {
         "n_iters": 100,
-        "lr": 1e-5,
+        "lr": 1e-6,
         "momentum": 0.8
     },
     "verbose": true,

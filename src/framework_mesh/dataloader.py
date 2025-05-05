@@ -76,6 +76,8 @@ class DataLoader:
             return None
 
         verts, faces, _ = load_obj(mesh_path, device=self.device)
+        verts = torch.stack([verts[:, 0], -verts[:, 2], verts[:, 1]], dim=1)
+
         return Meshes(verts=[verts], faces=[faces.verts_idx])
 
     def get_gt_mesh(self, mesh_name):
@@ -88,4 +90,6 @@ class DataLoader:
             return None
 
         verts, faces, _ = load_obj(gt_path, device=self.device)
+        verts = torch.stack([verts[:, 0], -verts[:, 2], verts[:, 1]], dim=1)
+
         return Meshes(verts=[verts], faces=[faces.verts_idx])

@@ -118,7 +118,8 @@ class PyTorchChamferLoss(nn.Module):
                         x_lengths=boundary_lengths[b].long(),
                         y_lengths=self.edgemaps_len[b].long(),
                         batch_reduction="mean",
-                        point_reduction="mean")
+                        point_reduction="mean",
+                        single_directional=True)
             chamfer_loss[b] = res.sum()
 
         return chamfer_loss.double()

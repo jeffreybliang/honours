@@ -26,7 +26,7 @@ def main():
         dataloader = DataLoader(data_config, device)
 
         if not smoothing:
-            exp_config['name'] = f"pipeline_nosmooth_res_{mesh_res}"
+            exp_config['name'] = f"nosmooth_res_{mesh_res}"
             print(f"[RUN] smoothing=False | mesh_res={mesh_res}")
             runner = ExperimentRunner(exp_config, dataloader)
             runner.run()
@@ -36,7 +36,7 @@ def main():
             constrained = False
             exp_config['gradient']['method'] = method
             exp_config['gradient']['constrained'] = constrained
-            exp_config['name'] = f"pipeline_{method}_constrained_{constrained}_res_{mesh_res}"
+            exp_config['name'] = f"smooth_{method}_constrained_{constrained}_res_{mesh_res}"
             print(f"[RUN] smoothing=True | method={method} | constrained={constrained} | mesh_res={mesh_res}")
             runner = ExperimentRunner(exp_config, dataloader)
             runner.run()
