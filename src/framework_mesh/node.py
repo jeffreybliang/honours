@@ -105,15 +105,15 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
 
             eq_constraint = {
                 'type': 'eq',
-                'fun' : lambda u: volume_constraint(u, faces, vol).cpu().numpy(),
-                'jac' : lambda u: volume_constraint_grad(u, faces).cpu().numpy(),
+                'fun' : lambda u: volume_constraint(u, faces, vol, xs.device).cpu().numpy(),
+                'jac' : lambda u: volume_constraint_grad(u, faces, xs.device).cpu().numpy(),
             }
 
             res = opt.minimize(
-                lambda u: least_squares(u, verts).detach().cpu().numpy(),
+                lambda u: least_squares(u, verts, xs.device).detach().cpu().numpy(),
                 Y,
                 method='SLSQP',
-                jac=lambda u: least_squares_grad(u, verts).cpu().numpy(),
+                jac=lambda u: least_squares_grad(u, verts, xs.device).cpu().numpy(),
                 constraints=[eq_constraint],
                 options={'ftol': 1e-4, 'iprint': 2, 'maxiter': 100}
             )

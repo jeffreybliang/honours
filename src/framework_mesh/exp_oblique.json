@@ -108,5 +108,5 @@
         "enabled": true,
         "frequency": 1
     },
-    "wandb": true
+    "wandb": false
 }
