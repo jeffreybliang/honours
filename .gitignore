@@ -21,3 +21,5 @@ readings.syn*
 
 wandb/
 __pycache__
+
+src/data/Diffuse/

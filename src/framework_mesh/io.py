@@ -13,8 +13,6 @@ def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
     cam_names = set()
     file_pattern = re.compile(r"^Cam_([A-Za-z]+_\d+)_(K|RT|P)\.npy$")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     if matrix_types is not None:
         matrix_types = set(matrix_types)
 

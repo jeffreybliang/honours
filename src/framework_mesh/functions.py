@@ -6,11 +6,10 @@ import numpy as np
 
 torch.autograd.set_detect_anomaly(True)
 
-def least_squares(u0, tgt_vtxs):
+def least_squares(u0, tgt_vtxs, device=torch.device("cpu")):
     """
     u0 are vertices
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if not torch.is_tensor(u0):
         u0 = torch.tensor(u0, device=device)
     if not torch.is_tensor(tgt_vtxs):
@@ -18,8 +17,7 @@ def least_squares(u0, tgt_vtxs):
     res = torch.square(u0 - tgt_vtxs.flatten()).sum()
     return res.double()
 
-def least_squares_grad(u0, tgt_vtxs):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def least_squares_grad(u0, tgt_vtxs, device=torch.device("cpu")):
     if torch.is_tensor(u0):
         u0 = u0.detach().clone()
     else:
@@ -44,7 +42,7 @@ def calculate_volume(vertices, faces):
     return volume.abs()
 
 
-def volume_constraint(x, faces, tgt_vol):
+def volume_constraint(x, faces, tgt_vol, device=torch.device("cpu")):
     """
     Calculate the volume of a mesh using PyTorch tensors.
     Args:
@@ -53,8 +51,6 @@ def volume_constraint(x, faces, tgt_vol):
     Returns:
         volume: Total volume of the mesh as a PyTorch scalar
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     if not torch.is_tensor(x):
         x = torch.tensor(x, device=device)
     if not torch.is_tensor(faces):
@@ -68,8 +64,7 @@ def volume_constraint(x, faces, tgt_vol):
     res = volume.abs() - tgt_vol
     return res.double()
 
-def volume_constraint_grad(x, faces):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def volume_constraint_grad(x, faces, device=torch.device("cpu")):
     if torch.is_tensor(x):
         x = x.detach().clone()
     else:
