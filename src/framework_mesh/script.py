@@ -4,14 +4,14 @@ import warnings
 warnings.filterwarnings('ignore')
 
 def main():
-    data_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/skyconfig_local.json"
+    data_path = "/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/obliqueconfig_local.json"
     with open(data_path, 'r') as f:
         config = json.load(f)
 
     # Modify the 'mesh_res' value
     config['paths']['mesh_res'] = 2
     dataloader = DataLoader(config)
-    runner = ExperimentRunner("/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/exp_pipeline.json", dataloader)
+    runner = ExperimentRunner("/Users/jeffreyliang/Documents/Honours/honours/src/framework_mesh/exp_oblique.json", dataloader)
     runner.run()
 
     # config['paths']['mesh_res'] = 3
