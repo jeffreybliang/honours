@@ -91,6 +91,13 @@
             "num_views": 13
         }
     },
+    "gradient": {
+        "smoothing": false,
+        "method": "jacobi",
+        "k": 5,
+        "constrained": false,
+        "debug": false
+    },
     "training": {
         "n_iters": 100,
         "lr": 1e-5,

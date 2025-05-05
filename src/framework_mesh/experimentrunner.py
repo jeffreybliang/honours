@@ -89,6 +89,7 @@ class ExperimentRunner:
 
         src_mesh = self.get_mesh(src_name).to(device)
         for tgt_name in tgt_names:
+            print(f"Target: {tgt_name}")
             tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
 
             # Use encapsulated loading logic
