@@ -286,6 +286,20 @@
 		For my thesis, I would like to plan out my roadmap and write my abstract. My dad would like me to write a problem definition, idk if I'll use it but I'll do it to make him happy. 
 	\end{MeetingMinutes}
 
+	\begin{MeetingMinutes}{Fri 25/04/2025}{u7013004}
+		random crap:
+		% The process of obtaining a dense 3D geometry, such as a triangle mesh, from an unstructured point cloud is known as \textit{surface reconstruction} must be performed. In literature, three commonly implemented approaches for surface reconstruction are alpha shapes, ball pivoting, and Poisson surface reconstruction.
+
+% Alpha shapes, or $\alpha$-shapes, are generalisations of the convex hull of a finite set of points pioneered by \citet{edelsbrunnerShapeSetPoints1983} and \citet{edelsbrunnerThreedimensionalAlphaShapes1994} parametrised by a real value $\alpha \in [0, \infty)$. Their work aimed to formalise the geometric concept of a "shape", which previously had no formal notion.
+
+% As described by \citet{edelsbrunnerShapeSetPoints1983}, the $\alpha$-shape of a point set $S$ can be considered intuitively by treating the ambient space as a Styrofoam material and the points in $S$ as hard small rocks. Using a spherical eraser with radius $\alpha$, the Styrofoam material can be carved out so long as no hard rocks are enclosed in the removed area. The resulting carved object has its edges straightened out and spherical caps replaced with triangles to form the $\alpha$-shape of $S$. Thus, as $\alpha \to 0$, the resulting $\alpha$-shape has all ambient space removed, returning the original point set $S$, and as $\alpha \to \infty$, the $\alpha$-shape is identical to the convex hull of $S$. 
+
+% In practice, $\alpha$-shapes are calculated via a modified Delaunay triangulation process. Delaunay triangulation is the process of subdividing the point cloud into Delaunay triangles, which have circumcircles that do not contain any other points apart from the triangle's three vertices. This mesh is modified by removing triangle edges with length greater than $\alpha$.
+
+% Another approach is the ball-pivoting algorithm~\citep{bernardiniBallpivotingAlgorithmSurface1999}. This method reconstructs the surface of a point cloud by dropping balls of various user-defined radii onto the point cloud. If the ball touches three points without containing any other, a triangle of the mesh is formed. The ball then maintains contact with a selected edge of the triangle, and pivots around it until it comes into contact with another point which it cannot fall through, whereupon a new triangle is added to the mesh. This process occurs until all reachable triangles are formed and then the process is attempted with a larger radius ball.
+
+	\end{MeetingMinutes}
+
 \section{Ellipsoid Formulation} \label{sec:ellipsoid}
 An ellipsoid is a 3-dimensional surface obtained by deforming a sphere under an affine transformation. As ellipsoid surfaces can be represented as the zero set of a quadratic polynomial in three variables, it is considered a quadric surface.
 

@@ -5,7 +5,7 @@ from pytorch3d.structures import Meshes
 from .io import *
 
 class DataLoader:
-    def __init__(self, config) -> None:
+    def __init__(self, config, device=torch.device("cpu")) -> None:
 
         if isinstance(config, str) and os.path.exists(config):
             with open(config, "r") as f:
@@ -14,7 +14,9 @@ class DataLoader:
             self.cfg = config
         else:
             raise ValueError("Invalid experiment_config. Must be a path or dict.")
-
+        
+        self.device = device
+        
         # Set up paths and other config settings
         self.mesh_dir = self.cfg["paths"]["mesh_dir"]
         self.mesh_res = self.cfg["paths"]["mesh_res"]
@@ -73,7 +75,7 @@ class DataLoader:
         if not os.path.exists(mesh_path):
             return None
 
-        verts, faces, _ = load_obj(mesh_path)
+        verts, faces, _ = load_obj(mesh_path, device=self.device)
         return Meshes(verts=[verts], faces=[faces.verts_idx])
 
     def get_gt_mesh(self, mesh_name):
@@ -85,5 +87,5 @@ class DataLoader:
         if not os.path.exists(gt_path):
             return None
 
-        verts, faces, _ = load_obj(gt_path)
+        verts, faces, _ = load_obj(gt_path, device=self.device)
         return Meshes(verts=[verts], faces=[faces.verts_idx])

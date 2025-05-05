@@ -42,28 +42,28 @@ def create_padded_tensor(vertices, vert2mesh, max_V, B):
         padded[i, :num_vertices, :] = mesh_vertices
     return padded
 
-# def plot_vertices(verts_list):
-#     fig = plt.figure(figsize=(5, 5))
-#     ax = fig.add_subplot(111, projection='3d')
+def plot_vertices(verts_list):
+    fig = plt.figure(figsize=(5, 5))
+    ax = fig.add_subplot(111, projection='3d')
     
-#     if not isinstance(verts_list, list):
-#         x, y, z = verts_list.clone().detach().cpu().squeeze().unbind(1)
-#         ax.scatter3D(x, z, -y)
-#     else:
-#         colors = ['b',  'g', 'r' , 'm', 'c', 'y']  # Define some colors for different sets
-#         marker_size = 5  # Make points smaller
+    if not isinstance(verts_list, list):
+        x, y, z = verts_list.clone().detach().cpu().squeeze().unbind(1)
+        ax.scatter3D(x, z, -y)
+    else:
+        colors = ['b',  'g', 'r' , 'm', 'c', 'y']  # Define some colors for different sets
+        marker_size = 5  # Make points smaller
     
-#         for i, verts in enumerate(verts_list):
-#             x, y, z = verts.clone().detach().cpu().squeeze().unbind(1)
-#             ax.scatter3D(x, z, -y, color=colors[i % len(colors)], s=marker_size, label=f"Set {i+1}")    
+        for i, verts in enumerate(verts_list):
+            x, y, z = verts.clone().detach().cpu().squeeze().unbind(1)
+            ax.scatter3D(x, z, -y, color=colors[i % len(colors)], s=marker_size, label=f"Set {i+1}")    
     
-#     ax.set_xlabel('x')
-#     ax.set_ylabel('z')
-#     ax.set_zlabel('y')
-#     ax.set_aspect("equal")
-#     ax.view_init(190, 30)
-#     ax.legend()
-#     plt.show()
+    ax.set_xlabel('x')
+    ax.set_ylabel('z')
+    ax.set_zlabel('y')
+    ax.set_aspect("equal")
+    ax.view_init(190, 30)
+    ax.legend()
+    plt.show()
 
 def plot_projections(projverts, projmats, edgemaps):
     plt.ioff()  # Disable interactive mode
@@ -115,11 +115,16 @@ def plot_projections(projverts, projmats, edgemaps):
     axes = axes.flatten()  # Flatten for easy indexing
 
     for i in range(P):
-        proj_2d_hom = (projmats[i] @ torch.cat([projverts, torch.ones(projverts.shape[0], 1)], dim=1).T).T
-        proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]  # Normalize by depth
+        proj_2d_hom = (projmats[i] @ torch.cat([
+            projverts, torch.ones(projverts.shape[0], 1, device=projverts.device)
+        ], dim=1).T).T
+        proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]
 
-        boundary_pts = get_boundary(proj_2d)
-        valid_edges = edge_coords[i, :edge_lens[i]]
+        # Detach and move to CPU before plotting
+        proj_2d = proj_2d.detach().cpu()
+
+        boundary_pts,_ = get_boundary(proj_2d)  # already on CPU
+        valid_edges = edge_coords[i, :edge_lens[i]].cpu()
 
         ax = axes[i]
         ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='b', s=8, label="Projected Vertices")
@@ -380,4 +385,3 @@ def create_heatmap(src, tgt, cmin=None, cmax=None):
     # plt.show()
 
     return fig, cmin, cmax
-

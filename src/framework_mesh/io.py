@@ -8,10 +8,12 @@ from cv2.typing import MatLike
 from scipy.interpolate import splprep, splev
 
 
-def load_camera_matrices(path, matrix_types=None):
+def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
     cameras = defaultdict(dict)
     cam_names = set()
     file_pattern = re.compile(r"^Cam_([A-Za-z]+_\d+)_(K|RT|P)\.npy$")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if matrix_types is not None:
         matrix_types = set(matrix_types)
@@ -22,7 +24,7 @@ def load_camera_matrices(path, matrix_types=None):
             cam_name, matrix_type = match.groups()
             if matrix_types is None or matrix_type in matrix_types:
                 filepath = os.path.join(path, filename)
-                cameras[cam_name][matrix_type] = torch.tensor(np.load(filepath))
+                cameras[cam_name][matrix_type] = torch.tensor(np.load(filepath), device=device)
                 cam_names.add(cam_name)
 
     cam_names = sorted(cam_names)
@@ -58,7 +60,7 @@ def canny_edge_map(img: MatLike, options):
     # return edge map
     return edge_map
 
-def load_edgemaps(renders: dict, edgemap_options: dict):
+def load_edgemaps(renders: dict, edgemap_options: dict, device=torch.device("cpu")):
     edgemaps = {}
     edgemaps_len = {}
 

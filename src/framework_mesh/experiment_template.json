@@ -20,9 +20,16 @@
         }
     },
     "training": {
-    "n_iters": 150,
-    "lr": 1e-6,
-    "momentum": 0.8
+        "n_iters": 150,
+        "lr": 1e-6,
+        "momentum": 0.8
+    },
+    "gradient": {
+        "smoothing": false,
+        "type": "jacobi",
+        "k": 5,
+        "constrained": false,
+        "debug": true
     },
     "verbose": true,
     "vis": {
