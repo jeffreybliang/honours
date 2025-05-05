@@ -99,9 +99,14 @@
         "debug": false
     },
     "training": {
-        "n_iters": 150,
-        "lr": 2e-5,
+        "n_iters": 120,
+        "lr": 1e-5,
         "momentum": 0.8
+    },
+    "velocity": {
+        "enabled": true,
+        "k": 1,
+        "beta": 1
     },
     "verbose": false,
     "vis": {
