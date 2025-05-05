@@ -4,12 +4,12 @@ from .node import *
 from .chamfer import *
 from .utils import *
 from .io import *
+from .gradient import *
 from typing import List, Tuple, Union
 import random
 import wandb
 import os
 from tqdm import trange
-from .gradient import *
 
 
 class ExperimentRunner:
@@ -34,7 +34,7 @@ class ExperimentRunner:
         for mesh_name, view_config in self.cfg["views"].items():
             self.views_config[mesh_name] = {
                 "mode": view_config["mode"],
-                "view_idx": view_config["view_idx"],
+                "view_names": view_config["view_names"],
                 "num_views": view_config["num_views"]
             }
             self.num_views = view_config["num_views"]
@@ -49,8 +49,8 @@ class ExperimentRunner:
         self.vis_freq = self.cfg["vis"]["frequency"]
         # Use the DataLoader to load data
         self.data_loader = data_loader
-        edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
-        self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options, device=data_loader.device)
+        # edgemap_options = {k: v for k,v in data_loader.edgemap_options.items() if k in self.target_meshes}
+        # self.edgemaps, self.edgemaps_len = load_edgemaps(data_loader.renders, edgemap_options)
         
         self.wandb = self.cfg["wandb"]
 
@@ -84,18 +84,22 @@ class ExperimentRunner:
             wandb.define_metric("outer/gt/chamfer", summary="min")
             wandb.define_metric("outer/gt/iou", summary="max")
 
-        view_idxs = {}
+        view_names_used = {}
         step_offset = 0
 
         src_mesh = self.get_mesh(src_name).to(device)
         for tgt_name in tgt_names:
             tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
 
-            # Select the view points and get corresponding projmats
-            projmats, tgt_edgemap_info, view_idx = self.get_projmats_and_edgemap_info(tgt_name, device)
+            # Use encapsulated loading logic
+            projmats, tgt_edgemap_info, view_ids = self.get_projmats_and_edgemap_info(tgt_name, device)
             gt_projmats, gt_edgemap_info, _ = self.get_gt_projmats_and_edgemap_info(tgt_name, device)
 
-            view_idxs[tgt_name] = view_idx
+            # Reverse map view_ids to view_names
+            _, _, cam_id_to_name = self.data_loader.load_camera_matrices()
+            view_names = [cam_id_to_name[i] for i in view_ids]
+            view_names_used[tgt_name] = view_names
+
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
             # Train the mesh transformation
@@ -114,11 +118,11 @@ class ExperimentRunner:
             # Update source mesh for warmstarting
             src_mesh = Meshes(verts=final_verts.float(), faces=src_mesh.faces_padded())
             src_name = tgt_name
-            # Visualization step (optional)
-            # if self.vis_enabled:
-                # visualise_meshes(src_mesh, tgt_mesh)
-        run.config["view_idxs"] = view_idxs
-        run.finish()
+
+        if self.wandb:
+            run.config["view_names"] = view_names_used
+            run.finish()
+
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
                    n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
@@ -205,41 +209,70 @@ class ExperimentRunner:
         return best_verts
 
     def get_gt_mesh(self,name):
-        return self.data_loader.gt_meshes[name]
+        return self.data_loader.get_gt_mesh(name)
 
     def get_mesh(self, name):
-        return self.data_loader.meshes[name]
+        return self.data_loader.get_mesh(name)
     
-    def get_edgemaps(self, name):
-        return self.edgemaps[name], self.edgemaps_len[name]
+    # def get_edgemaps(self, name):
+    #     return self.edgemaps[name], self.edgemaps_len[name]
 
     def get_camera_matrices(self):
-        return self.data_loader.camera_matrices
+        return self.data_loader.load_camera_matrices()
 
     def get_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
-        camera_matrices = self.get_camera_matrices()
-        edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
+        view_conf = self.views_config[mesh_name]
+        edgemap_opts = self.data_loader.edgemap_options[mesh_name]
+        renders = self.data_loader.load_renders(mesh_name)
 
-        if self.views_config[mesh_name]["mode"] == "manual":
-            view_idx = self.views_config[mesh_name]["view_idx"]
-        else:  # random
-            num_views = self.views_config[mesh_name]["num_views"]
-            view_idx = random.sample(self.views_config[mesh_name]["view_idx"], num_views)
-        print(f"{view_idx} from {self.views_config[mesh_name]['view_idx']}")
+        view_names = (
+            view_conf["view_names"]
+            if view_conf["mode"] == "manual"
+            else random.sample(view_conf["view_names"], view_conf["num_views"])
+        )
+        print(f"{view_names} from {view_conf['view_names']}")
 
-        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
-        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx], device=device)
+    def get_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
+        view_conf = self.views_config[mesh_name]
+        edgemap_opts = self.data_loader.edgemap_options[mesh_name]
+        renders = self.data_loader.load_renders(mesh_name)
+
+        view_names = (
+            view_conf["view_names"]
+            if view_conf["mode"] == "manual"
+            else random.sample(view_conf["view_names"], view_conf["num_views"])
+        )
+        print(f"{view_names} from {view_conf['view_names']}")
+
+        edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
+        camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
+
+        view_idx = [cam_name_to_id[name] for name in view_names]
+        projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names])
+        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence(
+            [edgemaps[name] for name in view_names],
+            batch_first=True, padding_value=0.0
+        )
+        tgt_edgemaps_len = torch.tensor([edgemaps_len[name] for name in view_names])
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
 
 
+
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
-        camera_matrices = self.get_camera_matrices()
-        edgemaps, edgemaps_len = self.get_edgemaps(mesh_name)
-        view_idx = list(range(len(camera_matrices)))
-        projmats = torch.stack([camera_matrices[idx]["P"] for idx in view_idx]).to(device)
-        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence([edgemaps[i] for i in view_idx], batch_first=True, padding_value=0.0).to(device)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[i] for i in view_idx], device=device)
+        edgemap_opts = self.data_loader.edgemap_options[mesh_name]
+        renders = self.data_loader.load_renders(mesh_name)
+        edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
+
+        camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
+        view_names = sorted(cam_name_to_id.keys())  # alphabetical order
+        view_idx = [cam_name_to_id[name] for name in view_names]
+
+        projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names]).to(device)
+        tgt_edgemaps = torch.nn.utils.rnn.pad_sequence(
+            [edgemaps[name] for name in view_names],
+            batch_first=True, padding_value=0.0
+        ).to(device)
+        tgt_edgemaps_len = torch.tensor([edgemaps_len[name] for name in view_names], device=device)
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
