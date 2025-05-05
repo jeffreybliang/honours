@@ -134,12 +134,12 @@ class ExperimentRunner:
         V_max = src.num_verts_per_mesh().max().item()
         boundary_mask = torch.zeros(V_max, dtype=torch.bool, device=device)
 
-        if self.smoothing:
-            faces = src[0].faces_packed().to(device)
-            edge_src, edge_dst = build_edge_lists(faces, device)
+        faces = src[0].faces_packed().to(device)
+        edge_src, edge_dst = build_edge_lists(faces, device)
+        all_idx = torch.arange(V_max, device=device)
+        D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
 
-            all_idx = torch.arange(V_max, device=device)
-            D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
+        if self.smoothing:
             hook = select_hook(
                 method=self.smoothing_method,         # "jacobi", "invhop", or "khop"
                 edge_src=edge_src,
@@ -158,6 +158,8 @@ class ExperimentRunner:
         a,b = a[0], b[0]
         projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
         cmin,cmax = None,None
+        bmin,bmax = None,None
+
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
         if self.wandb:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
@@ -166,7 +168,7 @@ class ExperimentRunner:
         min_loss = float("inf")
         best_verts = None
     
-        pbar = trange(n_iters, desc="Training", leave=True)  # Always visible
+        pbar = trange(n_iters, desc="Training", leave=True, mininterval=5)  # Always visible
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
@@ -200,13 +202,22 @@ class ExperimentRunner:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(projverts, src, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
-            if self.vis_enabled and i % self.vis_freq == self.vis_freq-1:
+            def should_log(i):
+                return i < 50 or (i % self.vis_freq == self.vis_freq-1)  # True at i = 1, 2, 4, 8, 16, ...
+            if self.vis_enabled and should_log(i):
                 projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
-                heatmap,cmin,cmax = create_heatmap(Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
+                tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
+                heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
+                boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
+                    tmp_mesh, boundary_mask, D_all, bmin, bmax
+                )
                 if self.wandb:
-                    wandb.log({"plt/projections": wandb.Image(projectionplot),
-                                "plt/heatmap": wandb.Plotly(heatmap)}, 
-                                step=i + step_offset)   
+                    wandb.log({
+                         "plt/projections": wandb.Image(projectionplot),
+                         "plt/heatmap": wandb.Plotly(heatmap),
+                         "plt/boundary_heatmap": wandb.Plotly(boundary_fig)
+                         }, 
+                         step=i + step_offset)        
         return best_verts
 
     def get_gt_mesh(self,name):
@@ -220,18 +231,6 @@ class ExperimentRunner:
 
     def get_camera_matrices(self):
         return self.data_loader.load_camera_matrices()
-
-    def get_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
-        view_conf = self.views_config[mesh_name]
-        edgemap_opts = self.data_loader.edgemap_options[mesh_name]
-        renders = self.data_loader.load_renders(mesh_name)
-
-        view_names = (
-            view_conf["view_names"]
-            if view_conf["mode"] == "manual"
-            else random.sample(view_conf["view_names"], view_conf["num_views"])
-        )
-        print(f"{view_names} from {view_conf['view_names']}")
 
     def get_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         view_conf = self.views_config[mesh_name]

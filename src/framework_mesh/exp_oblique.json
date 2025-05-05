@@ -99,14 +99,14 @@
         "debug": false
     },
     "training": {
-        "n_iters": 100,
-        "lr": 1e-6,
+        "n_iters": 150,
+        "lr": 2e-5,
         "momentum": 0.8
     },
-    "verbose": true,
+    "verbose": false,
     "vis": {
         "enabled": true,
-        "frequency": 1
+        "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }

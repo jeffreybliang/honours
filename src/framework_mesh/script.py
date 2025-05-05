@@ -16,30 +16,33 @@ def main():
         data_config = json.load(f)
 
     with open(exp_config_path, 'r') as f:
-        exp_config = json.load(f)
+        exp_config_base = json.load(f)
 
-    smoothing = exp_config.get("gradient", {}).get("smoothing", False)
     mesh_resolutions = [2, 3]
+    smoothing_options = [False, True]
 
     for mesh_res in mesh_resolutions:
-        data_config['paths']['mesh_res'] = mesh_res
-        dataloader = DataLoader(data_config, device)
+        for smoothing in smoothing_options:
+            data_config['paths']['mesh_res'] = mesh_res
+            dataloader = DataLoader(data_config, device)
 
-        if not smoothing:
-            exp_config['name'] = f"nosmooth_res_{mesh_res}"
-            print(f"[RUN] smoothing=False | mesh_res={mesh_res}")
-            runner = ExperimentRunner(exp_config, dataloader)
-            runner.run()
+            exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
+            exp_config.setdefault("gradient", {})["smoothing"] = smoothing
 
-        else:
-            method = "jacobi"
-            constrained = False
-            exp_config['gradient']['method'] = method
-            exp_config['gradient']['constrained'] = constrained
-            exp_config['name'] = f"smooth_{method}_constrained_{constrained}_res_{mesh_res}"
-            print(f"[RUN] smoothing=True | method={method} | constrained={constrained} | mesh_res={mesh_res}")
-            runner = ExperimentRunner(exp_config, dataloader)
-            runner.run()
+            if not smoothing:
+                exp_config['name'] = f"nosmooth_res_{mesh_res}"
+                print(f"[RUN] smoothing=False | mesh_res={mesh_res}")
+                runner = ExperimentRunner(exp_config, dataloader)
+                runner.run()
+            else:
+                method = "jacobi"
+                for constrained in [False, True]:
+                    exp_config['gradient']['method'] = method
+                    exp_config['gradient']['constrained'] = constrained
+                    exp_config['name'] = f"smooth_{method}_constrained_{constrained}_res_{mesh_res}"
+                    print(f"[RUN] smoothing=True | method={method} | constrained={constrained} | mesh_res={mesh_res}")
+                    runner = ExperimentRunner(exp_config, dataloader)
+                    runner.run()
 
 if __name__ == "__main__":
     main()
