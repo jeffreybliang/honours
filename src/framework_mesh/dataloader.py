@@ -19,6 +19,7 @@ class DataLoader:
         
         # Set up paths and other config settings
         env = self.cfg.get("env", "local")  # default to "local" if not specified
+        print(f"env is {env}")
         path_cfg = self.cfg["paths"][env]
 
         # Set up paths and other config settings
