@@ -100,6 +100,8 @@ class ExperimentRunner:
         prev_verts = None
         prev_displacement = None
         src_mesh = self.get_mesh(src_name).to(device)
+        initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
+
         for tgt_name in tgt_names:
             print(f"Target: {tgt_name}")
             tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
@@ -128,14 +130,17 @@ class ExperimentRunner:
                     wandb.log({"velocity/mean_displacement": mean_disp}, step=step_offset)
 
             # Train the mesh transformation
-            final_verts = self.train_loop(src_mesh, tgt_mesh,
-                                        projmats, edgemap_info,
-                                        gt_projmats, gt_edgemap_info,
-                                        n_iters=self.n_iters,
-                                        step_offset=step_offset,
-                                        lr=self.lr,
-                                        moment=self.momentum,
-                                        device=device)
+            final_verts = self.train_loop(
+                src_mesh, tgt_mesh,
+                projmats, edgemap_info,
+                gt_projmats, gt_edgemap_info,
+                n_iters=self.n_iters,
+                step_offset=step_offset,
+                lr=self.lr,
+                moment=self.momentum,
+                device=device,
+                target_volume=initial_volume
+            )
             
             if prev_verts is not None:
                 prev_displacement = final_verts[0] - prev_verts[0]
@@ -152,8 +157,8 @@ class ExperimentRunner:
 # ============================================================================================================
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
-                   n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
-        node = ConstrainedProjectionNode(src, self.wandb)
+                n_iters, step_offset, lr, moment, device, target_volume):
+        node = ConstrainedProjectionNode(src, target_volume, self.wandb)
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
         verts = verts_init.clone().detach().requires_grad_(True).to(device)

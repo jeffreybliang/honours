@@ -10,11 +10,12 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
     """
     Performs a projection of the input points X onto the nearest points Y such that the volume of Y is constant.
     """
-    def __init__(self, src: Meshes, wandbBool):
+    def __init__(self, src: Meshes, tgt_vol, wandbBool):
         super().__init__(eps=1.0e-6) # relax tolerance on optimality test 
         self.src = src # source meshes (B,)
         self.b = len(src)
         self.iter = 0
+        self.tgt_vol = tgt_vol
         self.wandb = wandbBool
 
     def objective(self, xs: torch.Tensor, y: torch.Tensor, scatter_add=False):
@@ -74,7 +75,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
                 volumes[i] = face_volumes[start:end].sum()  # Sum over all faces
 
         volumes = volumes.abs()
-        return volumes  # Shape: (B,)    
+        return volumes - self.tgt_vol  # Shape: (B,)    
     
     def solve(self, xs: torch.Tensor, ):
         """Projects the vertices onto the target mesh vertices across batches.
@@ -99,9 +100,9 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
             Y = xs[batch][:n_verts].flatten().detach().double().cpu().numpy() 
 
             with torch.no_grad():
-                src_vtx = self.src[batch].verts_packed().detach()
-                src_faces = self.src[batch].faces_packed().detach()
-                vol = calculate_volume(src_vtx, src_faces)
+                # src_vtx = self.src[batch].verts_packed().detach()
+                # src_faces = self.src[batch].faces_packed().detach()
+                vol = self.tgt_vol
 
             eq_constraint = {
                 'type': 'eq',
