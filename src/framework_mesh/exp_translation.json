@@ -1,0 +1,87 @@
+{
+    "project": "Translation",
+    "name": "translation_icospheres",
+    "description": "Ground view comparisons across icosphere variants with fixed Canny parameters",
+    "src_mesh": "translation",
+    "target_meshes": [
+        "Icosphere0",
+        "Icosphere1",
+        "Icosphere2",
+        "Icosphere3",
+        "Icosphere4",
+        "Icosphere5",
+        "Icosphere6",
+        "Icosphere7",
+        "Icosphere8"
+    ],
+    "views": {
+        "Icosphere0": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere1": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere2": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere3": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere4": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere5": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere6": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere7": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        },
+        "Icosphere8": {
+            "mode": "manual",
+            "view_names": ["Ground_0"],
+            "num_views": 1
+        }
+    },
+    "gradient": {
+        "smoothing": false,
+        "method": "jacobi",
+        "k": 5,
+        "constrained": false,
+        "debug": false
+    },
+    "training": {
+        "n_iters": 120,
+        "lr": 2e-5,
+        "momentum": 0.85
+    },
+    "velocity": {
+        "enabled": true,
+        "k": 1,
+        "beta": 1
+    },
+    "verbose": false,
+    "vis": {
+        "enabled": true,
+        "frequency": 5
+    },
+    "wandb": true
+}
