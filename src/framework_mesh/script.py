@@ -9,8 +9,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("cpu")
 
-    data_path = "./framework_mesh/obliqueconfig.json"
-    exp_config_path = "./framework_mesh/exp_oblique.json"
+    data_path = "./framework_mesh/data_translation.json"
+    exp_config_path = "./framework_mesh/exp_translation.json"
 
     with open(data_path, 'r') as f:
         data_config = json.load(f)
