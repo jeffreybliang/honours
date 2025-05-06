@@ -1,10 +1,19 @@
 {
+  "env": "gpu",
   "paths": {
-    "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
-    "mesh_res": 2,
-    "renders_path": "/home/jeffrey/honours/src/data",
-    "matrices_path": "/home/jeffrey/honours/src/data/cameras",
-    "material": "Diffuse"
+    "local": {
+      "mesh_dir": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/exports",
+      "renders_path": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/renders",
+      "matrices_path": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/cameras",
+      "material": "Diffuse"
+    },
+    "gpu": {
+      "mesh_dir": "/home/jeffrey/honours/Blender/oblique/exports",
+      "renders_path": "/home/jeffrey/honours/Blender/oblique/renders",
+      "matrices_path": "/home/jeffrey/honours/Blender/oblique/cameras",
+      "material": "Diffuse"
+    },
+    "mesh_res": 2
   },
   "meshes": [
     {
@@ -59,7 +68,7 @@
         "Ground_0"  : [false, 12, 200],
         "Ground_1"  : [false, 12, 200],
         "Ground_2"  : [false, 12, 200],
-        "Ground_3"  : [false, 12, 200],
+        "Ground_3"  : [false, 12, 50 ],
         "Ground_4"  : [false, 12, 200],
         "Overhead_0": [false, 12, 200]
       }

@@ -18,12 +18,16 @@ class DataLoader:
         self.device = device
         
         # Set up paths and other config settings
-        self.mesh_dir = self.cfg["paths"]["mesh_dir"]
-        self.mesh_res = self.cfg["paths"]["mesh_res"]
-        self.renders_path = self.cfg["paths"]["renders_path"]
-        self.material = self.cfg["paths"]["material"]
+        env = self.cfg.get("env", "local")  # default to "local" if not specified
+        path_cfg = self.cfg["paths"][env]
+
+        # Set up paths and other config settings
+        self.mesh_dir = path_cfg["mesh_dir"]
+        self.renders_path = path_cfg["renders_path"]
+        self.material = path_cfg["material"]
         self.materials_path = os.path.join(self.renders_path, self.material)
-        self.matrices_path = self.cfg["paths"]["matrices_path"]
+        self.matrices_path = path_cfg["matrices_path"]
+        self.mesh_res = self.cfg["paths"]["mesh_res"]  # shared outside "env" dict
         
         self.edgemap_options = {
             mesh["name"]: mesh.get("edgemap_options", {})
