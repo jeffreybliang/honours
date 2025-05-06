@@ -116,11 +116,12 @@ class ExperimentRunner:
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
             if self.velocity_enabled and prev_displacement is not None:
+                print("Accounting for velocity")
                 faces = src_mesh[0].faces_packed().to(prev_verts.device)
                 edge_src, edge_dst = build_edge_lists(faces, device=prev_verts.device)
                 smoothed_disp = smooth_displacement_jacobi(prev_displacement, edge_src, edge_dst, k=self.velocity_k)
                 extrapolated_verts = prev_verts[0] + self.beta * smoothed_disp
-                src_mesh = Meshes(verts=[extrapolated_verts], faces=src_mesh.faces_packed())
+                src_mesh = Meshes(verts=extrapolated_verts[None, ...], faces=src_mesh.faces_padded())
 
                 mean_disp = (self.beta * smoothed_disp).norm(dim=1).mean().item()
                 if self.wandb:
@@ -309,7 +310,7 @@ def smooth_displacement_jacobi(displacement, edge_src, edge_dst, k=1):
         d_nb = torch.zeros_like(d)
         d_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), d[edge_src])
         deg = torch.zeros(V, 1, device=d.device)
-        deg.scatter_add_(0, edge_dst[:, None], torch.ones_like(edge_dst[:, None], dtype=d.dtype))
+        deg.scatter_add_(0, edge_dst[:, None], torch.ones_like(edge_dst[:, None], dtype=deg.dtype))
         d_nb += d
         deg += 1.0
         d = d_nb / deg

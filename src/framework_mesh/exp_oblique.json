@@ -99,7 +99,7 @@
         "debug": false
     },
     "training": {
-        "n_iters": 120,
+        "n_iters": 150,
         "lr": 1e-5,
         "momentum": 0.8
     },
