@@ -18,7 +18,7 @@ def main():
     with open(exp_config_path, 'r') as f:
         exp_config_base = json.load(f)
 
-    mesh_resolutions = [2, 3]
+    mesh_resolutions = [3]
     grad_smoothing_options = [True]
     velocity_ks = [1]
     velocity_betas = [1.0]

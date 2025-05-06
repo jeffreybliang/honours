@@ -125,9 +125,13 @@ class ExperimentRunner:
                 extrapolated_verts = prev_verts[0] + self.beta * smoothed_disp
                 src_mesh = Meshes(verts=extrapolated_verts[None, ...], faces=src_mesh.faces_padded())
 
-                mean_disp = (self.beta * smoothed_disp).norm(dim=1).mean().item()
+                mean_disp = (self.beta * smoothed_disp).mean(dim=0)  # Shape: (3,)
                 if self.wandb:
-                    wandb.log({"velocity/mean_displacement": mean_disp}, step=step_offset)
+                    wandb.log({
+                        "velocity/mean_disp_x": mean_disp[0].item(),
+                        "velocity/mean_disp_y": mean_disp[1].item(),
+                        "velocity/mean_disp_z": mean_disp[2].item(),
+                    }, step=step_offset)
 
             # Train the mesh transformation
             final_verts = self.train_loop(
