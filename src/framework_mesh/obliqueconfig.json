@@ -8,9 +8,9 @@
       "material": "Diffuse"
     },
     "gpu": {
-      "mesh_dir": "/home/jeffrey/honours/Blender/oblique/exports",
-      "renders_path": "/home/jeffrey/honours/Blender/oblique/renders",
-      "matrices_path": "/home/jeffrey/honours/Blender/oblique/cameras",
+      "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
+      "renders_path": "/home/jeffrey/honours/src/data",
+      "matrices_path": "/home/jeffrey/honours/src/data/cameras",
       "material": "Diffuse"
     },
     "mesh_res": 2

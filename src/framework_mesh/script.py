@@ -19,9 +19,9 @@ def main():
         exp_config_base = json.load(f)
 
     mesh_resolutions = [2, 3]
-    grad_smoothing_options = [False, True]
-    velocity_ks = [1, 3]
-    velocity_betas = [0.5, 1.0]
+    grad_smoothing_options = [True]
+    velocity_ks = [1]
+    velocity_betas = [1.0]
 
     for mesh_res in mesh_resolutions:
         data_config['paths']['mesh_res'] = mesh_res
