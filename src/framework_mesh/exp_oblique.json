@@ -108,6 +108,9 @@
         "k": 1,
         "beta": 1
     },
+    "chamfer": {
+        "doublesided": false
+    },      
     "verbose": false,
     "vis": {
         "enabled": true,

@@ -187,7 +187,7 @@ class ExperimentRunner:
             )
             verts.register_hook(hook)
 
-        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
+        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided = self.cfg["chamfer"]["doublesided"])
         optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
@@ -219,15 +219,17 @@ class ExperimentRunner:
             loss.backward()
             optimiser.step()
 
-            pbar.set_description(f"Loss: {loss.item()*10:.4f}")
+            pbar.set_description(f"Loss: {loss.item():.4f}")
 
+
+            tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
             # log
             if self.wandb:
                 wandb.log(
                     data = {
                     "outer/chamfer": loss * 10,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
-                    "outer/gt/chamfer": chamfer_gt(projverts, src, tgt)[0] * 10,
+                    "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
                     },
                     step = i + step_offset
@@ -235,13 +237,12 @@ class ExperimentRunner:
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
-                print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(projverts, src, tgt))}] "
+                print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(tmp_mesh, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             def should_log(i):
                 return i < 50 or (i % self.vis_freq == self.vis_freq-1)  # True at i = 1, 2, 4, 8, 16, ...
             if self.vis_enabled and should_log(i):
                 projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
-                tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
                 heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
                 boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
                     tmp_mesh, boundary_mask, D_all, bmin, bmax

@@ -1,6 +1,7 @@
 import torch
 from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
+from pytorch3d.ops import sample_points_from_meshes
 import trimesh
 import numpy as np
 
@@ -92,15 +93,26 @@ def volume_constraint_grad(x, faces, device=torch.device("cpu")):
     analytical_grad = grad_verts.flatten()
     return analytical_grad 
 
-def chamfer_gt(mesh, src:Meshes, tgt:Meshes):
-    res,_ = chamfer_distance(x=mesh.detach().float(), 
-                             y=tgt.verts_padded().float().detach(),
-                             x_lengths=src.num_verts_per_mesh(),
-                             y_lengths=tgt.num_verts_per_mesh(),
-                             batch_reduction=None,
-                             point_reduction="mean")
-    # print("Chamfer", res.size())
-    return res.tolist() # (B,)
+def chamfer_gt(src:Meshes, tgt:Meshes, num_samples=10000):
+    # res,_ = chamfer_distance(x=mesh.detach().float(), 
+    #                          y=tgt.verts_padded().float().detach(),
+    #                          x_lengths=src.num_verts_per_mesh(),
+    #                          y_lengths=tgt.num_verts_per_mesh(),
+    #                          batch_reduction=None,
+    #                          point_reduction="mean")
+    # # print("Chamfer", res.size())
+    # return res.tolist() # (B,)
+    src_pts = sample_points_from_meshes(src, num_samples=num_samples)
+    tgt_pts = sample_points_from_meshes(tgt, num_samples=num_samples)
+
+    res, _ = chamfer_distance(
+        x=src_pts, 
+        y=tgt_pts, 
+        batch_reduction=None,  # per-mesh loss
+        point_reduction="mean"
+    )
+    return res.tolist()  # (B,)
+
 
 
 def sse_gt(mesh, src:Meshes, tgt:Meshes):

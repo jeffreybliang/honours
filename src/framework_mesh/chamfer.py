@@ -45,7 +45,7 @@ def get_boundary(projected_pts: torch.Tensor, alpha: float = 12.0):
     return boundary_pts, b_mask
 
 class PyTorchChamferLoss(nn.Module):
-    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, boundary_mask=None):
+    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, boundary_mask=None, doublesided=False):
         super().__init__()
         self.src = src  # (B meshes)
         self.tgt = tgt  # (B meshes)
@@ -53,6 +53,7 @@ class PyTorchChamferLoss(nn.Module):
         self.edgemaps = edgemap_info[0] # (P, max_Ni, 2)
         self.edgemaps_len = edgemap_info[1] # (P,)
         self.boundary_mask = boundary_mask    # keep the reference
+        self.doublesided = doublesided
 
     def project_vertices(self, vertices):
         """
@@ -119,7 +120,7 @@ class PyTorchChamferLoss(nn.Module):
                         y_lengths=self.edgemaps_len[b].long(),
                         batch_reduction="mean",
                         point_reduction="mean",
-                        single_directional=True)
+                        single_directional=not self.doublesided)
             chamfer_loss[b] = res.sum()
 
         return chamfer_loss.double()
