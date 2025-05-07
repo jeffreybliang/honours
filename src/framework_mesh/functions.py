@@ -102,8 +102,8 @@ def chamfer_gt(src:Meshes, tgt:Meshes, num_samples=10000):
     #                          point_reduction="mean")
     # # print("Chamfer", res.size())
     # return res.tolist() # (B,)
-    src_pts = sample_points_from_meshes(src, num_samples=num_samples)
-    tgt_pts = sample_points_from_meshes(tgt, num_samples=num_samples)
+    src_pts = sample_points_from_meshes(src, num_samples=num_samples).float()
+    tgt_pts = sample_points_from_meshes(tgt, num_samples=num_samples).float()
 
     res, _ = chamfer_distance(
         x=src_pts, 
