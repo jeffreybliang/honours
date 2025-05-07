@@ -197,21 +197,37 @@ class ExperimentRunner:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(projverts, src, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
-            if self.vis_enabled and i % self.vis_freq == self.vis_freq-1:
-                projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
-                tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
-                heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
+            if self.vis_enabled and i % self.vis_freq == self.vis_freq - 1:
+                faces = src[0].faces_packed().unsqueeze(0)
+                mesh_proj = Meshes(verts=projverts.detach(), faces=faces)
+                mesh_verts = Meshes(verts=verts.detach(), faces=faces)
+
+                # Heatmaps
+                heatmap_proj, cmin, cmax = create_heatmap(mesh_proj, tgt[0], cmin, cmax)
+                heatmap_verts, _, _ = create_heatmap(mesh_verts, tgt[0], cmin, cmax)
+
+                # Volume logging
+                vol_proj = calculate_volume(projverts[0], src[0].faces_packed())
+                vol_verts = calculate_volume(verts[0], src[0].faces_packed())
+
+                # 2D scatter projection
+                camera_path = "/Users/jeffreyliang/Documents/Honours/Blender/blurred/cameras/Cam_Ground_3_P.npy"
+                projectionplot = plot_projverts_scatter2d(projverts[0], camera_path, f"Step {i}")
+
+                # Optional: Boundary heatmap if still needed
                 boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
-                    tmp_mesh, boundary_mask, D_all, bmin, bmax
+                    mesh_proj, boundary_mask, D_all, bmin, bmax
                 )
 
                 if self.wandb:
                     wandb.log({
-                        "plt/projections": wandb.Image(projectionplot),
-                        "plt/heatmap": wandb.Plotly(heatmap),
-                        "plt/boundary_heatmap": wandb.Plotly(boundary_fig)
-                        }, 
-                        step=i + step_offset)
+                        "plt/projections": wandb.Plotly(projectionplot),
+                        "plt/heatmap_proj": wandb.Plotly(heatmap_proj),
+                        "plt/heatmap_verts": wandb.Plotly(heatmap_verts),
+                        "plt/boundary_heatmap": wandb.Plotly(boundary_fig),
+                        "outer/vol_proj": vol_proj,
+                        "outer/vol_verts": vol_verts
+                    }, step=i + step_offset)
         return best_verts
 
     def get_gt_mesh(self,name):

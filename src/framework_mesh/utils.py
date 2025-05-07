@@ -435,3 +435,35 @@ def compute_boundary_distance_heatmap(src: Meshes, boundary_mask, D_all, cmin=No
     )
     fig.update_layout(title='Distance to Nearest Boundary (3D Geodesic)', scene=dict(aspectmode='data'))
     return fig, cmin, cmax
+
+
+def project_vertices(verts3d, camera_matrix_path):
+    P = torch.tensor(np.load(camera_matrix_path), dtype=verts3d.dtype, device=verts3d.device)
+    ones = torch.ones((verts3d.shape[0], 1), dtype=verts3d.dtype, device=verts3d.device)
+    verts_h = torch.cat([verts3d, ones], dim=1)
+    proj_h = (P @ verts_h.T).T
+    proj_2d = proj_h[:, :2] / proj_h[:, 2:]
+    return proj_2d.detach().cpu().numpy() 
+
+def plot_projverts_scatter2d(projverts, camera_matrix_path, title, save_path=None):
+    proj_2d = project_vertices(projverts, camera_matrix_path)
+
+    x = proj_2d[:, 0]
+    y = proj_2d[:, 1]
+    fig = go.Figure(data=go.Scatter(x=x, y=-y, mode='markers',
+                                    marker=dict(size=3), name='Projected verts'))
+
+    fig.update_layout(
+        title=title,
+        xaxis=dict(visible=False, scaleanchor='y'),
+        yaxis=dict(visible=False, autorange='reversed'),
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        width=512, height=512
+    )
+
+    if save_path:
+        fig.write_json(save_path)
+
+    return fig
