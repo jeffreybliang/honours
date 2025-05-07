@@ -40,7 +40,7 @@ def main():
         exp_config["gradient"] = {
             "smoothing": True,
             "method": "jacobi",
-            "k": 4,
+            "k": 5,
             "constrained": constrained,
             "debug": False
         }
