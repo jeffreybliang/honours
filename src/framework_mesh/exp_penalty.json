@@ -91,7 +91,7 @@
             "num_views": 13
         }
     },
-    "method": "projection",
+    "method": "penalty",
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -100,7 +100,7 @@
         "debug": false
     },
     "training": {
-        "n_iters": 100,
+        "n_iters": 2,
         "lr": 1e-4,
         "momentum": 0.9
     },
@@ -117,5 +117,5 @@
         "enabled": true,
         "frequency": 5
     },
-    "wandb": true
+    "wandb": false
 }
