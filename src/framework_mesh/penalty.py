@@ -5,7 +5,7 @@ from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
 from torch import nn
 import numpy as np
-from chamfer import get_boundary
+from .chamfer import get_boundary
 from .functions import calculate_volume
 from .utils import *
 import wandb
@@ -90,13 +90,20 @@ class PenaltyMethod(nn.Module):
 
         if self.lambda_vol != 0:
             volume_loss = self.volume_constraint(xs)
-            wandb.log({
+            # wandb.log({
+            #     "chamfer": silhouette_chamfer_loss,
+            #     "vol_error": volume_loss
+            # }, commit=False)
+            # return silhouette_chamfer_loss + self.lambda_vol * volume_loss
+            return {
                 "chamfer": silhouette_chamfer_loss,
                 "vol_error": volume_loss
-            }, commit=False)
-            return silhouette_chamfer_loss + self.lambda_vol * volume_loss
+            }
 
-        wandb.log({
+        # wandb.log({
+        #     "chamfer": silhouette_chamfer_loss,
+        # }, commit=False)
+        return {
             "chamfer": silhouette_chamfer_loss,
-        }, commit=False)
-        return silhouette_chamfer_loss
+            "vol_error": 0
+        }

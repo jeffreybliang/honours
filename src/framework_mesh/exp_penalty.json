@@ -92,6 +92,9 @@
         }
     },
     "method": "penalty",
+    "penalty": {
+        "lambda_vol": 0
+    },
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -117,5 +120,5 @@
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }

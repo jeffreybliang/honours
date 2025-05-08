@@ -21,49 +21,53 @@ def main():
 
     velocity_k = 1
     velocity_beta = 1.0
+    iters_to_sweep = [100, 150]
 
     for mesh_res in [2, 3]:
         data_config['paths']['mesh_res'] = mesh_res
         dataloader = DataLoader(data_config, device)
 
-        # For res=2 run both constraints, for res=3 only unconstrained
         constrained_options = [False, True] if mesh_res == 2 else [False]
 
         for constrained in constrained_options:
-            exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
+            for n_iters in iters_to_sweep:
+                exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
 
-            exp_config["method"] = "penalty"  # ← set penalty method
+                exp_config["method"] = "penalty"
 
-            exp_config["velocity"] = {
-                "enabled": True,
-                "k": velocity_k,
-                "beta": velocity_beta
-            }
+                exp_config["velocity"] = {
+                    "enabled": True,
+                    "k": velocity_k,
+                    "beta": velocity_beta
+                }
 
-            exp_config["gradient"] = {
-                "smoothing": True,
-                "method": "jacobi",
-                "k": 5,
-                "constrained": constrained,
-                "debug": False
-            }
+                exp_config["gradient"] = {
+                    "smoothing": True,
+                    "method": "jacobi",
+                    "k": 5,
+                    "constrained": constrained,
+                    "debug": False
+                }
 
-            exp_config["training"] = {
-                "n_iters": 150,
-                "lr": 5e-5,
-                "momentum": 0.8
-            }
+                exp_config["training"] = {
+                    "n_iters": n_iters,
+                    "lr": 5e-5,
+                    "momentum": 0.8
+                }
 
-            exp_config["chamfer"] = {
-                "doublesided": True
-            }
+                exp_config["chamfer"] = {
+                    "doublesided": True
+                }
 
-            name = f"clean_penalty_vbeta_{velocity_beta}_vk_{velocity_k}_gradsmooth_True_constrained_{constrained}_res_{mesh_res}"
-            exp_config["name"] = name
+                name = (
+                    f"PENALTY_clean_vbeta_{velocity_beta}_vk_{velocity_k}_"
+                    f"gradsmooth_True_constrained_{constrained}_res_{mesh_res}_n{n_iters}"
+                )
+                exp_config["name"] = name
 
-            print(f"[RUN] {name}")
-            runner = ExperimentRunner(exp_config, dataloader)
-            runner.run()
+                print(f"[RUN] {name}")
+                runner = ExperimentRunner(exp_config, dataloader)
+                runner.run()
 
 
 if __name__ == "__main__":
