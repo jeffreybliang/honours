@@ -51,8 +51,8 @@ def main():
 
                 exp_config["training"] = {
                     "n_iters": n_iters,
-                    "lr": 5e-5,
-                    "momentum": 0.8
+                    "lr": 1e-4,
+                    "momentum": 0.9
                 }
 
                 exp_config["chamfer"] = {
