@@ -21,13 +21,13 @@ def main():
 
     velocity_k = 1
     velocity_beta = 1.0
-    iters_to_sweep = [100, 150]
+    iters_to_sweep = [100]
 
-    for mesh_res in [2, 3]:
+    for mesh_res in [3]:
         data_config['paths']['mesh_res'] = mesh_res
         dataloader = DataLoader(data_config, device)
 
-        constrained_options = [False, True] if mesh_res == 2 else [False]
+        constrained_options = [False]
 
         for constrained in constrained_options:
             for n_iters in iters_to_sweep:
