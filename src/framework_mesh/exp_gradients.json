@@ -1,6 +1,6 @@
 {
     "project": "Flowchart",
-    "name": "k2_lr1e-4",
+    "name": "balloon",
     "description": "sky, sphere to balloon",
     "src_mesh": "sphere",
     "target_meshes": [
@@ -14,14 +14,14 @@
         }    
     },
     "training": {
-    "n_iters": 20,
-    "lr": 8e-5,
+    "n_iters": 100,
+    "lr": 1e-5,
     "momentum": 0.8
     },
     "gradient": {
         "smoothing": true,
         "method": "jacobi",
-        "k": 1,
+        "k": 4,
         "constrained": false,
         "debug": true
     },
