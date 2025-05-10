@@ -1,7 +1,7 @@
 {
   "paths": {
       "mesh_dir": "/Users/jeffreyliang/Documents/Honours/honours/src/data/meshes",
-      "renders_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/renders",
+      "renders_path": "/Users/jeffreyliang/Documents/Honours/Blender/easy_background/renders",
       "matrices_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/cameras",
       "mesh_res": 2
   },

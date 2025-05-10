@@ -1,21 +1,21 @@
 {
     "project": "Flowchart",
-    "name": "parabola 2 sided",
+    "name": "balloon",
     "description": "sky, sphere to strawberry",
     "src_mesh": "sphere",
     "target_meshes": [
-        "parabola"
+        "balloon"
     ],
     "views": {
-        "parabola": {
+        "balloon": {
             "mode": "manual",
-            "view_idx": [0,1,2,3,4,5,6,7,8,9,10,11],
-            "num_views": 12
+            "view_idx": [0,1,2,3,5,6,7,8,9,10,11],
+            "num_views": 11
         }
     },
     "training": {
     "n_iters": 100,
-    "lr": 3e-5,
+    "lr": 2e-5,
     "momentum": 0.9
     },
     "gradient": {

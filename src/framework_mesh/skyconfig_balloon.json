@@ -1,10 +1,10 @@
 {
   "paths": {
-    "mesh_dir": "/home/jeffrey/honours/src/data/meshes",
-    "mesh_res": 2,
-    "renders_path": "/home/jeffrey/honours/src/data/sky/renders",
-    "matrices_path": "/home/jeffrey/honours/src/data/sky/cameras"
-  },
+    "mesh_dir": "/Users/jeffreyliang/Documents/Honours/honours/src/data/meshes",
+    "renders_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/renders",
+    "matrices_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/cameras",
+    "mesh_res": 2
+},
   "meshes": [
     {
       "name": "balloon",

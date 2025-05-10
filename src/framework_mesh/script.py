@@ -23,12 +23,14 @@ def main():
     methods = ["jacobi"]
     constrained_options = [False]
     mesh_resolutions = [2]
+    mesh_res = 3
+    velocity_k = 1
+    velocity_beta = 1.0
 
     for mesh_res in mesh_resolutions:
         # Update mesh resolution
         data_config['paths']['mesh_res'] = mesh_res
         dataloader = DataLoader(data_config, device)
-
         for method in methods:
             for constrained in constrained_options:
                 # Update gradient method and constraint setting
@@ -37,10 +39,6 @@ def main():
 
                 # Update experiment name to be descriptive
                 exp_config['name'] = f"jaconlyboundary_pipeline_{method}_constrained_{constrained}_res_{mesh_res}"
-
-                # Create runner and run
-                runner = ExperimentRunner(exp_config, dataloader)
-                runner.run()
 
 if __name__ == "__main__":
     main()
