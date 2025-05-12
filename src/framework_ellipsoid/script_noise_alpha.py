@@ -173,15 +173,14 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
     full_view_indices = list(range(len(BASE_CFG["view_angles"])))
     resume = False
     for problem in problems:
+        if problem == "chamferboundary":
+            resume = True
+        if not resume:
+            continue
         for a_id, r_id in configs:
             axes = AXES_PRESETS_24[a_id]
             angles = ANGLE_PRESETS[r_id]
             for n_views in view_counts:
-                if n_views >= 4:
-                    resume=True
-
-                if not resume:
-                    continue
 
                 for trial in range(10):
                     selected_views = sorted(random.sample(full_view_indices, k=n_views))
@@ -226,8 +225,8 @@ def cli():
     p.add_argument("--no-save-cfgs", action="store_true", help="Do not write config files to disk")
     args = p.parse_args()
 
-    # run_alpha_sweep(args.outdir, alpha_values=[0, 10, 20, 30, 50])
-    run_view_count_sweep(args.outdir, view_counts=[1, 2, 3, 4, 6, 8])
+    # run_alpha_sweep(args.outdir, alpha_values=[20, 30, 40, 50])
+    run_view_count_sweep(args.outdir, view_counts=[2])
 
 if __name__ == "__main__":
     cli()
