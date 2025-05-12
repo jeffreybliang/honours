@@ -92,7 +92,8 @@ class ExperimentRunner:
         prev_verts = None
         prev_displacement = None
         src_mesh = self.get_mesh(src_name).to(device)
-        initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
+        initial_volume = 4.39763096 # 1.4 * pi but for mesh, so a little smaller
+        # initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
 
         for tgt_name in tgt_names:
             print(f"Target: {tgt_name}")
@@ -248,7 +249,7 @@ class ExperimentRunner:
                 )
 
             if self.verbose:
-                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss.item():.3f}")
+                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss.item():.3f} Tgt: {target_volume} VolErr: {loss_dict['vol_error'].item():.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(tmp_mesh, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             def should_log(i):

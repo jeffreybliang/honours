@@ -93,7 +93,7 @@
     },
     "method": "penalty",
     "penalty": {
-        "lambda_init": 1e4,
+        "lambda_init": 1e1,
         "lambda_max": 1e9,
         "rate": 1.1
     },
