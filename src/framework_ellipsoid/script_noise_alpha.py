@@ -72,7 +72,7 @@ BASE_CFG = {
         [-1, 1, 1], [-1, -1, 1], [-1, 1, 1],
     ],
     "view_indices": [0, 2, 4, 6],  # will be overridden for chamfer problems
-    "training": {"n_iters": 200, "lr": 1e-2, "momentum": 0.7},
+    "training": {"n_iters": 200, "lr": 1e-2, "momentum": 0.8},
     "verbose": False,
     "vis": {"enabled": True, "frequency": 1, "backend": "plotly"},
     "wandb": True,
@@ -147,7 +147,7 @@ def run_alpha_sweep(outdir, alpha_values, save_cfgs=False):
                     cfg = json.loads(json.dumps(BASE_CFG))
                     cfg.update({
                         "problem": problem,
-                        "name": f"{problem}-{a_id}-{r_id}-a{alpha:.3f}-t{trial:02d}",
+                        "name": f"{problem}-{a_id}-{r_id}-a{alpha}-t{trial:02d}",
                         "initial_axes": axes,
                         "initial_angles": angles,
                         "axes_id": a_id,
@@ -183,22 +183,27 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
                     cfg = json.loads(json.dumps(BASE_CFG))
                     cfg.update({
                         "problem": problem,
-                        "project": "view_count_sweep",
-                        "name": f"{problem}-{a_id}-{r_id}-v{n_views}-t{trial:02d}",
+                        "project": "Num Views Sweep",
+                        "name": f"{a_id}-{r_id}-v{n_views}-t{trial:02d}",
                         "initial_axes": axes,
                         "initial_angles": angles,
                         "axes_id": a_id,
                         "rotation_id": r_id,
                         "trial": trial,
                         "view_indices": selected_views,
+                        "num_views": n_views,
                         "noise": 1e-2,
-                        "alpha": 0.0,
+                        "alpha": 5.0,
                         "vis_enabled": trial < 2,
                     })
 
                     cfg["training"]["lr"] = 5e-1
                     cfg["target"]["radius"] = 0.6203504909
                     cfg["vis"]["enabled"] = trial < 2
+                    if problem == "chamfersampled":
+                        cfg["training"]["n_iters"] = 300 if n_views in {1, 2, 3} else 200
+                    elif problem == "chamferboundary":
+                        cfg["training"]["n_iters"] = 400 if n_views in {1, 2, 3} else 200
 
                     if save_cfgs:
                         config_path = outdir / f"{cfg['name']}.json"
@@ -215,8 +220,8 @@ def cli():
     p.add_argument("--no-save-cfgs", action="store_true", help="Do not write config files to disk")
     args = p.parse_args()
 
-    run_alpha_sweep(args.outdir, alpha_values=[0, 10.0, 20, 30, 50])
-
+    # run_alpha_sweep(args.outdir, alpha_values=[0, 10, 20, 30, 50])
+    run_view_count_sweep(args.outdir, view_counts=[1, 2, 3, 4, 6, 8])
 
 if __name__ == "__main__":
     cli()
