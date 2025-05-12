@@ -176,7 +176,7 @@ class ExperimentRunner:
         faces = src[0].faces_packed().to(device)
         edge_src, edge_dst = build_edge_lists(faces, device)
         all_idx = torch.arange(V_max, device=device)
-        D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10)
+        D_all = bfs_hop_distance(V_max, edge_src, edge_dst, all_idx, k_max=10, device=device)
 
         if self.smoothing:
             hook = select_hook(
@@ -304,16 +304,21 @@ class ExperimentRunner:
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
 
         view_idx = [cam_name_to_id[name] for name in view_names]
-        projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names])
+        projmats = torch.stack([
+            camera_matrices[cam_name_to_id[name]]["P"].to(device)
+            for name in view_names
+        ])
+
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence(
-            [edgemaps[name] for name in view_names],
+            [edgemaps[name].to(device) for name in view_names],
             batch_first=True, padding_value=0.0
         )
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[name] for name in view_names])
+        tgt_edgemaps_len = torch.tensor(
+            [edgemaps_len[name] for name in view_names],
+            device=device
+        )
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
-
-
 
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]

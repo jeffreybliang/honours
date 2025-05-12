@@ -11,7 +11,7 @@ def main():
     device = torch.device("cpu")
 
     data_path = "./framework_mesh/data_noground.json"
-    exp_path = "./framework_mesh/exp_oblique.json"
+    exp_path = "./framework_mesh/exp_oblique_AdamW_laplacian.json"
 
     with open(data_path, 'r') as f:
         data_config = json.load(f)
@@ -26,7 +26,7 @@ def main():
     data_config['paths']['mesh_res'] = mesh_res
     dataloader = DataLoader(data_config, device)
 
-    for constrained in [False, True]:
+    for constrained in [False]:
         exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
 
         # Velocity settings (unchanged)

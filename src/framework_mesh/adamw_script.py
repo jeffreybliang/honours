@@ -67,7 +67,7 @@ def run_experiments(data_path, exp_base_path, mesh_res, velocity_k, velocity_bet
 if __name__ == '__main__':
     # Device selection
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = torch.device('cpu')  # override to CPU
+    # device = torch.device('cpu')  # override to CPU
 
     # Common parameters
     mesh_res = 2

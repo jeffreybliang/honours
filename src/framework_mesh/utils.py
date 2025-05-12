@@ -275,8 +275,8 @@ def scale_and_crop(img, target_w, target_h):
 
 
 def compute_signed_distances(src, tgt):
-    mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().cpu().numpy(), faces=src[0].faces_packed().cpu().numpy())
-    mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().cpu().numpy(), faces=tgt[0].faces_packed().cpu().numpy())
+    mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), faces=src[0].faces_packed().detach().cpu().numpy())
+    mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), faces=tgt[0].faces_packed().detach().cpu().numpy())
     X_vertices = mesh_X.vertices
     Y_tree = trimesh.proximity.ProximityQuery(mesh_Y)
     closest_points, _, _ = Y_tree.on_surface(X_vertices)
