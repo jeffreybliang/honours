@@ -100,9 +100,9 @@
     },
     "training": {
         "n_iters": 100,
-        "lr": 1e-4,
+        "lr": 5e-5,
         "momentum": 0.9,
-        "optimiser": "sgd"
+        "optimiser": "AdamW"
     },
     "velocity": {
         "enabled": true,

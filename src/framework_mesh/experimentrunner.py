@@ -44,6 +44,8 @@ class ExperimentRunner:
         self.n_iters = self.cfg["training"]["n_iters"]
         self.lr = self.cfg["training"]["lr"]
         self.momentum = self.cfg["training"]["momentum"]
+        self.opt = self.cfg["training"].get("optimiser", "sgd")
+
         self.verbose = self.cfg["verbose"]
         self.vis_enabled = self.cfg["vis"]["enabled"]
         self.vis_freq = self.cfg["vis"]["frequency"]
@@ -67,6 +69,7 @@ class ExperimentRunner:
         self.velocity_k = velocity_cfg.get("k", 0)
         self.beta = velocity_cfg.get("beta", 1)
 
+        
 # ============================================================================================================
 
     def run(self):
@@ -188,7 +191,10 @@ class ExperimentRunner:
             verts.register_hook(hook)
 
         chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided = self.cfg["chamfer"]["doublesided"])
-        optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
+        if self.opt == "sgd":
+            optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
+        else:
+            optimiser = torch.optim.AdamW([verts], lr=lr)
         a,b = edgemap_info
         a,b = a[0], b[0]
         projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
