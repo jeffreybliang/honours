@@ -46,11 +46,11 @@ def main():
         }
 
         # Training hyperparameters
-        exp_config["training"] = {
-            "n_iters": 150,
-            "lr": 5e-5,
-            "momentum": 0.8
-        }
+        # exp_config["training"] = {
+        #     "n_iters": 150,
+        #     "lr": 5e-5,
+        #     "momentum": 0.8
+        # }
 
         # Chamfer loss: double-sided
         exp_config["chamfer"] = {

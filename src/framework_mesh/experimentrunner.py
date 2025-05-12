@@ -193,7 +193,7 @@ class ExperimentRunner:
             verts.register_hook(hook)
 
         chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided = self.cfg["chamfer"]["doublesided"])
-        if self.opt == "sgd":
+        if self.opt == "SGD":
             optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         else:
             optimiser = torch.optim.AdamW([verts], lr=lr)
@@ -218,10 +218,10 @@ class ExperimentRunner:
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
             loss = chamfer_loss(projverts)
-            tmp_mesh = Meshes(verts=projverts, faces=src[0].faces_packed().unsqueeze(0))
+            tmp_mesh = Meshes(verts=projverts.float(), faces=src[0].faces_packed().unsqueeze(0))
             if lap_wt > 0:
-                laplace_loss = lap_wt * mesh_laplacian_smoothing(tmp_mesh)
-                loss += laplace_loss 
+                laplace_loss = lap_wt * mesh_laplacian_smoothing(tmp_mesh, method="cot")
+                loss += laplace_loss
 
             colour = bcolors.FAIL
             if loss.item() < min_loss:
@@ -239,7 +239,7 @@ class ExperimentRunner:
             if self.wandb:
                 wandb.log(
                     data = {
-                    "outer/chamfer": loss * 10,
+                    "outer/chamfer": loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
