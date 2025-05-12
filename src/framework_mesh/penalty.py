@@ -90,19 +90,11 @@ class PenaltyMethod(nn.Module):
 
         if self.lambda_vol != 0:
             volume_loss = self.volume_constraint(xs)
-            # wandb.log({
-            #     "chamfer": silhouette_chamfer_loss,
-            #     "vol_error": volume_loss
-            # }, commit=False)
-            # return silhouette_chamfer_loss + self.lambda_vol * volume_loss
             return {
                 "chamfer": silhouette_chamfer_loss,
                 "vol_error": volume_loss
             }
 
-        # wandb.log({
-        #     "chamfer": silhouette_chamfer_loss,
-        # }, commit=False)
         return {
             "chamfer": silhouette_chamfer_loss,
             "vol_error": 0

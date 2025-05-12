@@ -63,7 +63,7 @@ class ExperimentRunner:
         self.beta = velocity_cfg.get("beta", 1)
 
         self.method = self.cfg.get("method", "projection")
-        self.lambda_vol = self.cfg.get("penalty", {}).get("lambda_vol", 1.0)
+        self.lambda_vol = self.cfg.get("penalty", {}).get("lambda_init", 0.0)
 
     def run(self):
         device = self.data_loader.device
@@ -139,7 +139,6 @@ class ExperimentRunner:
             run.config["view_names"] = view_names_used
             run.finish()
 
-    # NOTE: Add your updated train_loop here to support both methods (projection + penalty)
     def train_loop(self, src, tgt, projmats, edgemap_info, gt_projmats, gt_edgemap_info,
                 n_iters, step_offset, lr, moment, device: torch.device, target_volume=None):
         verts_init = src.verts_padded()
@@ -199,13 +198,21 @@ class ExperimentRunner:
         best_verts = None
         pbar = trange(n_iters, desc="Training", leave=True)
 
+        if self.method == "penalty":
+            penalty = self.cfg.get("penalty", {})
+            lambda_vol = penalty.get("lambda_init", 100.0)
+            lambda_max = penalty.get("lambda_max", 1e6)
+            rate = penalty.get("rate", 1.1)
+
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
 
             if self.method == "penalty":
                 loss_fn.iter = i + step_offset
                 loss_dict = loss_fn(xs)
-                loss = loss_dict["chamfer"] + self.lambda_vol * loss_dict["vol_error"]
+                loss = loss_dict["chamfer"] + lambda_vol * loss_dict["vol_error"]
+                if rate:
+                    lambda_vol = min(lambda_vol * rate, lambda_max)   
                 projverts = xs
             else:
                 node.iter = i + step_offset
@@ -228,6 +235,9 @@ class ExperimentRunner:
                 wandb.log(
                     data = {
                     "outer/chamfer": loss * 10,
+                    "outer/vol_penalty_lambda": lambda_vol,
+                    "outer/vol_error": loss_dict["vol_error"].item(),
+                    "outer/penalty": lambda_vol * loss_dict["vol_error"],
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
