@@ -137,13 +137,19 @@ def run_alpha_sweep(outdir, alpha_values, save_cfgs=False):
     outdir.mkdir(parents=True, exist_ok=True)
     configs = [("A6", "R5")]
     problems = ["chamferboundary"]
-
+    resume = False
     for problem in problems:
         for a_id, r_id in configs:
             axes = AXES_PRESETS_24[a_id]
             angles = ANGLE_PRESETS[r_id]
             for alpha in alpha_values:
                 for trial in range(5):
+                    if alpha == 40 and trial == 2:
+                        resume = True
+
+                    if not resume:
+                        continue
+
                     cfg = json.loads(json.dumps(BASE_CFG))
                     cfg.update({
                         "problem": problem,
@@ -182,7 +188,7 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
             angles = ANGLE_PRESETS[r_id]
             for n_views in view_counts:
 
-                for trial in range(10):
+                for trial in range(5):
                     selected_views = sorted(random.sample(full_view_indices, k=n_views))
 
                     cfg = json.loads(json.dumps(BASE_CFG))
@@ -225,7 +231,7 @@ def cli():
     p.add_argument("--no-save-cfgs", action="store_true", help="Do not write config files to disk")
     args = p.parse_args()
 
-    # run_alpha_sweep(args.outdir, alpha_values=[20, 30, 40, 50])
+    run_alpha_sweep(args.outdir, alpha_values=[40, 50])
     run_view_count_sweep(args.outdir, view_counts=[2])
 
 if __name__ == "__main__":
