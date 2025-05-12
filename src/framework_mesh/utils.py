@@ -287,7 +287,7 @@ def compute_signed_distances(src, tgt):
 
 
 def generate_3d_visualization(src, tgt, signed_dists, cmin, cmax):
-    mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().cpu().numpy(), faces=src[0].faces_packed().cpu().numpy())
+    mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), faces=src[0].faces_packed().detach().cpu().numpy())
     i, j, k = mesh_X.faces.T
     fig = go.Figure(data=[
         go.Mesh3d(
@@ -391,9 +391,9 @@ def compute_boundary_distance_heatmap(src: Meshes, boundary_mask, D_all, cmin=No
      """
      Computes a 3D heatmap coloring each vertex in `src` based on its geodesic distance to the nearest boundary vertex.
      """
-     verts3d = src.verts_padded()[0]  # (V, 3)
+     verts3d = src.verts_padded().detach()[0]  # (V, 3)
      V = verts3d.shape[0]
-     faces = src.faces_packed()
+     faces = src.faces_packed().detach()
  
      with torch.no_grad():
          boundary_ids = torch.where(boundary_mask[:V])[0]

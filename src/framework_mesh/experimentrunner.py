@@ -10,6 +10,7 @@ import random
 import wandb
 import os
 from tqdm import trange
+from pytorch3d.loss.mesh_laplacian_smoothing import mesh_laplacian_smoothing
 
 
 class ExperimentRunner:
@@ -210,11 +211,16 @@ class ExperimentRunner:
         best_verts = None
     
         pbar = trange(n_iters, desc="Training", leave=True, mininterval=5)  # Always visible
+        lap_wt = self.cfg["training"].get("laplacian_weight", 0.0)
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
             loss = chamfer_loss(projverts)
+            tmp_mesh = Meshes(verts=projverts, faces=src[0].faces_packed().unsqueeze(0))
+            if lap_wt > 0:
+                laplace_loss = lap_wt * mesh_laplacian_smoothing(tmp_mesh)
+                loss += laplace_loss 
 
             colour = bcolors.FAIL
             if loss.item() < min_loss:
@@ -228,7 +234,6 @@ class ExperimentRunner:
             pbar.set_description(f"Loss: {loss.item():.4f}")
 
 
-            tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
             # log
             if self.wandb:
                 wandb.log(
@@ -240,6 +245,15 @@ class ExperimentRunner:
                     },
                     step = i + step_offset
                 )
+                if lap_wt > 0:
+                    wandb.log(
+                        data = {
+                        "outer/laplace": laplace_loss.item(),
+                        },
+                    step = i + step_offset
+                    )
+
+
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
