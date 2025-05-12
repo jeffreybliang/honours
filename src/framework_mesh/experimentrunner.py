@@ -210,7 +210,9 @@ class ExperimentRunner:
             if self.method == "penalty":
                 loss_fn.iter = i + step_offset
                 loss_dict = loss_fn(xs)
-                loss = loss_dict["chamfer"] + lambda_vol * loss_dict["vol_error"]
+                penalty_loss = lambda_vol * loss_dict["vol_error"]
+                loss = loss_dict["chamfer"] + penalty_loss
+                old_lambda_vol = lambda_vol
                 if rate:
                     lambda_vol = min(lambda_vol * rate, lambda_max)   
                 projverts = xs
@@ -235,9 +237,9 @@ class ExperimentRunner:
                 wandb.log(
                     data = {
                     "outer/chamfer": loss * 10,
-                    "outer/vol_penalty_lambda": lambda_vol,
+                    "outer/vol_penalty_lambda": old_lambda_vol,
                     "outer/vol_error": loss_dict["vol_error"].item(),
-                    "outer/penalty": lambda_vol * loss_dict["vol_error"],
+                    "outer/penalty": penalty_loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
@@ -246,7 +248,7 @@ class ExperimentRunner:
                 )
 
             if self.verbose:
-                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
+                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f} Chamfer: {loss_dict['chamfer']:.3f} Penalty: {penalty_loss:.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(tmp_mesh, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             def should_log(i):
