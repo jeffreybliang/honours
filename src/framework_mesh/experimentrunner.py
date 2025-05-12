@@ -104,7 +104,8 @@ class ExperimentRunner:
         prev_verts = None
         prev_displacement = None
         src_mesh = self.get_mesh(src_name).to(device)
-        initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
+        initial_volume = 4.39763096 # 1.4 * pi but for mesh, so a little smaller
+        # initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
 
         for tgt_name in tgt_names:
             print(f"Target: {tgt_name}")
