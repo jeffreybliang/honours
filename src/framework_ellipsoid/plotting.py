@@ -180,16 +180,16 @@ def plot_silhouettes(projected_pts, target_pts, step=None,
         proj = projected_pts[b, v].detach().cpu().numpy()     # (2, N)
         targ = target_pts[v].detach().cpu().numpy().T         # (2, M)
 
-        ax.scatter(*proj, color='orange', s=2, label='Projected Points')
-        ax.scatter(*targ, color='blue', s=2, label='Target Points')
+        if show_alpha and boundary_points is not None and hulls is not None:
+            boundary_pts = boundary_points[b][v].detach().cpu().numpy()
+            for boundary in hulls[b][v]:  # hulls is now List[List[Boundary]]
+                plot_boundary(ax, boundary)
+
+        ax.scatter(*proj, color='orange', s=1, label='Projected Points')
+        ax.scatter(*targ, color='blue', s=1, label='Target Points')
 
         if show_alpha and boundary_points is not None and hulls is not None:
-            boundary = boundary_points[b][v].detach().cpu().numpy()
-            ax.scatter(*boundary, color='red', s=2, label='Boundary Points')
-
-            polygon = Polygon(hulls[b][v].exterior.coords,
-                              facecolor='lightblue', edgecolor='blue', alpha=0.4)
-            ax.add_patch(polygon)
+            ax.scatter(*boundary_pts, color='red', s=2, label='Boundary Points')
 
         ax.set_title(f'Batch {b+1}, View {v+1}')
         ax.set_xlim(-1, 1); ax.set_ylim(-1, 1)
@@ -203,3 +203,19 @@ def plot_silhouettes(projected_pts, target_pts, step=None,
 
     plt.tight_layout()
     return fig
+
+from alpha_shapes.boundary import Boundary
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
+
+def plot_boundary(ax, boundary: Boundary):
+    """
+    Plot a boundary using matplotlib's PathPatch.
+    see https://stackoverflow.com/a/70533052/6060982
+    """
+    exterior = Path(boundary.exterior)
+    holes = [Path(hole) for hole in boundary.holes]
+    path = Path.make_compound_path(exterior, *holes)
+    # lightcoral
+    patch = PathPatch(path, facecolor="lightblue", lw=0.8, alpha=0.2, ec="b")
+    ax.add_patch(patch)

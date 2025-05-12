@@ -22,6 +22,8 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         self.initial_angles = torch.deg2rad(initial_angles_deg)
         self.m_pts = m_pts
 
+        self.alpha = cfg.get("alpha", 5.0)
+
     def generate_data(self):
         a, b, c = self.initial_axes
         yaw, pitch, roll = self.initial_angles
@@ -32,7 +34,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
-        return BoundaryProjectionChamferLoss(self.views, m=self.m_pts, sqrt_m=self.sqrt_m_pts)
+        return BoundaryProjectionChamferLoss(self.views, m=self.m_pts, sqrt_m=self.sqrt_m_pts, alpha=self.alpha)
 
     def wrap_node_function(self, node, x):
         return EllipseConstrainedProjectionFunction.apply(node, x)

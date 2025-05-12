@@ -6,6 +6,8 @@ import alpha_shapes
 import numpy as np
 from .plotting import *
 from .utils import rotation_matrix_3d_batch
+from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
+from alpha_shapes.boundary import Boundary, get_boundaries
 
 def A_from_u_batch(u):
     Lambda = torch.diag_embed(1 / u[:, :3] ** 2)
@@ -209,12 +211,21 @@ class BoundaryProjectionChamferLoss(nn.Module):
 
             proj_np = proj.T.detach().cpu().numpy()  # (M, 2)
             shaper = alpha_shapes.Alpha_Shaper(proj_np)
-            shape = shaper.get_shape(alpha=0.0)
-            coords = np.stack(shape.exterior.coords.xy, axis=-1)  # (P, 2)
-
+            shape = shaper.get_shape(alpha=self.alpha)
+            try:
+                boundaries = get_boundaries(shape)  # returns a list of Boundary objects
+            except Exception as e:
+                print(f"[Warning] Failed to extract boundaries for view {k}: {e}")
+                boundaries = []
+            hulls.append(boundaries)
+            coords = np.concatenate(
+                [b.exterior for b in boundaries] +
+                [hole for b in boundaries for hole in b.holes],
+                axis=0
+            ) if boundaries else np.empty((0, 2))
+            
             boundary = nearest_boundary_points(proj, coords)  # (2, P)
             boundary_pts.append(boundary)
-            hulls.append(shape)
             boundary_lengths.append(boundary.size(1))
             max_len = max(max_len, boundary.size(1))
 
