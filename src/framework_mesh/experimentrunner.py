@@ -88,6 +88,8 @@ class ExperimentRunner:
         step_offset = 0
 
         src_mesh = self.get_mesh(src_name).to(device)
+        initial_volume = torch.pi * 1.4
+
         for tgt_name in tgt_names:
             tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
 
@@ -99,15 +101,18 @@ class ExperimentRunner:
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
             # Train the mesh transformation
-            final_verts = self.train_loop(src_mesh, tgt_mesh,
-                                        projmats, edgemap_info,
-                                        gt_projmats, gt_edgemap_info,
-                                        n_iters=self.n_iters,
-                                        step_offset=step_offset,
-                                        lr=self.lr,
-                                        moment=self.momentum,
-                                        device=device)
-            
+            final_verts = self.train_loop(
+                src_mesh, tgt_mesh,
+                projmats, edgemap_info,
+                gt_projmats, gt_edgemap_info,
+                n_iters=self.n_iters,
+                step_offset=step_offset,
+                lr=self.lr,
+                moment=self.momentum,
+                device=device,
+                target_volume=initial_volume
+            )
+
             # update step offset
             step_offset += self.n_iters
 
@@ -122,8 +127,8 @@ class ExperimentRunner:
             run.finish()
 
     def train_loop(self, src: Meshes, tgt: Meshes, projmats, edgemap_info, gt_projmats, gt_edgemap_info, 
-                   n_iters, step_offset, lr, moment, device: torch.device, verbose=False):
-        node = ConstrainedProjectionNode(src, self.wandb)
+                n_iters, step_offset, lr, moment, device, target_volume):
+        node = ConstrainedProjectionNode(src, target_volume, self.wandb)        
         verts_init = src.verts_padded()
         verts_init.requires_grad = True
         verts = verts_init.clone().detach().requires_grad_(True).to(device)
