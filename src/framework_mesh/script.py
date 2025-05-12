@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
 
     data_path = "./framework_mesh/data_noground.json"
     exp_path = "./framework_mesh/exp_penalty.json"
@@ -51,7 +51,7 @@ def main():
 
                 exp_config["training"] = {
                     "n_iters": n_iters,
-                    "lr": 1e-4,
+                    "lr": 5e-5,
                     "momentum": 0.9
                 }
 

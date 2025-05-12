@@ -156,7 +156,7 @@ class ExperimentRunner:
         if self.smoothing:
             edge_src, edge_dst = build_edge_lists(faces, device)
             all_idx = torch.arange(V, device=device)
-            D_all = bfs_hop_distance(V, edge_src, edge_dst, all_idx, k_max=10)
+            D_all = bfs_hop_distance(V, edge_src, edge_dst, all_idx, k_max=10, device=device)
             hook = select_hook(
                 method=self.smoothing_method,
                 edge_src=edge_src,
@@ -174,7 +174,7 @@ class ExperimentRunner:
 
         if self.method == "penalty":
             loss_fn = PenaltyMethod(src, tgt, projmats, edgemap_info,
-                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask)
+                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask, device=device)
             optimiser = torch.optim.SGD([xs], lr=lr, momentum=moment)
         else:
             node = ConstrainedProjectionNode(src, target_volume, self.wandb)
@@ -248,7 +248,7 @@ class ExperimentRunner:
                 )
 
             if self.verbose:
-                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f} Chamfer: {loss_dict['chamfer']:.3f} Penalty: {penalty_loss:.3f}")
+                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss.item():.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(tmp_mesh, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             def should_log(i):

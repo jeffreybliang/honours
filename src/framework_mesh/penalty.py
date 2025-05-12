@@ -11,20 +11,28 @@ from .utils import *
 import wandb
 
 class PenaltyMethod(nn.Module):
-    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None):
+    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None, device=torch.device("cpu")):
         super().__init__()
         self.src = src
         self.tgt = tgt
-        self.projmatrices = projmatrices
-        self.edgemaps = edgemap_info[0]
+        self.device = device
+
+        # Move everything to the specified device
+        self.projmatrices = projmatrices.to(device)
+        self.edgemaps = [e.to(device) for e in edgemap_info[0]]
         self.edgemaps_len = edgemap_info[1]
-        self.boundary_mask = boundary_mask
+        self.boundary_mask = boundary_mask.to(device) if boundary_mask is not None else None
         self.lambda_vol = lambda_vol
-        B = len(src)
-        self.register_buffer("target_volumes", torch.tensor(
-            [calculate_volume(src[b].verts_packed(), src[b].faces_packed()) for b in range(B)],
-            dtype=torch.double))
         self.iter = 0
+
+        # Precompute and store target volumes on the correct device
+        B = len(src)
+        target_volumes = torch.tensor(
+            [calculate_volume(src[b].verts_packed(), src[b].faces_packed()) for b in range(B)],
+            dtype=torch.double,
+            device=device
+        )
+        self.register_buffer("target_volumes", target_volumes)
 
     def project_vertices(self, vertices):
         V = vertices.shape[0]
@@ -54,8 +62,9 @@ class PenaltyMethod(nn.Module):
             Vb = num_verts_per_mesh[b]
             projected.append(self.project_vertices(xs[b, :Vb]))
 
-        with torch.no_grad():
-            self.boundary_mask.zero_()
+        if self.boundary_mask is not None:
+            with torch.no_grad():
+                self.boundary_mask.zero_()
 
         boundaries_pad = []
         boundary_lengths = torch.zeros(B, P, device=xs.device)
@@ -65,8 +74,9 @@ class PenaltyMethod(nn.Module):
             boundaries_b = []
             for p in range(P):
                 boundary_p, mask_p = get_boundary(projected[b][p])
-                with torch.no_grad():
-                    self.boundary_mask[:Vb].logical_or_(mask_p)
+                if self.boundary_mask is not None:
+                    with torch.no_grad():
+                        self.boundary_mask[:Vb].logical_or_(mask_p)
                 boundaries_b.append(boundary_p)
                 boundary_lengths[b, p] = boundary_p.size(0)
             padded = torch.nn.utils.rnn.pad_sequence(boundaries_b, batch_first=True, padding_value=0.0)

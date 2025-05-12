@@ -93,8 +93,8 @@
     },
     "method": "penalty",
     "penalty": {
-        "lambda_init": 100,
-        "lambda_max": 1e6,
+        "lambda_init": 1e4,
+        "lambda_max": 1e9,
         "rate": 1.1
     },
     "gradient": {
@@ -106,7 +106,7 @@
     },
     "training": {
         "n_iters": 2,
-        "lr": 1e-4,
+        "lr": 5e-5,
         "momentum": 0.9
     },
     "velocity": {

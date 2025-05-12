@@ -7,9 +7,15 @@ def build_edge_lists(faces, device=None):
     if device: e = e.to(device)
     return e[:, 0], e[:, 1]
 
-def bfs_hop_distance(V, edge_src, edge_dst, boundary_idx, k_max=10):
+def bfs_hop_distance(V, edge_src, edge_dst, boundary_idx, k_max=10, device=torch.device("cpu")):
     B = boundary_idx.numel()
-    D = torch.full((V, B), k_max + 1, dtype=torch.int16)
+    D = torch.full((V, B), k_max + 1, dtype=torch.int16, device=device)
+
+    # Make sure indices are on CPU for Python-native ops like deque/set
+    edge_src = edge_src.cpu()
+    edge_dst = edge_dst.cpu()
+    boundary_idx = boundary_idx.cpu()
+    
     frontier = [deque([b.item()]) for b in boundary_idx]
     visited  = [set([b.item()])   for b in boundary_idx]
 
