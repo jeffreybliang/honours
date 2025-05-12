@@ -171,12 +171,18 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
     configs = [("A6", "R5")]
     problems = ["chamfersampled", "chamferboundary"]
     full_view_indices = list(range(len(BASE_CFG["view_angles"])))
-
+    resume = False
     for problem in problems:
         for a_id, r_id in configs:
             axes = AXES_PRESETS_24[a_id]
             angles = ANGLE_PRESETS[r_id]
             for n_views in view_counts:
+                if n_views >= 4:
+                    resume=True
+
+                if not resume:
+                    continue
+
                 for trial in range(10):
                     selected_views = sorted(random.sample(full_view_indices, k=n_views))
 
@@ -201,9 +207,9 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
                     cfg["target"]["radius"] = 0.6203504909
                     cfg["vis"]["enabled"] = trial < 2
                     if problem == "chamfersampled":
-                        cfg["training"]["n_iters"] = 300 if n_views in {1, 2, 3} else 200
+                        cfg["training"]["n_iters"] = 300
                     elif problem == "chamferboundary":
-                        cfg["training"]["n_iters"] = 400 if n_views in {1, 2, 3} else 200
+                        cfg["training"]["n_iters"] = 400
 
                     if save_cfgs:
                         config_path = outdir / f"{cfg['name']}.json"
