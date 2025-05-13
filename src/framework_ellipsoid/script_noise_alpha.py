@@ -224,6 +224,81 @@ def run_view_count_sweep(outdir, view_counts, save_cfgs=False):
                     experiment = EllipsoidExperiment(cfg)
                     experiment.run()
 
+def run_sampling_resolution_sweep(outdir, m_values, sqrt_m_values, save_cfgs=False):
+    outdir.mkdir(parents=True, exist_ok=True)
+    configs = [("A6", "R5")]
+    problems = ["chamfersampled", "chamferboundary"]
+    resume = True  # you can add a resume block like the others if needed
+
+    for problem in problems:
+        for a_id, r_id in configs:
+            axes = AXES_PRESETS_24[a_id]
+            angles = ANGLE_PRESETS[r_id]
+
+            if problem == "chamfersampled":
+                for m in m_values:
+                    for trial in range(5):
+                        cfg = json.loads(json.dumps(BASE_CFG))
+                        cfg.update({
+                            "problem": problem,
+                            "project": "Sampling Resolution Sweep",
+                            "name": f"{a_id}-{r_id}-m{m}-t{trial:02d}",
+                            "initial_axes": axes,
+                            "initial_angles": angles,
+                            "axes_id": a_id,
+                            "rotation_id": r_id,
+                            "trial": trial,
+                            "noise": 1e-2,
+                            "alpha": 5.0,
+                            "vis_enabled": trial < 2,
+                        })
+                        cfg["target"]["m"] = m
+                        cfg["training"]["lr"] = 5e-1
+                        cfg["training"]["n_iters"] = 300
+                        cfg["target"]["radius"] = 0.6203504909
+                        cfg["view_indices"] = [0, 2, 4, 6]
+
+                        if save_cfgs:
+                            config_path = outdir / f"{cfg['name']}.json"
+                            with config_path.open("w") as f:
+                                json.dump(cfg, f, indent=2)
+
+                        experiment = EllipsoidExperiment(cfg)
+                        experiment.run()
+
+            elif problem == "chamferboundary":
+                for sqrt_m in sqrt_m_values:
+                    for trial in range(5):
+                        cfg = json.loads(json.dumps(BASE_CFG))
+                        cfg.update({
+                            "problem": problem,
+                            "project": "Sampling Resolution Sweep",
+                            "name": f"{a_id}-{r_id}-sm{sqrt_m}-t{trial:02d}",
+                            "initial_axes": axes,
+                            "initial_angles": angles,
+                            "axes_id": a_id,
+                            "rotation_id": r_id,
+                            "trial": trial,
+                            "noise": 1e-2,
+                            "alpha": 5.0,
+                            "vis_enabled": trial < 2,
+                        })
+                        m = sqrt_m ** 2
+                        cfg["target"]["sqrt_m"] = sqrt_m
+                        cfg["target"]["m"] = m
+                        cfg["training"]["lr"] = 5e-1
+                        cfg["training"]["n_iters"] = 200
+                        cfg["target"]["radius"] = 0.6203504909
+                        cfg["view_indices"] = [0, 2, 4, 6]
+
+                        if save_cfgs:
+                            config_path = outdir / f"{cfg['name']}.json"
+                            with config_path.open("w") as f:
+                                json.dump(cfg, f, indent=2)
+
+                        experiment = EllipsoidExperiment(cfg)
+                        experiment.run()
+
 
 def cli():
     p = argparse.ArgumentParser(description="Batch runner for ellipsoid problems")
@@ -233,6 +308,12 @@ def cli():
 
     # run_alpha_sweep(args.outdir, alpha_values=[40, 50])
     run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
+    # run_view_count_sweep(args.outdir, view_counts=[2])
+    # run_sampling_resolution_sweep(
+    #     args.outdir,
+    #     m_values=[100, 200, 300, 500, 1000],        # for chamfersampled
+    #     sqrt_m_values=[20, 30, 40],       # for chamferboundary
+    # )
 
 if __name__ == "__main__":
     cli()

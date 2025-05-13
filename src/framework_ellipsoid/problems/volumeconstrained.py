@@ -26,7 +26,7 @@ class VolumeConstrainedProblem(BaseEllipsoidProblem):
         from framework_ellipsoid.utils import sample_ellipsoid_surface
         a, b, c = self.initial_axes
         yaw, pitch, roll = self.initial_angles
-        return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
+        return sample_ellipsoid_surface(self.m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
         return UnitVolConstrainedProjectionNode(self.m, self.wandb)

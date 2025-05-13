@@ -6,9 +6,8 @@ import torch.nn.functional as F
 from scipy.interpolate import interp1d
 
 # Main sampling function
-def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
+def sample_ellipsoid_surface(n, a, b, c, yaw, pitch, roll, noise_std=1e-4, uniform=True):
     if uniform:
-        m = sqrt_m * sqrt_m
         def ellipsoid_func(t, u):
             x = a * torch.sin(t) * torch.cos(u)
             y = b * torch.sin(t) * torch.sin(u)
@@ -16,7 +15,7 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, 
             return torch.stack([x, y, z], dim=0)  # (3, ...)
         u_min, u_max = 0, 2 * torch.pi
         t_min, t_max = 0, torch.pi
-        coords = r_surface(m, ellipsoid_func, t_min, t_max, u_min, u_max, m, m).double()
+        coords = r_surface(n, ellipsoid_func, t_min, t_max, u_min, u_max, 100, 100).double()
 
     else:
         def ellipsoid_func(theta, phi):
@@ -24,7 +23,7 @@ def sample_ellipsoid_surface(sqrt_m, a, b, c, yaw, pitch, roll, noise_std=1e-4, 
             y = b * torch.sin(theta) * torch.sin(phi)
             z = c * torch.cos(theta)
             return torch.stack([x, y, z], dim=0)
-
+        sqrt_m = math.floor(math.sqrt(n))
         theta = torch.linspace(0, math.pi, sqrt_m).double()
         phi = torch.linspace(0, 2 * math.pi, sqrt_m).double()
         theta, phi = torch.meshgrid(theta, phi, indexing='ij')

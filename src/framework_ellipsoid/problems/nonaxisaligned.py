@@ -17,12 +17,11 @@ class NonAxisAlignedProblem(BaseEllipsoidProblem):
         super().__init__(cfg)
         initial_angles_deg = torch.tensor(cfg.get("initial_angles", [0, 0, 0]), dtype=torch.double)
         self.initial_angles = torch.deg2rad(initial_angles_deg)
-        self.m = self.sqrt_m * self.sqrt_m
 
     def generate_data(self):
         a, b, c = self.initial_axes
         yaw, pitch, roll = self.initial_angles
-        return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
+        return sample_ellipsoid_surface(self.m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
         return NAAUnitSAConstrainedProjectionNode(self.m,  self.wandb, self.p)

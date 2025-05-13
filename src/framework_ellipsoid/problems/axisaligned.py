@@ -17,7 +17,7 @@ class AxisAlignedProblem(BaseEllipsoidProblem):
     def generate_data(self):
         a, b, c = self.initial_axes
         yaw = pitch = roll = torch.tensor(0.0, dtype=torch.double)
-        return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
+        return sample_ellipsoid_surface(self.m, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
         return UnitSAConstrainedProjectionNode(self.m, self.wandb, self.p)

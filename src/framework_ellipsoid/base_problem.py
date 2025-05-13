@@ -4,13 +4,12 @@ import abc
 class BaseEllipsoidProblem(abc.ABC):
     def __init__(self, cfg):
         self.cfg = cfg
-        self.sqrt_m = cfg["sqrt_m"]
+        self.m = cfg["m_init"]
         self.seed = cfg["seed"]
         torch.seed = self.seed
         self.nu = cfg.get("noise", 1e-4)
         self.p = cfg.get("p", 1.6075)
         self.initial_axes = cfg["initial_axes"]  # [a, b, c]
-        self.m = self.sqrt_m * self.sqrt_m
         self.wandb = cfg.get("wandb", False)
 
     @abc.abstractmethod

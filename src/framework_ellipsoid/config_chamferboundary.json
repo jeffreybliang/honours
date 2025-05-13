@@ -1,19 +1,19 @@
 {
-    "project": "ellipsoid-experiments",
-    "name": "test chamfer boundary",
-    "problem": "chamferboundary",
-    "sqrt_m": 30,
-    "seed": 42,
-    "noise": 1e-2,
-    "p": 1.6075,
-    "alpha": 20,
-    "initial_axes": [0.4, 0.65, 0.85],
-    "initial_angles": [80,30,60],
-    "target": {
-      "radius": 0.6203504909,
-      "m": 300,
-      "sqrt_m": 30
-    },
+      "project": "ellipsoid-experiments",
+      "name": "test chamfer boundary",
+      "problem": "chamferboundary",
+      "m_init": 900,
+      "m_sample": 1000,
+      "seed": 42,
+      "noise": 1e-2,
+      "p": 1.6075,
+      "alpha": 0,
+      "initial_axes": [0.4, 0.65, 0.85],
+      "initial_angles": [80,30,60],
+      "target": {
+        "radius": 0.6203504909,
+        "m": 300
+      },
     "view_mode": "angles",
     "view_angles": [
       [-90.0,    -90.0,     0.0],

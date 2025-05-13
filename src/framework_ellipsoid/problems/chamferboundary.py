@@ -13,7 +13,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         target_cfg = cfg.get("target", {})
         radius = target_cfg.get("radius", 1.0)
         m_pts = target_cfg.get("m", 50)
-        self.sqrt_m_pts = target_cfg.get("sqrt_m", 50)
+        self.m_sampled = cfg.get("m_sample", 900)
 
         target_pts = build_target_circle(radius, m_pts).expand(self.rot_mats.size(0), -1, -1)
         self.views = (self.rot_mats, target_pts)
@@ -28,13 +28,13 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         a, b, c = self.initial_axes
         yaw, pitch, roll = self.initial_angles
         print(f"Initial volume is {ellipsoid_volume(a,b,c)} and initial surface area {ellipsoid_surface_area(a,b,c)}")
-        return sample_ellipsoid_surface(self.sqrt_m, a, b, c, yaw, pitch, roll, self.nu)
+        return sample_ellipsoid_surface(self.m_sampled, a, b, c, yaw, pitch, roll, self.nu)
 
     def get_node(self):
         return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
-        return BoundaryProjectionChamferLoss(self.views, m=self.m_pts, sqrt_m=self.sqrt_m_pts, alpha=self.alpha)
+        return BoundaryProjectionChamferLoss(self.views, m=self.m_pts, m_sampled=self.m_sampled, alpha=self.alpha)
 
     def wrap_node_function(self, node, x):
         return EllipseConstrainedProjectionFunction.apply(node, x)
