@@ -16,48 +16,33 @@
     "views": {
         "Icosphere0": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         },
         "Icosphere1": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         },
         "Icosphere2": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         },
         "Icosphere3": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         },
         "Icosphere4": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         },
         "Icosphere5": {
             "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
-        },
-        "Icosphere6": {
-            "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
-        },
-        "Icosphere7": {
-            "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
-        },
-        "Icosphere8": {
-            "mode": "manual",
-            "view_names": ["Ground_0"],
-            "num_views": 1
+            "view_names": ["Above_0", "Above_1", "Above_2", "Above_3", "Above_4", "Above_5", "Above_6", "Ground_0", "Ground_1", "Ground_2", "Ground_3", "Overhead_0"],
+            "num_views": 12
         }
     },
     "gradient": {

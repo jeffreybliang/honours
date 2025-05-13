@@ -22,55 +22,103 @@
     {
       "name": "Icosphere0",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     },
     {
       "name": "Icosphere1",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     },
     {
       "name": "Icosphere2",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     },
     {
       "name": "Icosphere3",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     },
     {
       "name": "Icosphere4",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     },
     {
       "name": "Icosphere5",
       "edgemap_options": {
-        "Ground_0": [false, 15, 100]
-      }
-    },
-    {
-      "name": "Icosphere6",
-      "edgemap_options": {
-        "Ground_0": [false, 15, 100]
-      }
-    },
-    {
-      "name": "Icosphere7",
-      "edgemap_options": {
-        "Ground_0": [false, 15, 100]
-      }
-    },
-    {
-      "name": "Icosphere8",
-      "edgemap_options": {
-        "Ground_0": [false, 15, 100]
+        "Above_0":      [false, 15, 50],
+        "Above_1":      [false, 15, 50],
+        "Above_2":      [false, 15, 50],
+        "Above_3":      [false, 15, 50],
+        "Above_4":      [false, 15, 50],
+        "Above_5":      [false, 15, 50],
+        "Above_6":      [false, 15, 50],    
+        "Ground_0":     [false, 15, 50],
+        "Ground_1":     [false, 15, 50],
+        "Ground_2":     [false, 15, 50],
+        "Ground_3":     [false, 15, 50],
+        "Overhead_0":   [false, 15, 45]
       }
     }
   ]
