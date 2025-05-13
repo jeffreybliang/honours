@@ -231,8 +231,8 @@ def cli():
     p.add_argument("--no-save-cfgs", action="store_true", help="Do not write config files to disk")
     args = p.parse_args()
 
-    run_alpha_sweep(args.outdir, alpha_values=[40, 50])
-    run_view_count_sweep(args.outdir, view_counts=[2])
+    # run_alpha_sweep(args.outdir, alpha_values=[40, 50])
+    run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
 
 if __name__ == "__main__":
     cli()
