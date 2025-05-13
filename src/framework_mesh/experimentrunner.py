@@ -175,7 +175,7 @@ class ExperimentRunner:
 
         if self.method == "penalty":
             loss_fn = PenaltyMethod(src, tgt, projmats, edgemap_info,
-                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask, device=device)
+                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask, device=device, doublesided=self.cfg["chamfer"]["doublesided"], target_volume=target_volume)
             optimiser = torch.optim.SGD([xs], lr=lr, momentum=moment)
         else:
             node = ConstrainedProjectionNode(src, target_volume, self.wandb)
@@ -215,7 +215,7 @@ class ExperimentRunner:
                 loss = loss_dict["chamfer"] + penalty_loss
                 old_lambda_vol = lambda_vol
                 if rate:
-                    lambda_vol = min(lambda_vol * rate, lambda_max)   
+                    lambda_vol = min(lambda_vol + rate, lambda_max)   
                 projverts = xs
             else:
                 node.iter = i + step_offset
@@ -239,7 +239,7 @@ class ExperimentRunner:
                     data = {
                     "outer/chamfer": loss * 10,
                     "outer/vol_penalty_lambda": old_lambda_vol,
-                    "outer/vol_error": loss_dict["vol_error"].item(),
+                    "outer/vol_error": loss_dict["vol_error"],
                     "outer/penalty": penalty_loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
@@ -249,7 +249,7 @@ class ExperimentRunner:
                 )
 
             if self.verbose:
-                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss.item():.3f} Tgt: {target_volume} VolErr: {loss_dict['vol_error'].item():.3f}")
+                print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss:.3f} Tgt: {target_volume} VolErr: {loss_dict['vol_error']:.3f}")
                 print(f"GT Chamfer: [{', '.join(f'{x:.3f}' for x in chamfer_gt(tmp_mesh, tgt))}] "
                     f"GT IoU: [{', '.join(f'{x:.3f}' for x in iou_gt(projverts, src, tgt))}]")
             def should_log(i):

@@ -93,10 +93,10 @@
     },
     "method": "penalty",
     "penalty": {
-        "lambda_init": 1e1,
-        "lambda_max": 1e9,
-        "rate": 1.1
-    },
+        "lambda_init": 0,
+        "lambda_max": 1e6,
+        "rate": 500
+},
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -117,10 +117,10 @@
     "chamfer": {
         "doublesided": true
     },      
-    "verbose": true,
+    "verbose": false,
     "vis": {
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }

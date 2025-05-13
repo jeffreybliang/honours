@@ -11,7 +11,7 @@ from .utils import *
 import wandb
 
 class PenaltyMethod(nn.Module):
-    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None, device=torch.device("cpu")):
+    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None, device=torch.device("cpu"), doublesided=False, target_volume=None):
         super().__init__()
         self.src = src
         self.tgt = tgt
@@ -27,12 +27,14 @@ class PenaltyMethod(nn.Module):
 
         # Precompute and store target volumes on the correct device
         B = len(src)
-        target_volumes = torch.tensor(
-            [calculate_volume(src[b].verts_packed(), src[b].faces_packed()) for b in range(B)],
-            dtype=torch.double,
-            device=device
-        )
-        self.register_buffer("target_volumes", target_volumes)
+        if target_volume:
+            target_volumes = torch.tensor(
+                [target_volume for b in range(B)],
+                dtype=torch.double,
+                device=device
+            )
+            self.register_buffer("target_volumes", target_volumes)
+        self.doublesided = doublesided
 
     def project_vertices(self, vertices):
         V = vertices.shape[0]
@@ -90,8 +92,8 @@ class PenaltyMethod(nn.Module):
                 x_lengths=boundary_lengths[b].long(),
                 y_lengths=self.edgemaps_len[b].long(),
                 batch_reduction="mean",
-                point_reduction="mean"
-            )
+                point_reduction="mean",
+                single_directional=not self.doublesided)
             chamfer_loss[b] = res.sum()
         return chamfer_loss.double()
 
