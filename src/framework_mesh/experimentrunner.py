@@ -103,11 +103,15 @@ class ExperimentRunner:
 
         prev_verts = None
         prev_displacement = None
-        src_mesh = self.get_mesh(src_name).to(device)
-        initial_volume = 4.39763096 # 1.4 * pi but for mesh, so a little smaller
-        # initial_volume = calculate_volume(src_mesh[0].verts_packed(), src_mesh[0].faces_packed()).item()
-
-        for tgt_name in tgt_names:
+        if isinstance(src_name, list):
+            assert len(src_name) == len(tgt_names), "src_name and tgt_names must be the same length when src_name is a list"
+            name_pairs = list(zip(src_name, tgt_names))
+        else:
+            name_pairs = [(src_name, tgt_name) for tgt_name in tgt_names]
+        print([(src,tgt_name) for src, tgt_name in name_pairs])
+        for src, tgt_name in name_pairs:
+            src_mesh = self.get_mesh(src).to(device)
+            initial_volume = 4.39763096  # Or compute dynamically if needed
             print(f"Target: {tgt_name}")
             tgt_mesh = self.get_gt_mesh(tgt_name).to(device)
 
@@ -154,11 +158,10 @@ class ExperimentRunner:
             if prev_verts is not None:
                 prev_displacement = final_verts[0] - prev_verts[0]
             prev_verts = final_verts.detach()
-            src_mesh = Meshes(verts=final_verts.float(), faces=src_mesh.faces_padded())
+            # src_mesh = Meshes(verts=final_verts.float(), faces=src_mesh.faces_padded())
 
             # update step offset
             step_offset += self.n_iters
-
         if self.wandb:
             run.config["view_names"] = view_names_used
             run.finish()

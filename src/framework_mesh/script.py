@@ -11,7 +11,7 @@ def main():
     device = torch.device("cpu")
 
     data_path = "./framework_mesh/data_noground.json"
-    exp_path = "./framework_mesh/exp_oblique_AdamW_laplacian.json"
+    exp_path = "./framework_mesh/exp_spherediff.json"
 
     with open(data_path, 'r') as f:
         data_config = json.load(f)

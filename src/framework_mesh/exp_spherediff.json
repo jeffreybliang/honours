@@ -2,7 +2,22 @@
     "project": "Video Sequence",
     "name": "res_2_sphere_init",
     "description": "sky background, sphere to balloon dropping on ground",
-    "src_mesh": "sphere",
+    "src_mesh": [
+        "Sphere0", 
+        "Sphere1", 
+        "Sphere2", 
+        "Sphere3", 
+        "Sphere4", 
+        "Sphere5", 
+        "Sphere6", 
+        "Sphere7", 
+        "Sphere8", 
+        "Sphere9", 
+        "Sphere10",
+        "Sphere11",
+        "Sphere12",
+        "Sphere13"
+    ],    
     "target_meshes": [
         "Oblique0", 
         "Oblique1", 
@@ -99,11 +114,10 @@
         "debug": false
     },
     "training": {
-        "n_iters": 100,
-        "lr": 5e-5,
+        "n_iters": 1,
+        "lr": 1e-4,
         "momentum": 0.9,
-        "optimiser": "AdamW",
-        "laplacian_weight": 0.1
+        "optimiser": "sgd"
     },
     "velocity": {
         "enabled": true,
