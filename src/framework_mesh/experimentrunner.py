@@ -196,7 +196,9 @@ class ExperimentRunner:
         if self.opt == "SGD":
             optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         else:
-            optimiser = torch.optim.AdamW([verts], lr=lr)
+            optimiser = torch.optim.AdamW([verts], 
+                                          lr=lr, 
+                                          betas=(self.cfg["training"].get("beta1", 0.9), self.cfg["training"].get("beta2", 0.999)), weight_decay=self.cfg["training"].get("weight_decay",0))
         a,b = edgemap_info
         a,b = a[0], b[0]
         projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
