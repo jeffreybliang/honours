@@ -28,7 +28,7 @@ def main():
         dataloader = DataLoader(data_config, device)
 
         for grad_smoothing in grad_smoothing_options:
-            for constrained in ([False, True] if grad_smoothing else [False]):
+            for constrained in ([False] if grad_smoothing else [False]):
                 for k in velocity_ks:
                     for beta in velocity_betas:
                         # Deep copy experiment config
@@ -51,7 +51,7 @@ def main():
                         }
 
                         # Naming
-                        name = f"vbeta_{beta}_vk_{k}_"
+                        name = f"translation_vbeta_{beta}_vk_{k}_"
                         name += f"gradsmooth_{grad_smoothing}"
                         if grad_smoothing:
                             name += f"_constrained_{constrained}"

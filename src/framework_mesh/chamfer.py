@@ -6,7 +6,7 @@ from pytorch3d.loss import chamfer_distance
 from torch import nn
 import numpy as np
 
-def get_boundary(projected_pts: torch.Tensor, alpha: float = 12.0):
+def get_boundary(projected_pts: torch.Tensor, alpha: float = 5.0):
     """
     projected_pts : (V,2) *on GPU* – 2‑D projected vertices
     alpha         : α‑shape parameter
