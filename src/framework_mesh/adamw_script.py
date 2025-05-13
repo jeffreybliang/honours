@@ -18,7 +18,7 @@ def run_experiments(data_path, exp_base_path, mesh_res_values, velocity_k, veloc
         data_config['paths']['mesh_res'] = mesh_res
         dataloader = DataLoader(data_config, device)
         for constrained in constrained_map.get(mesh_res, []):
-            for optimiser in ["SGD", "AdamW"]:
+            for optimiser in ["SGD"]:
             # Update mesh resolution
 
                 # Deep copy config
