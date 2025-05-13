@@ -157,7 +157,6 @@ class NAAUnitSAConstrainedProjectionNode(IneqConstDeclarativeNode):
                 'type': 'ineq',
                 'fun': lambda u: np.concatenate([u, [2*np.pi - u[3], np.pi - u[4], 2*np.pi - u[5]]])
             }
-
             res = opt.minimize(
                 lambda u: objective_function(u, X,self.u_prev).cpu().numpy(),
                 u0,
@@ -220,7 +219,7 @@ class UnitVolConstrainedProjectionNode(IneqConstDeclarativeNode):
         if self.u_prev is None or torch.equal(y[:,:], self.u_prev):
             obj_val = torch.sum((XT_AX - b_ones).pow(2), dim=1)
         else:
-            obj_val = torch.sum((XT_AX - b_ones).pow(2), dim=1) + torch.norm(y[:,:] - self.u_prev, p=2)**2
+            obj_val = torch.sum((XT_AX - b_ones).pow(2), dim=1) + torch.norm(y[:,:] - self.u_prev, p=2)**2 * 10
         self.u_prev = y
         return obj_val
     

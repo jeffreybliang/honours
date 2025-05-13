@@ -136,11 +136,11 @@ def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
 
 
 class BoundaryProjectionChamferLoss(nn.Module):
-    def __init__(self, views, m=50, sqrt_m=25, alpha=0.0):
+    def __init__(self, views, m=50, m_sampled=900, alpha=0.0):
         super().__init__()
         self.rot_mats, self.target_pts = views  # target_pts: (N, M, 2)
         self.m = m
-        self.sqrt_m = sqrt_m
+        self.m_sampled = m_sampled
         self.alpha = alpha
         self.last_projected_pts = None         # (B, V, 2, N)
         self.last_boundary_points = None       # list[list[Tensor]] of shape B × V
@@ -194,7 +194,7 @@ class BoundaryProjectionChamferLoss(nn.Module):
 
         # z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
         # E = Binv @ z  # (3, M), ellipsoid surface points
-        n = self.sqrt_m ** 2
+        n = self.m_sampled
         E = self.sample_ellipsoid_surface_uniform(Au, n)
         # Step 5: Loop over each view
         boundary_pts = []
@@ -242,7 +242,7 @@ class BoundaryProjectionChamferLoss(nn.Module):
 
         x_lengths = torch.tensor(boundary_lengths, dtype=torch.int64, device=input.device)
         y_lengths = torch.full((B,), self.target_pts.shape[1], dtype=torch.int64, device=input.device)
-
+        # print(max_len, x_lengths, y_lengths)
         # Step 7: Chamfer distance
         res, _ = chamfer_distance(
             padded.float(), self.target_pts.float(),

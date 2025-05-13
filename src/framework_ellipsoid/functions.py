@@ -50,13 +50,15 @@ def objective_function(u, X, u_prev=None):
     A = R @ L @ R.T
     XT_AX = torch.einsum('ji,jk,ki->i', X, A, X)
     b = torch.ones(X.shape[1])
+
     if u_prev is None:
         u_prev = u 
         return torch.sum((XT_AX - b) ** 2)
     
     elif not torch.is_tensor(u_prev):   
         u_prev = torch.tensor(u_prev).double()
-    res = torch.sum((XT_AX - b) ** 2) + torch.norm(u_prev - u)**2
+    # print("solver", torch.sum((XT_AX - b) ** 2), torch.norm(u_prev - u)**2 * 10)
+    res = torch.sum((XT_AX - b) ** 2) + torch.norm(u_prev - u)**2 * 10
     return res
 
 def objective_function_grad(u, X, u_prev=None):

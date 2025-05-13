@@ -59,7 +59,7 @@ class EllipsoidExperiment:
             optimiser.zero_grad()
             y = self.problem.wrap_node_function(node, x)
             res = loss_fn(y)
-            outer_loss = res.sum()
+            outer_loss = res.mean()
             outer_loss.backward()
             pbar.set_description(f"Loss: {outer_loss.item():.4f}")
             if self.wandb:
