@@ -8,7 +8,7 @@ exp_base_path = "./framework_mesh/exp_oblique_AdamW.json"
 velocity_k = 1
 velocity_beta = 1.0
 fixed_config = {
-    "lr": 5e-3,
+    "lr": 1e-4,
     "weight_decay": 0.0,
     "beta1": 0.9,
     "beta2": 0.9
@@ -17,25 +17,11 @@ fixed_config = {
 # Mesh & config variants
 configs = [
     {
-        "data_path": "./framework_mesh/data_noground.json",
-        "mesh_res": 2,
-        "doublesided": True,
-        "ground_label": "noground",
-        "constrained_vals": [False]
-    },
-    {
-        "data_path": "./framework_mesh/data_noground.json",
-        "mesh_res": 3,
-        "doublesided": True,
-        "ground_label": "noground",
-        "constrained_vals": [False]
-    },
-    {
         "data_path": "./framework_mesh/data_ground.json",
         "mesh_res": 2,
         "doublesided": False,
         "ground_label": "ground",
-        "constrained_vals": [False, True]
+        "constrained_vals": [False]
     },
     {
         "data_path": "./framework_mesh/data_ground.json",
@@ -52,7 +38,7 @@ running_procs = []
 
 def build_cmd(idx, sweep_cfg, constrained):
     name = (
-        f"{sweep_cfg['ground_label']}_AdamW_idx{idx}"
+        f"{sweep_cfg['ground_label']}_SGD_idx{idx}"
         f"_lr{fixed_config['lr']}_wd{fixed_config['weight_decay']}"
         f"_b1{fixed_config['beta1']}_b2{fixed_config['beta2']}"
         f"_constrained{constrained}_res{sweep_cfg['mesh_res']}"
@@ -63,7 +49,7 @@ def build_cmd(idx, sweep_cfg, constrained):
         "--exp_base_path", exp_base_path,
         "--mesh_res", str(sweep_cfg["mesh_res"]),
         "--constrained", str(constrained).lower(),
-        "--optimiser", "AdamW",
+        "--optimiser", "SGD",
         "--lr", str(fixed_config["lr"]),
         "--weight_decay", str(fixed_config["weight_decay"]),
         "--beta1", str(fixed_config["beta1"]),

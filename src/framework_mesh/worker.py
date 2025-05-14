@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument("--exp_base_path", required=True)
     parser.add_argument("--mesh_res", type=int, required=True)
     parser.add_argument("--constrained", type=lambda x: x.lower() == "true", default=False)
-    parser.add_argument("--optimiser", default="AdamW")
+    parser.add_argument("--optimiser", default="SGD")
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--weight_decay", type=float, default=0.0)
