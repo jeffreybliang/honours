@@ -307,13 +307,13 @@ def cli():
     args = p.parse_args()
 
     # run_alpha_sweep(args.outdir, alpha_values=[40, 50])
-    run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
+    # run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
     # run_view_count_sweep(args.outdir, view_counts=[2])
-    # run_sampling_resolution_sweep(
-    #     args.outdir,
-    #     m_values=[100, 200, 300, 500, 1000],        # for chamfersampled
-    #     sqrt_m_values=[20, 30, 40],       # for chamferboundary
-    # )
+    run_sampling_resolution_sweep(
+        args.outdir,
+        m_values=[100, 200, 300, 500, 1000],        # for chamfersampled
+        sqrt_m_values=[20, 30, 40],       # for chamferboundary
+    )
 
 if __name__ == "__main__":
     cli()

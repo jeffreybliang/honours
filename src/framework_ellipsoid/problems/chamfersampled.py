@@ -9,7 +9,7 @@ class ChamferSampledProblem(BaseEllipsoidProblem):
         super().__init__(cfg)
         self.rot_mats = build_view_matrices(cfg)
         target_cfg = cfg["target"]
-        target_pts = build_target_circle(target_cfg["radius"], target_cfg["m"]).expand(self.rot_mats.size(0), -1, -1)
+        target_pts = build_target_circle(target_cfg["radius"], 500).expand(self.rot_mats.size(0), -1, -1)
         self.views = (self.rot_mats, target_pts)
         initial_angles_deg = torch.tensor(cfg.get("initial_angles", [0, 0, 0]), dtype=torch.double)
         self.initial_angles = torch.deg2rad(initial_angles_deg)

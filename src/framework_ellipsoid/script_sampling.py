@@ -33,34 +33,33 @@ def cli():
 
     jobs = []
 
-    for problem in ["chamfersampled", "chamferboundary"]:
-        for m in [50, 250, 500, 1000]:
-            for trial in range(10):
-                cmd = make_args(
-                    problem=problem,
-                    project="Target M Sweep",
-                    name=f"{a_id}-{r_id}-m{m}-t{trial:02d}",
-                    axes=axes,
-                    angles=angles,
-                    trial=trial,
-                    target_m=m,
-                    target_radius=0.6203504909,
-                    alpha=1,
-                    vis_enabled=int(trial < 2)
-                )
-                jobs.append(cmd)
+    # for problem in ["chamfersampled", "chamferboundary"]:
+    #     for m in [50, 250, 500, 1000]:
+    #         for trial in range(10):
+    #             cmd = make_args(
+    #                 problem=problem,
+    #                 project="Target M Sweep",
+    #                 name=f"{a_id}-{r_id}-m{m}-t{trial:02d}",
+    #                 axes=axes,
+    #                 angles=angles,
+    #                 trial=trial,
+    #                 target_m=m,
+    #                 target_radius=0.6203504909,
+    #                 alpha=1,
+    #                 vis_enabled=int(trial < 2)
+    #             )
+    #             jobs.append(cmd)
 
-    for n_sample in [500, 1000, 2000, 10000]:
-        for trial in range(10):
+    for n_sample in [50, 250, 500, 1000]:
+        for trial in range(20):
             cmd = make_args(
-                problem="chamferboundary",
+                problem="chamfersampled",
                 project="N Sample Sweep",
                 name=f"{a_id}-{r_id}-ns{n_sample}-t{trial:02d}",
                 axes=axes,
                 angles=angles,
                 trial=trial,
-                m_sample=n_sample,
-                target_m=500,
+                target_m=n_sample,
                 target_radius=0.6203504909,
                 alpha=1,
                 vis_enabled=int(trial < 2)

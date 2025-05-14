@@ -24,7 +24,7 @@ def get_base_config():
         ],
         "view_normals": [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, 1, 1], [-1, -1, 1], [-1, 1, 1]],
         "view_indices": [0, 2, 4, 6],
-        "training": {"n_iters": 200, "lr": 1e-2, "momentum": 0.8},
+        "training": {"n_iters": 200, "lr": 5e-1, "momentum": 0.8},
         "verbose": True,
         "vis": {"enabled": True, "frequency": 1, "backend": "plotly"},
         "wandb": True,
@@ -61,8 +61,7 @@ def main():
         "initial_axes": args.axes,
         "initial_angles": args.angles,
         "trial": args.trial,
-        "alpha": args.alpha,
-        "noise": args.noise,
+        "alpha": args.alpha
     })
 
     cfg["vis"] = {
