@@ -1,5 +1,5 @@
 {
-    "project": "Video Sequence",
+    "project": "From Sphere",
     "name": "res_2_sphere_init",
     "description": "sky background, sphere to balloon dropping on ground",
     "src_mesh": [
@@ -114,10 +114,10 @@
         "debug": false
     },
     "training": {
-        "n_iters": 1,
+        "n_iters": 150,
         "lr": 1e-4,
         "momentum": 0.9,
-        "optimiser": "sgd"
+        "optimiser": "SGD"
     },
     "velocity": {
         "enabled": true,
@@ -132,5 +132,5 @@
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }
