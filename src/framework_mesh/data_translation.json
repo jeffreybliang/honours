@@ -98,7 +98,7 @@
         "Above_5":      [false, 15, 50],
         "Above_6":      [false, 15, 50],    
         "Ground_0":     [false, 15, 50],
-        "Ground_1":     [false, 15, 50],
+        "Ground_1":     [false, 10, 30],
         "Ground_2":     [false, 15, 50],
         "Ground_3":     [false, 15, 50],
         "Overhead_0":   [false, 15, 45]

@@ -21,7 +21,7 @@ def main():
     mesh_resolutions = [2, 3]
     grad_smoothing_options = [True]
     velocity_ks = [1]
-    velocity_betas = [1.0]
+    velocity_betas = [0, 1.0]
 
     for mesh_res in mesh_resolutions:
         data_config['paths']['mesh_res'] = mesh_res
@@ -55,7 +55,7 @@ def main():
                         name += f"gradsmooth_{grad_smoothing}"
                         if grad_smoothing:
                             name += f"_constrained_{constrained}"
-                        name += f"_res_{mesh_res}"
+                        name += f"_res_{mesh_res}_doublesided"
                         exp_config["name"] = name
 
                         print(f"[RUN] {name}")

@@ -4,14 +4,12 @@
     "description": "Ground view comparisons across icosphere variants with fixed Canny parameters",
     "src_mesh": "translation",
     "target_meshes": [
+        "Icosphere0",
         "Icosphere1",
         "Icosphere2",
         "Icosphere3",
         "Icosphere4",
-        "Icosphere5",
-        "Icosphere6",
-        "Icosphere7",
-        "Icosphere8"
+        "Icosphere5"
     ],
     "views": {
         "Icosphere0": {
@@ -56,6 +54,9 @@
         "n_iters": 100,
         "lr": 1e-4,
         "momentum": 0.9
+    },
+    "chamfer": {
+        "doublesided": true
     },
     "velocity": {
         "enabled": true,
