@@ -23,7 +23,7 @@ class ChamferSampledProblem(BaseEllipsoidProblem):
         return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
-        return SampledProjectionChamferLoss(self.views, m=self.cfg["target"]["m"])
+        return SampledProjectionChamferLoss(self.views, m=self.cfg["m_sample"])
 
     def wrap_node_function(self, node, x):
         return EllipseConstrainedProjectionFunction.apply(node, x)

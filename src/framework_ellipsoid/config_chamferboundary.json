@@ -3,7 +3,7 @@
       "name": "test chamfer boundary",
       "problem": "chamferboundary",
       "m_init": 900,
-      "m_sample": 1000,
+      "m_sample": 200,
       "seed": 42,
       "noise": 1e-2,
       "p": 1.6075,
@@ -12,7 +12,7 @@
       "initial_angles": [80,30,60],
       "target": {
         "radius": 0.6203504909,
-        "m": 300
+        "m": 1000
       },
     "view_mode": "angles",
     "view_angles": [
@@ -35,7 +35,7 @@
     ],
     "view_indices": [0,2,4,6],
     "training": {
-      "n_iters": 200,
+      "n_iters": 100,
       "lr": 5e-1,
       "momentum": 0.7
     },
