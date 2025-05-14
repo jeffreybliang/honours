@@ -57,9 +57,9 @@ def collect_jobs(filter_penalty_type=None):
                     exp_config["method"] = "penalty"
                     if use_penalty:
                         exp_config["penalty"] = {
-                            "lambda_init": 0.01,
+                            "lambda_init": 10000,
                             "lambda_max": 1e7,
-                            "rate": 500,
+                            "linear": 10,
                         }
                     else:
                         exp_config["penalty"] = {
@@ -84,7 +84,7 @@ def collect_jobs(filter_penalty_type=None):
 
                     exp_config["training"] = {
                         "n_iters": n_iters,
-                        "lr": 1e-4,
+                        "lr": 1e-5,
                         "momentum": 0.9
                     }
 
@@ -93,7 +93,7 @@ def collect_jobs(filter_penalty_type=None):
                     }
 
                     name = (
-                        f"PENALTY_{penalty_label}_{ground_label}_vbeta_{velocity_beta}_"
+                        f"const10000PENALTY_{penalty_label}_{ground_label}_vbeta_{velocity_beta}_"
                         f"vk_{velocity_k}_gradsmooth_True_constrained_{constrained}_"
                         f"res_{mesh_res}_n{n_iters}"
                     )

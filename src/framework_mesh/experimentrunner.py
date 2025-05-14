@@ -203,8 +203,8 @@ class ExperimentRunner:
             penalty = self.cfg.get("penalty", {})
             lambda_vol = penalty.get("lambda_init", 100.0)
             lambda_max = penalty.get("lambda_max", 1e6)
-            rate = penalty.get("rate", 1.1)
-
+            rate = penalty.get("rate", -1)
+            linear = penalty.get("linear", -1)
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
 
@@ -214,8 +214,11 @@ class ExperimentRunner:
                 penalty_loss = lambda_vol * loss_dict["vol_error"]
                 loss = loss_dict["chamfer"] + penalty_loss
                 old_lambda_vol = lambda_vol
-                if rate:
-                    lambda_vol = min(lambda_vol + rate, lambda_max)   
+                if rate > 0:
+                    lambda_vol = min(lambda_vol * rate, lambda_max)
+                    loss *= 10
+                elif linear > 0:
+                    lambda_vol = min(lambda_vol + linear, lambda_max)
                 projverts = xs
             else:
                 node.iter = i + step_offset
@@ -237,7 +240,7 @@ class ExperimentRunner:
             if self.wandb:
                 wandb.log(
                     data = {
-                    "outer/chamfer": loss * 10,
+                    "outer/chamfer": loss,
                     "outer/vol_penalty_lambda": old_lambda_vol,
                     "outer/vol_error": loss_dict["vol_error"],
                     "outer/penalty": penalty_loss,
