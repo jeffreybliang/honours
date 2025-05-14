@@ -249,7 +249,7 @@ class BoundaryProjectionChamferLoss(nn.Module):
             x_lengths=x_lengths,
             y_lengths=y_lengths,
             batch_reduction=None,
-            point_reduction="mean"
+            point_reduction="sum"
         )
 
         return res
