@@ -8,6 +8,7 @@ from .plotting import *
 from .utils import rotation_matrix_3d_batch
 from shapely.geometry import Polygon, MultiPolygon, GeometryCollection
 from alpha_shapes.boundary import Boundary, get_boundaries
+import wandb
 
 def A_from_u_batch(u):
     Lambda = torch.diag_embed(1 / u[:, :3] ** 2)
@@ -96,6 +97,24 @@ class SampledProjectionChamferLoss(nn.Module):
             batch_reduction=None,
             point_reduction="mean"
         )
+
+        if True:
+            (p,t), _ = chamfer_distance(
+                sampled_pts.float(), self.target_pts.float(),
+                batch_reduction=None,
+                point_reduction=None
+            )
+            wandb.log({
+                "chamfer/p_to_t_sum": p.sum().item(),
+                "chamfer/t_to_p_sum": t.sum().item(),
+                "chamfer/p_to_t_mean": p.mean().item(),
+                "chamfer/t_to_p_mean": t.mean().item(),
+                "chamfer/num_p": p.numel(),
+                "chamfer/num_t": t.numel(),
+                "chamfer/sum": (p.sum() + t.sum()).item(),
+                "chamfer/mean": res.mean().item()
+            }, commit=False)
+
         return res
 
 
@@ -136,18 +155,18 @@ def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
 
 
 class BoundaryProjectionChamferLoss(nn.Module):
-    def __init__(self, views, m=50, m_sampled=900, alpha=0.0):
+    def __init__(self, views, m_sampled=900, alpha=0.0):
         super().__init__()
         self.rot_mats, self.target_pts = views  # target_pts: (N, M, 2)
-        self.m = m
         self.m_sampled = m_sampled
         self.alpha = alpha
         self.last_projected_pts = None         # (B, V, 2, N)
         self.last_boundary_points = None       # list[list[Tensor]] of shape B × V
         self.last_hulls = None                 # list[list[Polygon]] of shape B × V
 
-    def sample_unit_sphere(self, sqrt_m, device):
+    def sample_unit_sphere(self, n, device):
         """Sample m points on the unit sphere S²"""
+        sqrt_m = math.ceil(math.sqrt(n))
         phi = 2 * math.pi * torch.linspace(0.0, 1.0, sqrt_m, dtype=torch.double, device=device)
         theta = torch.acos(1 - 2 * torch.linspace(0.0, 1.0, sqrt_m, dtype=torch.double, device=device))
         phi, theta = torch.meshgrid(phi, theta, indexing="ij")
@@ -159,7 +178,7 @@ class BoundaryProjectionChamferLoss(nn.Module):
     def sample_ellipsoid_surface_uniform(self, A: torch.Tensor, n: int, oversample: float = 2.0):
         # eigvals, eigvecs = torch.linalg.eigh(A)
         # A_inv_sqrt = eigvecs @ torch.diag(1.0 / torch.sqrt(eigvals)) @ eigvecs.T
-        L = torch.linalg.cholesky(A)  # B in pseudocode: upper-triangular
+        L = torch.linalg.cholesky(A, upper=True)  # B in pseudocode: upper-triangular
         A_inv_sqrt = torch.linalg.inv(L)
 
         accepted = []
@@ -170,7 +189,7 @@ class BoundaryProjectionChamferLoss(nn.Module):
             u /= torch.norm(u, dim=0, keepdim=True)
 
             x = A_inv_sqrt @ u
-            accepted.append(x)
+            # accepted.append(x)
             norm_A = torch.sqrt(torch.sum(x * (A @ x), dim=0))  # shape: (N,)
             x = x / norm_A.unsqueeze(0)
 
@@ -189,10 +208,10 @@ class BoundaryProjectionChamferLoss(nn.Module):
         B = len(self.rot_mats)
         A = A_from_u_batch(input).double()  # (1, 3, 3)
         Au = A[0]
-        # L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
-        # Binv = torch.inverse(L)        # B⁻¹ (3×3)
+        L = torch.linalg.cholesky(Au)  # B in pseudocode: upper-triangular
+        Binv = torch.inverse(L)        # B⁻¹ (3×3)
 
-        # z = self.sample_unit_sphere(self.sqrt_m, device=input.device)  # (3, M)
+        # z = self.sample_unit_sphere(self.m_sampled, device=input.device)  # (3, M)
         # E = Binv @ z  # (3, M), ellipsoid surface points
         n = self.m_sampled
         E = self.sample_ellipsoid_surface_uniform(Au, n)
@@ -219,8 +238,8 @@ class BoundaryProjectionChamferLoss(nn.Module):
                 boundaries = []
             hulls.append(boundaries)
             coords = np.concatenate(
-                [b.exterior for b in boundaries] +
-                [hole for b in boundaries for hole in b.holes],
+                [b.exterior[:-1] for b in boundaries] + [hole for b in boundaries for hole in b.holes[:-1]]
+                ,
                 axis=0
             ) if boundaries else np.empty((0, 2))
             
@@ -241,16 +260,57 @@ class BoundaryProjectionChamferLoss(nn.Module):
             padded[i, :b.shape[1]] = b.T  # (2, N) → (N, 2)
 
         x_lengths = torch.tensor(boundary_lengths, dtype=torch.int64, device=input.device)
-        y_lengths = torch.full((B,), self.target_pts.shape[1], dtype=torch.int64, device=input.device)
+        # y_lengths = torch.full((B,), self.target_pts.shape[1], dtype=torch.int64, device=input.device)
         # print(max_len, x_lengths, y_lengths)
         # Step 7: Chamfer distance
+
+        R = self.rot_mats  # (N, 3, 3)
+        ellipses = homogeneous_projection_batch_torch(A, R)  # (N, 2, 2)
+        matrix_sqrts = pos_sqrt(ellipses)
+        sampled_pts = sample_pts(matrix_sqrts, m=self.m_sampled)  # (N, 2, m)
+        self.last_projected_pts = sampled_pts.unsqueeze(0)  # → (1, N, 2, m)
+
         res, _ = chamfer_distance(
             padded.float(), self.target_pts.float(),
             x_lengths=x_lengths,
-            y_lengths=y_lengths,
             batch_reduction=None,
-            point_reduction="sum"
+            point_reduction="mean"
         )
+        if True:
+            (p,t), _ = chamfer_distance(
+                padded.float(), self.target_pts.float(),
+                x_lengths=x_lengths,
+                batch_reduction=None,
+                point_reduction=None
+            )
+            print(t[0])
+            print("== Chamfer Debug ==")
+            print(f"x_lengths.sum()        = {x_lengths.sum().item()}")
+            print(f"p.numel()              = {p.numel()}")
+            print(f"t.numel()              = {t.numel()}")
+            print(f"res.mean()             = {res.mean().item():.6f}")
+            B = p.shape[0]
+            means = []
+            for i in range(B):
+                p_i = p[i, :x_lengths[i]]  # valid forward distances
+                t_i = t[i, :]              # assume no masking for t
+                mean_i = p_i.mean() + t_i.mean()
+                means.append(mean_i)
+
+            true_mean = torch.stack(means).mean()
+            print(f"true_mean (masked + batched) = {true_mean.item():.6f}")
+            print("====================")
+            wandb.log({
+                "chamfer/p_to_t_sum": p.sum().item(),
+                "chamfer/t_to_p_sum": t.sum().item(),
+                "chamfer/p_to_t_mean": p.mean().item(),
+                "chamfer/t_to_p_mean": t.mean().item(),
+                "chamfer/num_p": p.numel(),
+                "chamfer/num_t": t.numel(),
+                "chamfer/sum": (p.sum() + t.sum()).item(),
+                "chamfer/mean": res.mean().item()
+            }, commit=False)
+
 
         return res
 

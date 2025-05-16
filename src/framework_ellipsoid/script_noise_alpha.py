@@ -81,7 +81,7 @@ BASE_CFG = {
 # ----------------------------- MAIN LOGIC --------------------------------- #
 def run_noise_sweep(outdir, noise_levels, save_cfgs=False):
     outdir.mkdir(parents=True, exist_ok=True)
-    configs = [("A1", "R1"), ("A6", "R5")]
+    configs = [("A6", "R5")]
     problems = ["volumeconstrained", "chamfersampled", "chamferboundary"]
 
     # Point to resume from:
@@ -306,8 +306,9 @@ def cli():
     p.add_argument("--no-save-cfgs", action="store_true", help="Do not write config files to disk")
     args = p.parse_args()
 
+    run_noise_sweep(args.outdir, noise_levels=[0.05, 0.5, 1])
     # run_alpha_sweep(args.outdir, alpha_values=[40, 50])
-    run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
+    # run_view_count_sweep(args.outdir, view_counts=[1,2,3,4,6,8])
     # run_view_count_sweep(args.outdir, view_counts=[2])
     # run_sampling_resolution_sweep(
     #     args.outdir,

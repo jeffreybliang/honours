@@ -34,7 +34,7 @@ class ChamferBoundaryProblem(BaseEllipsoidProblem):
         return UnitVolConstrainedProjectionNode(self.m, self.wandb)
 
     def get_loss(self):
-        return BoundaryProjectionChamferLoss(self.views, m=self.m_pts, m_sampled=self.m_sampled, alpha=self.alpha)
+        return BoundaryProjectionChamferLoss(self.views, m_sampled=self.m_sampled, alpha=self.alpha)
 
     def wrap_node_function(self, node, x):
         return EllipseConstrainedProjectionFunction.apply(node, x)

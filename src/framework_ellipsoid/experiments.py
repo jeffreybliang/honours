@@ -61,6 +61,10 @@ class EllipsoidExperiment:
             res = loss_fn(y)
             outer_loss = res.mean()
             outer_loss.backward()
+            wandb.log({
+                "gradient_norm": torch.norm(x.grad)},
+                commit=False
+            )
             pbar.set_description(f"Loss: {outer_loss.item():.4f}")
             if self.wandb:
                 wandb.log({

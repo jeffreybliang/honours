@@ -9,6 +9,7 @@ def get_base_config():
         "project": "default",
         "name": "auto-run",
         "m_init": 1000,
+        "m_sample": 500,
         "seed": 42,
         "noise": 1e-2,
         "p": 1.6075,
@@ -24,7 +25,7 @@ def get_base_config():
         ],
         "view_normals": [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1], [1, -1, 1], [-1, 1, 1], [-1, -1, 1], [-1, 1, 1]],
         "view_indices": [0, 2, 4, 6],
-        "training": {"n_iters": 100, "lr": 5e-1, "momentum": 0.8},
+        "training": {"n_iters": 300, "lr": 5e-1, "momentum": 0.8},
         "verbose": False,
         "vis": {"enabled": True, "frequency": 1, "backend": "plotly"},
         "wandb": True,
@@ -38,7 +39,7 @@ def parse_args():
     parser.add_argument("--axes", nargs=3, type=float, required=True)
     parser.add_argument("--angles", nargs=3, type=float, required=True)
     parser.add_argument("--trial", type=int, required=True)
-    parser.add_argument("--alpha", type=float, default=5)
+    parser.add_argument("--alpha", type=float, default=0)
     parser.add_argument("--target_m", type=int)
     parser.add_argument("--target_radius", type=float)
     parser.add_argument("--m_sample", type=int)
@@ -48,7 +49,10 @@ def parse_args():
     parser.add_argument("--lr", type=float)
     parser.add_argument("--noise", type=float)
     parser.add_argument("--vis_enabled", type=int, choices=[0, 1], default=1)
+    parser.add_argument("--axes_id", type=str)
+    parser.add_argument("--rotation_id", type=str)
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -62,6 +66,7 @@ def main():
         "initial_angles": args.angles,
         "trial": args.trial,
         "alpha": args.alpha,
+        "noise": args.noise
     })
 
     cfg["vis"] = {
@@ -83,6 +88,10 @@ def main():
         cfg["training"]["lr"] = args.lr
     if args.n_iters is not None:
         cfg["training"]["n_iters"] = args.n_iters
+    if args.axes_id:
+        cfg["axes_id"] = args.axes_id
+    if args.rotation_id:
+        cfg["rotation_id"] = args.rotation_id
 
     experiment = EllipsoidExperiment(cfg)
     experiment.run()
