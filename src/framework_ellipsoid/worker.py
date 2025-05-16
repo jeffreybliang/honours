@@ -65,8 +65,7 @@ def main():
         "initial_axes": args.axes,
         "initial_angles": args.angles,
         "trial": args.trial,
-        "alpha": args.alpha,
-        "noise": args.noise
+        "alpha": args.alpha
     })
 
     cfg["vis"] = {

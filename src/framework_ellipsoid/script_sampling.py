@@ -41,7 +41,7 @@ def run_process(cmd):
 
 def cli():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=4)
+    parser.add_argument("--n-workers", type=int, default=5)
     args = parser.parse_args()
 
     a_id, r_id = "A6", "R5"
@@ -50,8 +50,26 @@ def cli():
 
     jobs = []
 
+    for problem in ["chamfersampled", "chamferboundary"]:
+        for m in [50, 250, 500, 1000]:
+            for trial in range(10):
+                cmd = make_args(
+                    problem=problem,
+                    project="Target M Sweep2",
+                    name=f"{a_id}-{r_id}-m{m}-t{trial:02d}",
+                    axes=axes,
+                    angles=angles,
+                    trial=trial,
+                    target_m=m,
+                    m_sample=500,
+                    target_radius=0.6203504909,
+                    alpha=1,
+                    vis_enabled=int(trial < 2)
+                )
+                jobs.append(cmd)
+
     # for problem in ["chamfersampled", "chamferboundary"]:
-    #     for m in [50, 250, 500, 1000]:
+    #     for n_sample in [200, 500, 1000, 2000, 5000]:
     #         for trial in range(10):
     #             cmd = make_args(
     #                 problem=problem,
@@ -60,9 +78,12 @@ def cli():
     #                 axes=axes,
     #                 angles=angles,
     #                 trial=trial,
-    #                 target_m=m,
+    #                 m_sample=n_sample,
+    #                 target_m=500,
     #                 target_radius=0.6203504909,
-    #                 alpha=1,
+    #                 alpha=0,
+    #                 n_iters=300,
+    #                 lr=5e-1,
     #                 vis_enabled=int(trial < 2)
     #             )
     #             jobs.append(cmd)
