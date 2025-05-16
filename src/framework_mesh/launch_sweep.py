@@ -1,76 +1,62 @@
+import argparse
+import json
 import subprocess
-import sys
-import torch
-import time
+from multiprocessing import Pool
 
-# Fixed experiment settings
-device = "cpu"
-data_path = "./framework_mesh/data_noground.json"
-exp_base_path = "./framework_mesh/exp_oblique_AdamW_TEST.json"
-mesh_res = 2
-velocity_k = 1
-velocity_beta = 1.0
-doublesided = False
-constrained = True
-ground_label = "ground"
+# --- CONFIG ---
+data_path = "honours/src/framework_mesh/data_diffuse.json"
+exp_path = "honours/src/framework_mesh/exp_all_diffuse.json"
+device = "cuda"
 
-# Grid sweep parameters
-lrs = [1e-3, 5e-3, 1e-2]
-weight_decays = [0.0, 1e-4]
-beta1_vals = [0.9, 0.95]
-beta2_vals = [0.9, 0.95]
+objects = [
+    "Balloon", "Biconvex", "Bottle", "Cube", "Cylinder",
+    "Diamond", "Ellipsoid", "Parabola", "Spiky", "Sponge",
+    "Strawberry", "Tear", "Turnip", "Uneven"
+]
 
-# Generate all combinations
-sweeps = []
-for lr in lrs:
-    for wd in weight_decays:
-        for b1 in beta1_vals:
-            for b2 in beta2_vals:
-                sweeps.append({
-                    "lr": lr,
-                })
+def make_args(**kwargs):
+    args = ["python", "-m", "framework_mesh.worker"]
+    for k, v in kwargs.items():
+        args += [f"--{k}", str(v)]
+    return args
 
-# Limit concurrent subprocesses
-max_procs = 4
-running_procs = []
+def run_process(cmd):
+    subprocess.run(cmd)
 
-def build_cmd(idx, sweep_cfg, constrained, projection_mode, alpha, object_name):
-    name = (
-        f"{object_name}_idx{idx}_proj{projection_mode}_alpha{alpha}_"
-        f"lr{fixed_config['lr']}"
-        f"constrained{constrained}_res{sweep_cfg['mesh_res']}"
-    )
-    return [
-        sys.executable, "-m", "framework_mesh.worker",
-        "--data_path", sweep_cfg["data_path"],
-        "--exp_base_path", exp_base_path,
-        "--mesh_res", str(sweep_cfg["mesh_res"]),
-        "--constrained", str(constrained).lower(),
-        "--optimiser", "SGD",
-        "--lr", str(fixed_config["lr"]),
-        "--velocity_k", str(velocity_k),
-        "--velocity_beta", str(velocity_beta),
-        "--doublesided", str(sweep_cfg["doublesided"]).lower(),
-        "--ground_label", sweep_cfg["ground_label"],
-        "--device", device,
-        "--name", name,
-        "--projection_mode", projection_mode,
-        "--alpha", str(alpha),
-        "--object_name", object_name
-    ]
+def sweep_projection_modes(projection_modes, trials=3):
+    """
+    Sweep over projection.mode ∈ {alpha, mesh} for all objects and trials.
+    Returns list of command argument lists.
+    """
+    mesh_res = 2  # fixed resolution for this sweep
 
-# Launch processes with concurrency limit
-for idx, config in enumerate(sweeps):
-    cmd = build_cmd(config, idx)
-    print(f"[LAUNCH] {' '.join(cmd)}")
-    proc = subprocess.Popen(cmd)
-    running_procs.append(proc)
+    jobs = []
+    for mode in projection_modes:
+        for obj in objects:
+            for trial in range(trials):
+                run_name = f"{obj}_proj-{mode}_t{trial:02d}"
+                cmd = make_args(
+                    data_path=data_path,
+                    exp_base_path=exp_path,
+                    target_object=obj,
+                    projection_mode=mode,
+                    mesh_res=mesh_res,
+                    name=run_name,
+                    device=device
+                )
+                jobs.append(cmd)
+    return jobs
 
-    if len(running_procs) >= max_procs:
-        for p in running_procs:
-            p.wait()
-        running_procs = []
+def main(n_workers):
+    projection_modes = ["alpha", "mesh"]
+    jobs = sweep_projection_modes(projection_modes, trials=3)
 
-# Final cleanup
-for p in running_procs:
-    p.wait()
+    print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
+    with Pool(processes=n_workers) as pool:
+        pool.map(run_process, jobs)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--n-workers", type=int, default=4)
+    args = parser.parse_args()
+    main(args.n_workers)

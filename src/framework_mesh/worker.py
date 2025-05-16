@@ -45,13 +45,21 @@ def main(args):
         "name": args.name
     })
     exp_cfg.update({
-        # ...
         "projection": {
             "mode": args.projection_mode,
             "alpha": args.alpha
-        },
-        "object_name": args.object_name# change to target mesh
+        }
     })
+    target = args.target_object
+    exp_cfg["target_meshes"] = [target]
+    exp_cfg["views"] = {
+        target: {
+            "mode": "manual",
+            "view_idx": list(range(12)),
+            "num_views": 12
+        }
+    }
+    exp_cfg["name"] = args.name
 
     # Run experiment
     runner = ExperimentRunner(exp_cfg, dataloader)
@@ -74,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--name", required=True)
     parser.add_argument("--projection_mode", choices=["alpha", "mesh"], required=True)
     parser.add_argument("--alpha", type=float, default=12.0)
-    parser.add_argument("--object_name", required=True)
+    parser.add_argument("--target_object", required=True)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)

@@ -292,12 +292,12 @@ class ExperimentRunner:
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]
         renders = self.data_loader.load_renders(mesh_name)
 
+        full_idx = [str(i) for i in view_conf["view_idx"]]
         view_names = (
-            view_conf["view_names"]
-            if view_conf["mode"] == "manual"
-            else random.sample(view_conf["view_names"], view_conf["num_views"])
+            full_idx if view_conf["mode"] == "manual"
+            else random.sample(full_idx, view_conf["num_views"])
         )
-        print(f"{view_names} from {view_conf['view_names']}")
+        print(f"{view_names} from view_idx: {view_conf['view_idx']}")
 
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
@@ -325,7 +325,7 @@ class ExperimentRunner:
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
 
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
-        view_names = sorted(cam_name_to_id.keys())  # alphabetical order
+        view_names = sorted(cam_name_to_id.keys(), key=lambda x: int(x))
         view_idx = [cam_name_to_id[name] for name in view_names]
 
         projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names]).to(device)

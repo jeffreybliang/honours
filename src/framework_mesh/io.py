@@ -39,8 +39,8 @@ def load_renders(renders_path, object_name):
     for filename in sorted(os.listdir(renders_path)):
         match = pattern.match(filename)
         if match:
-            view_type, view_number = match.groups()
-            cam_name = f"{view_type}_{view_number}"
+            view_number = match.groups()
+            cam_name = f"{view_number}"
             image_path = os.path.join(renders_path, filename)
             image = cv2.imread(image_path)
             if image is not None:
