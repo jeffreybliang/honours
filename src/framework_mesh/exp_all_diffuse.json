@@ -20,7 +20,7 @@
     },
     "projection": {
         "mode": "alpha",
-        "alpha": 12.0
+        "alpha": 5.0
     },
     "gradient": {
         "smoothing": true,
@@ -29,7 +29,7 @@
         "constrained": false,
         "debug": true
     },
-    "verbose": true,
+    "verbose": false,
     "vis": {
         "enabled": true,
         "frequency": 2

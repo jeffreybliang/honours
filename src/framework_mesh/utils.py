@@ -77,7 +77,7 @@ def plot_vertices(verts_list):
 
 
 def plot_projections(projverts, projmats, edgemaps,
-                     boundary_points=None, hulls=None, loops=None, alpha=12.0):
+                     boundary_points=None, hulls=None, loops=None, alpha=10.0):
     # Disable interactive mode
     P, _, _ = projmats.shape
     edge_coords, edge_lens = edgemaps
@@ -255,6 +255,11 @@ def scale_and_crop(img, target_w, target_h):
 def compute_signed_distances(src, tgt):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), faces=src[0].faces_packed().detach().cpu().numpy())
     mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), faces=tgt[0].faces_packed().detach().cpu().numpy())
+
+    if not mesh_Y.is_watertight or len(mesh_Y.triangles) == 0:
+        raise ValueError("Target mesh is invalid or empty")
+
+
     X_vertices = mesh_X.vertices
     Y_tree = trimesh.proximity.ProximityQuery(mesh_Y)
     closest_points, _, _ = Y_tree.on_surface(X_vertices)

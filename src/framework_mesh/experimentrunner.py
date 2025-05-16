@@ -35,7 +35,7 @@ class ExperimentRunner:
         for mesh_name, view_config in self.cfg["views"].items():
             self.views_config[mesh_name] = {
                 "mode": view_config["mode"],
-                "view_names": view_config["view_names"],
+                "view_names": [str(i) for i in view_config["view_idx"]],
                 "num_views": view_config["num_views"]
             }
             self.num_views = view_config["num_views"]
@@ -71,7 +71,7 @@ class ExperimentRunner:
         self.beta = velocity_cfg.get("beta", 1)
 
         self.projection_mode = self.cfg["projection"].get("mode", "alpha")
-        self.alpha = self.cfg["projection"].get("alpha", 12.0)
+        self.alpha = self.cfg["projection"].get("alpha", 10.0)
         
 # ============================================================================================================
 
@@ -118,7 +118,6 @@ class ExperimentRunner:
             gt_projmats, gt_edgemap_info, _ = self.get_gt_projmats_and_edgemap_info(tgt_name, device)
 
             # Reverse map view_ids to view_names
-            _, _, cam_id_to_name = self.data_loader.load_camera_matrices()
             view_ids_used[tgt_name] = view_ids
 
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
@@ -291,13 +290,14 @@ class ExperimentRunner:
         view_conf = self.views_config[mesh_name]
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]
         renders = self.data_loader.load_renders(mesh_name)
+        print("Loaded renders:", list(renders.keys()))
 
-        full_idx = [str(i) for i in view_conf["view_idx"]]
+        full_idx = view_conf["view_names"]
         view_names = (
             full_idx if view_conf["mode"] == "manual"
             else random.sample(full_idx, view_conf["num_views"])
         )
-        print(f"{view_names} from view_idx: {view_conf['view_idx']}")
+        print(f"{view_names} from view_idx: {view_conf['view_names']}")
 
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()

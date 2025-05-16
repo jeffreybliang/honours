@@ -4,9 +4,9 @@ import subprocess
 from multiprocessing import Pool
 
 # --- CONFIG ---
-data_path = "honours/src/framework_mesh/data_diffuse.json"
-exp_path = "honours/src/framework_mesh/exp_all_diffuse.json"
-device = "cuda"
+data_path = "./framework_mesh/data_diffuse.json"
+exp_path = "./framework_mesh/exp_all_diffuse.json"
+device = "cpu"
 
 objects = [
     "Balloon", "Biconvex", "Bottle", "Cube", "Cylinder",
@@ -24,12 +24,7 @@ def run_process(cmd):
     subprocess.run(cmd)
 
 def sweep_projection_modes(projection_modes, trials=3):
-    """
-    Sweep over projection.mode ∈ {alpha, mesh} for all objects and trials.
-    Returns list of command argument lists.
-    """
-    mesh_res = 2  # fixed resolution for this sweep
-
+    mesh_res = 2
     jobs = []
     for mode in projection_modes:
         for obj in objects:
@@ -42,7 +37,10 @@ def sweep_projection_modes(projection_modes, trials=3):
                     projection_mode=mode,
                     mesh_res=mesh_res,
                     name=run_name,
-                    device=device
+                    device=device,
+                    vis_enabled=int(trial < 1),
+                    velocity_enabled=0,
+                    smoothing_enabled=0
                 )
                 jobs.append(cmd)
     return jobs
@@ -50,7 +48,6 @@ def sweep_projection_modes(projection_modes, trials=3):
 def main(n_workers):
     projection_modes = ["alpha", "mesh"]
     jobs = sweep_projection_modes(projection_modes, trials=3)
-
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)

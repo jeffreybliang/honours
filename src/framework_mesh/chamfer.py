@@ -9,7 +9,7 @@ from shapely.geometry import Polygon, MultiPolygon
 from shapely.ops import unary_union
 from alpha_shapes.boundary import get_boundaries
 
-def get_boundary(mode, projected_pts: torch.Tensor, alpha: float = 12.0,
+def get_boundary(mode, projected_pts: torch.Tensor, alpha: float = 10.0,
                  faces=None, fnorms=None, P=None):
     if mode == "alpha":
         return get_boundary_alpha(projected_pts, alpha)
