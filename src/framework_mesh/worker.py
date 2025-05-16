@@ -60,6 +60,7 @@ def main(args):
             "num_views": 12
         }
     }
+    exp_cfg["target"] = args.target_object
 
     # Run experiment
     runner = ExperimentRunner(exp_cfg, dataloader)
