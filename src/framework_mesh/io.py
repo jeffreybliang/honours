@@ -39,7 +39,7 @@ def load_renders(renders_path, object_name):
     for filename in sorted(os.listdir(renders_path)):
         match = pattern.match(filename)
         if match:
-            view_number = match.groups()
+            view_number = match.group(1)  # Extract just the number as string
             cam_name = f"{view_number}"
             image_path = os.path.join(renders_path, filename)
             image = cv2.imread(image_path)
