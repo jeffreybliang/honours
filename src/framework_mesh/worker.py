@@ -52,6 +52,7 @@ def main(args):
         exp_cfg["projection"]["alpha"] = args.alpha
 
     target = args.target_object
+    exp_cfg["target"] = args.target_object
     exp_cfg["target_meshes"] = [target]
     exp_cfg["views"] = {
         target: {
