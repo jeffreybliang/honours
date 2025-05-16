@@ -28,34 +28,35 @@ for lr in lrs:
             for b2 in beta2_vals:
                 sweeps.append({
                     "lr": lr,
-                    "weight_decay": wd,
-                    "beta1": b1,
-                    "beta2": b2
                 })
 
 # Limit concurrent subprocesses
 max_procs = 4
 running_procs = []
 
-def build_cmd(config, idx):
-    name = f"{ground_label}_AdamW_idx{idx}_lr{config['lr']}_wd{config['weight_decay']}_b1{config['beta1']}_b2{config['beta2']}_res{mesh_res}"
+def build_cmd(idx, sweep_cfg, constrained, projection_mode, alpha, object_name):
+    name = (
+        f"{object_name}_idx{idx}_proj{projection_mode}_alpha{alpha}_"
+        f"lr{fixed_config['lr']}"
+        f"constrained{constrained}_res{sweep_cfg['mesh_res']}"
+    )
     return [
         sys.executable, "-m", "framework_mesh.worker",
-        "--data_path", data_path,
+        "--data_path", sweep_cfg["data_path"],
         "--exp_base_path", exp_base_path,
-        "--mesh_res", str(mesh_res),
+        "--mesh_res", str(sweep_cfg["mesh_res"]),
         "--constrained", str(constrained).lower(),
-        "--optimiser", "AdamW",
-        "--lr", str(config["lr"]),
-        "--weight_decay", str(config["weight_decay"]),
-        "--beta1", str(config["beta1"]),
-        "--beta2", str(config["beta2"]),
+        "--optimiser", "SGD",
+        "--lr", str(fixed_config["lr"]),
         "--velocity_k", str(velocity_k),
         "--velocity_beta", str(velocity_beta),
-        "--doublesided", str(doublesided).lower(),
-        "--ground_label", ground_label,
+        "--doublesided", str(sweep_cfg["doublesided"]).lower(),
+        "--ground_label", sweep_cfg["ground_label"],
         "--device", device,
-        "--name", name
+        "--name", name,
+        "--projection_mode", projection_mode,
+        "--alpha", str(alpha),
+        "--object_name", object_name
     ]
 
 # Launch processes with concurrency limit

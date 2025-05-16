@@ -11,7 +11,7 @@ from scipy.interpolate import splprep, splev
 def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
     cameras = defaultdict(dict)
     cam_names = set()
-    file_pattern = re.compile(r"^Cam_([A-Za-z]+_\d+)_(K|RT|P)\.npy$")
+    file_pattern = re.compile(r"^Camera_(\d+)_(P)\.npy$")
 
     if matrix_types is not None:
         matrix_types = set(matrix_types)
@@ -34,7 +34,7 @@ def load_camera_matrices(path, matrix_types=None, device=torch.device("cpu")):
 
 def load_renders(renders_path, object_name):
     renders = {}
-    pattern = re.compile(rf"^{object_name}_Cam_(Overhead|Above|Ground)_(\d+)\.png")
+    pattern = re.compile(rf"^{object_name}_Camera_(\d+)\.png")
 
     for filename in sorted(os.listdir(renders_path)):
         match = pattern.match(filename)

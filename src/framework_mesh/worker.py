@@ -38,14 +38,19 @@ def main(args):
             "lr": args.lr,
             "momentum": args.momentum,
             "optimiser": args.optimiser,
-            "beta1": args.beta1,
-            "beta2": args.beta2,
-            "weight_decay": args.weight_decay,
         },
         "chamfer": {
             "doublesided": args.doublesided
         },
         "name": args.name
+    })
+    exp_cfg.update({
+        # ...
+        "projection": {
+            "mode": args.projection_mode,
+            "alpha": args.alpha
+        },
+        "object_name": args.object_name# change to target mesh
     })
 
     # Run experiment
@@ -61,15 +66,15 @@ if __name__ == "__main__":
     parser.add_argument("--optimiser", default="SGD")
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--momentum", type=float, default=0.9)
-    parser.add_argument("--weight_decay", type=float, default=0.0)
-    parser.add_argument("--beta1", type=float, default=0.9)
-    parser.add_argument("--beta2", type=float, default=0.999)
     parser.add_argument("--velocity_k", type=int, default=1)
     parser.add_argument("--velocity_beta", type=float, default=1.0)
     parser.add_argument("--doublesided", type=lambda x: x.lower() == "true", default=False)
     parser.add_argument("--ground_label", default="ground")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--name", required=True)
+    parser.add_argument("--projection_mode", choices=["alpha", "mesh"], required=True)
+    parser.add_argument("--alpha", type=float, default=12.0)
+    parser.add_argument("--object_name", required=True)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)

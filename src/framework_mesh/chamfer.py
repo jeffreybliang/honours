@@ -78,7 +78,7 @@ def get_boundary_mesh(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torc
     boundary_mask[boundary_indices] = True
 
     boundary_pts = torch.cat(loops, dim=0)
-    return boundary_pts, boundary_mask
+    return boundary_pts, boundary_mask, loops
 
 
 def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 10.0):
@@ -126,7 +126,7 @@ def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 10.0):
     b_idx  = b_mask.nonzero(as_tuple=False).view(-1)
 
     boundary_pts = projected_pts[b_idx]       # keeps gradient flow
-    return boundary_pts, b_mask
+    return boundary_pts, b_mask, boundaries
 
 class PyTorchChamferLoss(nn.Module):
     def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, boundary_mask=None, doublesided=False, mode="alpha", alpha=12.0):
@@ -180,12 +180,13 @@ class PyTorchChamferLoss(nn.Module):
         boundaries_pad   = []                              # list of (P, B_max, 2)
         boundary_lengths = torch.zeros(B, P, device=y.device)
 
-        if self.mode == "mesh":
-            faces_padded = self.src.faces_padded()              # (B, F_max, 3)
-            deformed_meshes = self.src.update_padded(y)
-            fnorms_padded = deformed_meshes.faces_normals_padded()  # (B, F_max, 3)
-            num_faces = self.src.num_faces_per_mesh()  # list of length B
+        faces_padded = self.src.faces_padded() if self.mode == "mesh" else None
+        fnorms_padded = self.src.update_padded(y).faces_normals_padded() if self.mode == "mesh" else None
+        num_faces = self.src.num_faces_per_mesh() if self.mode == "mesh" else None
 
+        all_boundary_pts = [[] for _ in range(B)]
+        all_hulls = [[] for _ in range(B)]
+        all_loops = [[] for _ in range(B)]
 
         # 3) per‑mesh → per‑view boundary extraction
         for b in range(B):
@@ -193,16 +194,21 @@ class PyTorchChamferLoss(nn.Module):
             boundaries_b = []
             for p in range(P):
                 if self.mode == "alpha":
-                    boundary_p, mask_p = get_boundary(self.mode, projected[b][p], alpha=self.alpha)      # (B_p,2)
-                elif self.mode == "mesh":
+                    boundary_p, mask_p, hulls_p = get_boundary_alpha(projected[b][p], alpha=self.alpha)
+                else:
                     faces_b = faces_padded[b][:num_faces[b]]
                     fnorms_b = fnorms_padded[b][:num_faces[b]]
-                    boundary_p, mask_p = get_boundary(self.mode, projected[b][p], faces=faces_b, fnorms=fnorms_b, P=self.projmatrices[p])      # (B_p,2)
+                    boundary_p, mask_p, loops_p = get_boundary_mesh(projected[b][p], faces=faces_b, fnorms=fnorms_b, P=self.projmatrices[p])
+                    hulls_p = []  # for consistency
+                    all_loops[b].append(loops_p)
 
                 with torch.no_grad():
-                    self.boundary_mask[:Vb].logical_or_(mask_p)      # OR merge
-                boundaries_b.append(boundary_p)                         # collect
+                    self.boundary_mask[:Vb].logical_or_(mask_p)
+
+                boundaries_b.append(boundary_p)
                 boundary_lengths[b, p] = boundary_p.size(0)
+                all_boundary_pts[b].append(boundary_p)
+                all_hulls[b].append(hulls_p)
 
             padded = torch.nn.utils.rnn.pad_sequence(boundaries_b,
                                                     batch_first=True,
@@ -222,4 +228,4 @@ class PyTorchChamferLoss(nn.Module):
                         single_directional=not self.doublesided)
             chamfer_loss[b] = res.sum()
 
-        return chamfer_loss.double()
+        return chamfer_loss.double(), all_boundary_pts, all_hulls, all_loops

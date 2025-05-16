@@ -70,6 +70,8 @@ class ExperimentRunner:
         self.velocity_k = velocity_cfg.get("k", 0)
         self.beta = velocity_cfg.get("beta", 1)
 
+        self.projection_mode = self.cfg["projection"].get("mode", "alpha")
+        self.alpha = self.cfg["projection"].get("alpha", 12.0)
         
 # ============================================================================================================
 
@@ -98,7 +100,7 @@ class ExperimentRunner:
             wandb.define_metric("outer/gt/chamfer", summary="min")
             wandb.define_metric("outer/gt/iou", summary="max")
 
-        view_names_used = {}
+        view_ids_used = {}
         step_offset = 0
 
         prev_verts = None
@@ -117,8 +119,7 @@ class ExperimentRunner:
 
             # Reverse map view_ids to view_names
             _, _, cam_id_to_name = self.data_loader.load_camera_matrices()
-            view_names = [cam_id_to_name[i] for i in view_ids]
-            view_names_used[tgt_name] = view_names
+            view_ids_used[tgt_name] = view_ids
 
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
@@ -160,7 +161,7 @@ class ExperimentRunner:
             step_offset += self.n_iters
 
         if self.wandb:
-            run.config["view_names"] = view_names_used
+            run.config["view_ids"] = view_ids_used
             run.finish()
 
 # ============================================================================================================
@@ -192,16 +193,17 @@ class ExperimentRunner:
             )
             verts.register_hook(hook)
 
-        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided = self.cfg["chamfer"]["doublesided"])
-        if self.opt == "SGD":
-            optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
-        else:
-            optimiser = torch.optim.AdamW([verts], 
-                                          lr=lr, 
-                                          betas=(self.cfg["training"].get("beta1", 0.9), self.cfg["training"].get("beta2", 0.999)), weight_decay=self.cfg["training"].get("weight_decay",0))
+        chamfer_loss = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided = self.cfg["chamfer"]["doublesided"], mode=self.projection_mode, alpha=self.alpha)
+        optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
         a,b = edgemap_info
         a,b = a[0], b[0]
-        projectionplot = plot_projections(verts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+        projectionplot = plot_projections(
+            verts.detach().squeeze().double(), 
+            gt_projmats, 
+            gt_edgemap_info,
+            boundary_points=None,
+            hulls=None
+        )
         cmin,cmax = None,None
         bmin,bmax = None,None
 
@@ -214,16 +216,12 @@ class ExperimentRunner:
         best_verts = None
     
         pbar = trange(n_iters, desc="Training", leave=True, mininterval=5)  # Always visible
-        lap_wt = self.cfg["training"].get("laplacian_weight", 0.0)
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
-            loss = chamfer_loss(projverts)
+            loss, boundary_pts, hulls, loops = chamfer_loss(verts)
             tmp_mesh = Meshes(verts=projverts.float(), faces=src[0].faces_packed().unsqueeze(0))
-            if lap_wt > 0:
-                laplace_loss = lap_wt * mesh_laplacian_smoothing(tmp_mesh, method="cot")
-                loss += laplace_loss
 
             colour = bcolors.FAIL
             if loss.item() < min_loss:
@@ -248,15 +246,6 @@ class ExperimentRunner:
                     },
                     step = i + step_offset
                 )
-                if lap_wt > 0:
-                    wandb.log(
-                        data = {
-                        "outer/laplace": laplace_loss.item(),
-                        },
-                    step = i + step_offset
-                    )
-
-
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()):.3f}")
@@ -265,7 +254,14 @@ class ExperimentRunner:
             def should_log(i):
                 return i < 50 or (i % self.vis_freq == self.vis_freq-1)  # True at i = 1, 2, 4, 8, 16, ...
             if self.vis_enabled and should_log(i):
-                projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+                projectionplot = plot_projections(
+                    projverts.detach().squeeze().double(),
+                    gt_projmats,
+                    gt_edgemap_info,
+                    boundary_points=boundary_pts[0],  # B=1 case
+                    hulls=hulls[0],
+                    loops=loops[0]
+                )
                 heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
                 boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
                     tmp_mesh, boundary_mask, D_all, bmin, bmax

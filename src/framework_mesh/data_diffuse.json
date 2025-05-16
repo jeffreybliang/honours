@@ -8,9 +8,9 @@
       "material": "Diffuse"
     },
     "gpu": {
-      "mesh_dir": "/home/jeffrey/data/meshes",
-      "renders_path": "/home/jeffrey/data/renders",
-      "matrices_path": "/home/jeffrey/data/cameras",
+      "mesh_dir": "/home/jeffrey/shape/meshes",
+      "renders_path": "/home/jeffrey/shape",
+      "matrices_path": "/home/jeffrey/shape/cameras",
       "material": "Diffuse"
     },
     "mesh_res": 2

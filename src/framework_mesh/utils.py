@@ -11,7 +11,17 @@ from PIL import Image as PILImage
 import plotly.io as pio
 from io import BytesIO
 import math
+from alpha_shapes.boundary import Boundary
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
 
+def plot_boundary(ax, boundary: Boundary):
+    """Plot a boundary using matplotlib's PathPatch."""
+    exterior = Path(boundary.exterior)
+    holes = [Path(hole) for hole in boundary.holes]
+    path = Path.make_compound_path(exterior, *holes)
+    patch = PathPatch(path, facecolor="lightblue", lw=0.5, alpha=0.2, ec="b")
+    ax.add_patch(patch)
 
 class bcolors:
     HEADER = '\033[95m'
@@ -65,45 +75,10 @@ def plot_vertices(verts_list):
     ax.legend()
     plt.show()
 
-def plot_projections(projverts, projmats, edgemaps):
-    plt.ioff()  # Disable interactive mode
 
-    P, _, _ = projmats.shape
-    edge_coords, edge_lens = edgemaps
-    fig, axes = plt.subplots(1, P, figsize=(2 * P, 2))  # Increase figure size
-    if P == 1:
-        axes = [axes]  # Ensure iterable for a single subplot case
-
-    for i in range(P):
-        proj_2d_hom = (projmats[i] @ torch.cat([projverts, torch.ones(projverts.shape[0], 1)], dim=1).T).T
-        proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]  # Normalize by depth
-
-        boundary_pts = get_boundary(proj_2d)
-        valid_edges = edge_coords[i, :edge_lens[i]]
-
-        ax = axes[i]
-        ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='b', s=8, label="Projected Vertices")
-        ax.scatter(valid_edges[:, 0], valid_edges[:, 1], c='r', s=3, label="Edge Coordinates")
-        ax.scatter(boundary_pts[:, 0], boundary_pts[:, 1], c='g', s=3, label="Boundary Points")
-
-        ax.set_title(f"Projection {i+1}", fontsize=10)  # Reduce title size
-        ax.set_xlabel("x", fontsize=8)
-        ax.set_ylabel("y", fontsize=8)
-        
-        ax.tick_params(axis='both', which='major', labelsize=6)  # Reduce tick label size
-        ax.axis("equal")
-        ax.invert_yaxis()
-
-    plt.tight_layout(pad=0.5)  # Reduce whitespace
-    plt.subplots_adjust(wspace=0.1)  # Reduce horizontal space
-    plt.show()
-    plt.close(fig)
-
-
-def plot_projections(projverts, projmats, edgemaps):
+def plot_projections(projverts, projmats, edgemaps,
+                     boundary_points=None, hulls=None, loops=None, alpha=12.0):
     # Disable interactive mode
-    plt.ioff()
-
     P, _, _ = projmats.shape
     edge_coords, edge_lens = edgemaps
 
@@ -121,15 +96,26 @@ def plot_projections(projverts, projmats, edgemaps):
         proj_2d = proj_2d_hom[:, :2] / proj_2d_hom[:, 2:3]
 
         # Detach and move to CPU before plotting
-        proj_2d = proj_2d.detach().cpu()
-
-        boundary_pts,_ = get_boundary(proj_2d)  # already on CPU
-        valid_edges = edge_coords[i, :edge_lens[i]].cpu()
-
+        proj_2d = proj_2d.detach().cpu().numpy()
         ax = axes[i]
-        ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='b', s=8, label="Projected Vertices")
-        ax.scatter(valid_edges[:, 0], valid_edges[:, 1], c='r', s=1, label="Edge Coordinates")
-        ax.scatter(boundary_pts[:, 0], boundary_pts[:, 1], c='g', s=3, label="Boundary Points")
+        ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='orange', s=8, label="Projected Vertices")
+        valid_edges = edge_coords[i, :edge_lens[i]].cpu()
+        ax.scatter(valid_edges[:, 0], valid_edges[:, 1], c='b', s=1, label="Target Silhouette")
+        # --- Optionally plot hulls ---
+        if hulls is not None and i < len(hulls):
+            for h in hulls[i]:
+                plot_boundary(ax, h)
+
+        # --- Optionally plot mesh loops ---
+        if loops is not None and i < len(loops):
+            for loop in loops[i]:  # loop: Tensor (L, 2)
+                pts = loop.detach().cpu().numpy()
+                ax.plot(pts[:, 0], pts[:, 1], linestyle='-', color='r', linewidth=1)
+
+        # --- Optionally scatter individual boundary points (not needed if hulls/loops exist) ---
+        if boundary_points is not None and i < len(boundary_points):
+            pts = boundary_points[i].detach().cpu().numpy()
+            ax.scatter(pts[:, 0], pts[:, 1], c='r', s=2, label="Boundary Pts")
 
         ax.set_title(f"Projection {i+1}", fontsize=10)
         ax.set_xlabel("x", fontsize=8)
@@ -138,25 +124,17 @@ def plot_projections(projverts, projmats, edgemaps):
         ax.axis("equal")
         ax.invert_yaxis()
 
-    # Turn off any unused subplots
     for j in range(P, len(axes)):
         axes[j].axis('off')
 
-    # Adjust layout
     plt.tight_layout(pad=0.2)
     plt.subplots_adjust(wspace=0.1, hspace=0.1)
 
-    # Save the figure to a BytesIO object
     buf = BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     buf.seek(0)
-
-    # Convert the image to a PIL image and close the figure
     img = PILImage.open(buf)
-
-    # Close the plot after saving
     plt.close(fig)
-
     return img
 
 
