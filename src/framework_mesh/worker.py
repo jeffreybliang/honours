@@ -58,6 +58,9 @@ def main(args):
         exp_cfg.setdefault("projection", {})
         exp_cfg["projection"]["alpha"] = args.alpha
 
+    if args.project is not None:
+        exp_cfg["project"] = args.project
+
     exp_cfg["name"] = args.name
     exp_cfg["target"] = args.target_object
     exp_cfg["target_meshes"] = [args.target_object]
@@ -93,6 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("--projection_mode", choices=["alpha", "mesh"], default=None)
     parser.add_argument("--alpha", type=float, default=None)
     parser.add_argument("--target_object", required=True)
+    parser.add_argument("--project", default=None)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)
