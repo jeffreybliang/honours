@@ -8,8 +8,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def run_experiment(exp_path, mesh_res, constrained, ground):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # device = torch.device("cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
 
     data_path = f"./framework_mesh/data_{ground}.json"
 
