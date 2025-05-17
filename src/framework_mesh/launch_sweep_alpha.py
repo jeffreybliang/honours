@@ -14,23 +14,6 @@ objects = [
     "Strawberry", "Tear", "Turnip", "Uneven"
 ]
 
-# bad_views = {
-#     "Balloon": [],
-#     "Biconvex": [7, 8],
-#     "Bottle": [],
-#     "Cube": [],
-#     "Cylinder": [3, 4, 5, 11],
-#     "Diamond": [],
-#     "Ellipsoid": [0, 2],
-#     "Parabola": [2,6,8],
-#     "Spiky": [],
-#     "Sponge": [7],
-#     "Strawberry": [2, 4, 10],
-#     "Tear": [0,3],
-#     "Turnip": [],
-#     "Uneven":[]
-# }
-
 def make_args(**kwargs):
     args = ["python", "-m", "framework_mesh.worker"]
     for k, v in kwargs.items():
@@ -53,12 +36,10 @@ alpha_override = {
 }
 
 def sweep_projection_modes(projection_modes, trials=4):
-    mesh_res = 3
+    mesh_res = 2
     jobs = []
     for mode in projection_modes:
         for obj in objects:
-            if mode == "alpha" and obj in ["Balloon", "Cube", "Cylinder"]:
-                continue
             alpha = alpha_override.get(obj, 5)  # default to 5 if not in dict 
             for trial in range(trials):
                 run_name = f"{obj}_proj-{mode}_t{trial:02d}"
@@ -73,14 +54,50 @@ def sweep_projection_modes(projection_modes, trials=4):
                     device=device,
                     vis_enabled=int(trial < 1),
                     velocity_enabled=0,
-                    smoothing_enabled=0
+                    smoothing_enabled=0,
                 )
                 jobs.append(cmd)
     return jobs
 
-def main(n_workers):
-    projection_modes = ["alpha", "mesh"]
-    jobs = sweep_projection_modes(projection_modes, trials=1)
+
+def sweep_alpha_values(alpha_range, mesh_res_values=(2,), trials=1):
+    jobs = []
+    mode = "alpha"
+    for mesh_res in mesh_res_values:
+        ntrials = trials if mesh_res == 2 else 1
+        for obj in objects:
+            for alpha in alpha_range:
+                for trial in range(ntrials):
+                    run_name = f"{obj}_alpha-{alpha}_res{mesh_res}_t{trial:02d}"
+                    cmd = make_args(
+                        data_path=data_path,
+                        exp_base_path=exp_path,
+                        target_object=obj,
+                        projection_mode=mode,
+                        mesh_res=mesh_res,
+                        alpha=alpha,
+                        name=run_name,
+                        device=device,
+                        vis_enabled=int(trial < 1),
+                        velocity_enabled=0,
+                        smoothing_enabled=0,
+                        project=f"Shape Alpha Sweep Res{mesh_res}"
+                    )
+                    jobs.append(cmd)
+    return jobs
+
+
+def main(n_workers, mode="alpha"):
+    print("mode is", mode)
+    # if mode == "projection":
+    #     jobs = sweep_projection_modes(["alpha", "mesh"], trials=4)
+
+    alpha_range = [0, 2, 5, 10, 20]
+    mesh_res_vals = [2, 3]
+    jobs = sweep_alpha_values(alpha_range=alpha_range, 
+                                mesh_res_values=mesh_res_vals, 
+                                trials=2)
+
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)
@@ -88,5 +105,6 @@ def main(n_workers):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n-workers", type=int, default=3)
+    parser.add_argument("--mode", type=str, default="alpha", choices=["projection", "alpha"])
     args = parser.parse_args()
-    main(args.n_workers)
+    main(args.n_workers, args.mode)

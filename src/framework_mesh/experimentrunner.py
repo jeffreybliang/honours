@@ -320,20 +320,33 @@ class ExperimentRunner:
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
 
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
+        view_conf = self.views_config[mesh_name]
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]
         renders = self.data_loader.load_renders(mesh_name)
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
 
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
-        view_names = sorted(cam_name_to_id.keys(), key=lambda x: int(x))
+
+        # Decide on view names based on mode
+        full_idx = view_conf["view_names"]  # Already stringified
+        view_names = (
+            full_idx if view_conf["mode"] == "manual"
+            else random.sample(full_idx, view_conf["num_views"])
+        )
         view_idx = [cam_name_to_id[name] for name in view_names]
 
-        projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names]).to(device)
+        projmats = torch.stack([
+            camera_matrices[cam_name_to_id[name]]["P"].to(device)
+            for name in view_names
+        ])
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence(
-            [edgemaps[name] for name in view_names],
+            [edgemaps[name].to(device) for name in view_names],
             batch_first=True, padding_value=0.0
-        ).to(device)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[name] for name in view_names], device=device)
+        )
+        tgt_edgemaps_len = torch.tensor(
+            [edgemaps_len[name] for name in view_names],
+            device=device
+        )
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
     

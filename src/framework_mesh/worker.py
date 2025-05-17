@@ -1,3 +1,4 @@
+#worker.py 
 import argparse
 import json
 import torch
@@ -30,7 +31,7 @@ def main(args):
         exp_cfg["gradient"]["smoothing"] = bool(args.smoothing_enabled)
     exp_cfg["gradient"].update({
         "method": "jacobi",
-        "k": 5,
+        "k": args.smoothing_k if args.smoothing_k is not None else 1,
         "constrained": args.constrained,
         "debug": False
     })
@@ -43,6 +44,8 @@ def main(args):
     if args.optimiser is not None:
         exp_cfg["training"]["optimiser"] = args.optimiser
     exp_cfg["training"].setdefault("n_iters", 100)
+    if args.n_iters is not None:
+        exp_cfg["training"]["n_iters"] = args.n_iters
 
     exp_cfg.setdefault("chamfer", {})
     if args.doublesided is not None:
@@ -58,14 +61,18 @@ def main(args):
         exp_cfg.setdefault("projection", {})
         exp_cfg["projection"]["alpha"] = args.alpha
 
+    if args.project is not None:
+        exp_cfg["project"] = args.project
+
     exp_cfg["name"] = args.name
     exp_cfg["target"] = args.target_object
     exp_cfg["target_meshes"] = [args.target_object]
+
     exp_cfg["views"] = {
         args.target_object: {
-            "mode": "manual",
+            "mode": args.view_mode,
             "view_idx": list(range(12)),
-            "num_views": 12
+            "num_views": args.num_views
         }
     }
 
@@ -85,6 +92,7 @@ if __name__ == "__main__":
     parser.add_argument("--velocity_beta", type=float, default=None)
     parser.add_argument("--velocity_enabled", type=int, default=None)
     parser.add_argument("--smoothing_enabled", type=int, default=None)
+    parser.add_argument("--smoothing_k", type=int, default=None)
     parser.add_argument("--vis_enabled", type=int, default=None)
     parser.add_argument("--doublesided", type=lambda x: x.lower() == "true", default=None)
     parser.add_argument("--ground_label", default="ground")
@@ -93,6 +101,10 @@ if __name__ == "__main__":
     parser.add_argument("--projection_mode", choices=["alpha", "mesh"], default=None)
     parser.add_argument("--alpha", type=float, default=None)
     parser.add_argument("--target_object", required=True)
+    parser.add_argument("--project", default=None)
+    parser.add_argument("--view_mode", choices=["manual", "random"], default="manual")
+    parser.add_argument("--num_views", type=int, default=12)
+    parser.add_argument("--n_iters", type=int, default=None)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)
