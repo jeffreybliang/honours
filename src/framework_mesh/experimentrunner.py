@@ -131,8 +131,10 @@ class ExperimentRunner:
                 faces = src_mesh[0].faces_packed().to(prev_verts.device)
                 edge_src, edge_dst = build_edge_lists(faces, device=prev_verts.device)
                 smoothed_disp = smooth_displacement_jacobi(prev_displacement, edge_src, edge_dst, k=self.velocity_k)
-                extrapolated_verts = prev_verts[0] + self.beta * smoothed_disp
-                src_mesh = Meshes(verts=extrapolated_verts[None, ...], faces=src_mesh.faces_padded())
+                current_verts = src_mesh.verts_padded()  # shape: (B, V, 3)
+                extrapolated_verts = current_verts + self.beta * smoothed_disp.unsqueeze(0)  # expand disp to (1, V, 3)
+
+                src_mesh = Meshes(verts=extrapolated_verts, faces=src_mesh.faces_padded())
 
                 mean_disp = (self.beta * smoothed_disp).mean(dim=0)  # Shape: (3,)
                 if self.wandb:

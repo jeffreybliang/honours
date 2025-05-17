@@ -24,7 +24,7 @@ def run_experiment(exp_path, mesh_res, constrained, ground):
     exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
 
     exp_config["velocity"] = {
-        "enabled": False,
+        "enabled": True,
         "k": 1,
         "beta": 1.0
     }
@@ -42,7 +42,7 @@ def run_experiment(exp_path, mesh_res, constrained, ground):
     }
 
     exp_name = exp_path.split("/")[-1].split(".")[0]
-    name = f"vel_{False}_{exp_name}_res{mesh_res}_constr{constrained}_{ground}"
+    name = f"vel_{True}_{exp_name}_res{mesh_res}_constr{constrained}_{ground}"
     exp_config["name"] = name
 
     print(f"[WORKER RUN] {name}")
