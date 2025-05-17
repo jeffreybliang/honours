@@ -60,14 +60,14 @@ def sweep_projection_modes(projection_modes, trials=4):
     return jobs
 
 def main(n_workers):
-    projection_modes = ["alpha", "mesh"]
-    jobs = sweep_projection_modes(projection_modes, trials=4)
+    projection_modes = ["mesh", "alpha"]
+    jobs = sweep_projection_modes(projection_modes, trials=1)
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=4)
+    parser.add_argument("--n-workers", type=int, default=3)
     args = parser.parse_args()
     main(args.n_workers)
