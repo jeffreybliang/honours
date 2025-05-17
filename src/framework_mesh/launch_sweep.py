@@ -87,6 +87,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=2)
+    parser.add_argument("--n-workers", type=int, default=3)
     args = parser.parse_args()
     main(args.n_workers)
