@@ -30,7 +30,7 @@ def main(args):
         exp_cfg["gradient"]["smoothing"] = bool(args.smoothing_enabled)
     exp_cfg["gradient"].update({
         "method": "jacobi",
-        "k": 5,
+        "k": args.smoothing_k if args.smoothing_k is not None else 1,
         "constrained": args.constrained,
         "debug": False
     })
@@ -88,6 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--velocity_beta", type=float, default=None)
     parser.add_argument("--velocity_enabled", type=int, default=None)
     parser.add_argument("--smoothing_enabled", type=int, default=None)
+    parser.add_argument("--smoothing_k", type=int, default=None)
     parser.add_argument("--vis_enabled", type=int, default=None)
     parser.add_argument("--doublesided", type=lambda x: x.lower() == "true", default=None)
     parser.add_argument("--ground_label", default="ground")
