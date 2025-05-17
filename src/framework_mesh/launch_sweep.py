@@ -36,10 +36,12 @@ alpha_override = {
 }
 
 def sweep_projection_modes(projection_modes, trials=4):
-    mesh_res = 2
+    mesh_res = 3
     jobs = []
     for mode in projection_modes:
         for obj in objects:
+            if mode == "alpha" and obj in ["Balloon", "Cube", "Cylinder"]:
+                continue
             alpha = alpha_override.get(obj, 5)  # default to 5 if not in dict 
             for trial in range(trials):
                 run_name = f"{obj}_proj-{mode}_t{trial:02d}"
@@ -61,13 +63,13 @@ def sweep_projection_modes(projection_modes, trials=4):
 
 def main(n_workers):
     projection_modes = ["alpha", "mesh"]
-    jobs = sweep_projection_modes(projection_modes, trials=4)
+    jobs = sweep_projection_modes(projection_modes, trials=1)
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=4)
+    parser.add_argument("--n-workers", type=int, default=2)
     args = parser.parse_args()
     main(args.n_workers)
