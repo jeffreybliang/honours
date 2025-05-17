@@ -14,22 +14,22 @@ objects = [
     "Strawberry", "Tear", "Turnip", "Uneven"
 ]
 
-bad_views = {
-    "Balloon": [],
-    "Biconvex": [7, 8],
-    "Bottle": [],
-    "Cube": [],
-    "Cylinder": [3, 4, 5, 11],
-    "Diamond": [],
-    "Ellipsoid": [0, 2],
-    "Parabola": [2,6,8],
-    "Spiky": [],
-    "Sponge": [7],
-    "Strawberry": [2, 4, 10],
-    "Tear": [0,3],
-    "Turnip": [],
-    "Uneven":[]
-}
+# bad_views = {
+#     "Balloon": [],
+#     "Biconvex": [7, 8],
+#     "Bottle": [],
+#     "Cube": [],
+#     "Cylinder": [3, 4, 5, 11],
+#     "Diamond": [],
+#     "Ellipsoid": [0, 2],
+#     "Parabola": [2,6,8],
+#     "Spiky": [],
+#     "Sponge": [7],
+#     "Strawberry": [2, 4, 10],
+#     "Tear": [0,3],
+#     "Turnip": [],
+#     "Uneven":[]
+# }
 
 def make_args(**kwargs):
     args = ["python", "-m", "framework_mesh.worker"]
