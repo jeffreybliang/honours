@@ -28,9 +28,9 @@
     "gradient": {
         "smoothing": true,
         "method": "jacobi",
-        "k": 4,
+        "k": 1,
         "constrained": false,
-        "debug": true
+        "debug": false
     },
     "verbose": false,
     "vis": {

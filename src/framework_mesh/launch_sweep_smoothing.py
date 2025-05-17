@@ -7,11 +7,15 @@ data_path = "./framework_mesh/data_diffuse.json"
 exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
 
-objects = [
-    "Balloon", "Biconvex", "Bottle", "Cube", "Cylinder",
-    "Diamond", "Ellipsoid", "Parabola", "Spiky", "Sponge",
-    "Strawberry", "Tear", "Turnip", "Uneven"
-]
+objects = ["Diamond", "Balloon", "Spiky", "Parabola", "Biconvex"]
+alpha_override = {
+    "Diamond": 2,
+    "Balloon": 2,
+    "Spiky": 10,
+    "Parabola": 10,
+    "Biconvex": 5,
+}
+projection_modes = ["alpha"]  # singleton for extensibility
 
 def make_args(**kwargs):
     args = ["python", "-m", "framework_mesh.worker"]
@@ -22,66 +26,53 @@ def make_args(**kwargs):
 def run_process(cmd):
     subprocess.run(cmd)
 
-alpha_override = {
-    "Parabola": 9,
-    "Spiky": 8,
-    "Uneven": 7,
-    "Sponge": 6,
-    "Cube": 1,
-    "Ellipsoid": 3,
-    "Cylinder": 2,
-    "Diamond": 2,
-    "Bottle": 4,
-}
-
-def sweep_smoothing_k_and_constraints(
-    smoothing_ks=(1, 3, 5),
-    constrained_flags=(True, False),
-    mesh_res_vals=(2, 3),
-    trials=2
-):
+def sweep_gradient_smoothing():
+    mesh_res_vals = [2, 3]
+    smoothing_methods = ["jacobi", "invhop", "khop"]
+    constrained_flags = [True, False]
+    smoothing_ks = [1, 3, 5]
+    trials = 2
     jobs = []
-    mode = "alpha"
 
     for mesh_res in mesh_res_vals:
-        ntrials = trials if mesh_res == 2 else 1
         for obj in objects:
-            alpha = alpha_override.get(obj, 5)
-            for k in smoothing_ks:
-                for constrained in constrained_flags:
-                    for trial in range(ntrials):
-                        run_name = f"{obj}_res{mesh_res}_k{k}_constr{int(constrained)}_t{trial:02d}"
-                        cmd = make_args(
-                            data_path=data_path,
-                            exp_base_path=exp_path,
-                            target_object=obj,
-                            projection_mode=mode,
-                            mesh_res=mesh_res,
-                            alpha=alpha,
-                            name=run_name,
-                            device=device,
-                            vis_enabled=int(trial < 1),
-                            velocity_enabled=0,
-                            smoothing_enabled=1,
-                            smoothing_k=k,
-                            constrained=constrained,
-                            project=f"Shape Smoothing Sweep Res{mesh_res}"
-                        )
-                        jobs.append(cmd)
+            alpha = alpha_override[obj]
+            ntrials = trials if mesh_res == 2 else 1
+            for mode in projection_modes:
+                for method in smoothing_methods:
+                    for constrained in constrained_flags:
+                        k_vals = smoothing_ks if method in {"jacobi", "khop"} else [0]
+                        for k in k_vals:
+                            for trial in range(ntrials):
+                                vis = int(trial == 0 and mesh_res == 2)
+                                run_name = f"{obj}_res{mesh_res}_{method}_k{k}_constr{int(constrained)}_t{trial:02d}"
+                                cmd = make_args(
+                                    data_path=data_path,
+                                    exp_base_path=exp_path,
+                                    target_object=obj,
+                                    projection_mode=mode,
+                                    mesh_res=mesh_res,
+                                    alpha=alpha,
+                                    name=run_name,
+                                    device=device,
+                                    vis_enabled=vis,
+                                    velocity_enabled=0,
+                                    smoothing_enabled=1,
+                                    smoothing_method=method,
+                                    smoothing_k=k,
+                                    constrained=constrained,
+                                    project=f"Shape Smoothing Sweep Res{mesh_res}",
+                                    n_iters=120,
+                                    lr=5e-6,
+                                    momentum=0.9,
+                                    view_mode="manual",
+                                    num_views=12,
+                                )
+                                jobs.append(cmd)
     return jobs
 
-def main(n_workers, mode="smoothing"):
-    print("mode is", mode)
-    
-    if mode == "smoothing":
-        jobs = sweep_smoothing_k_and_constraints(
-            smoothing_ks=[0, 1, 2, 3, 5, 7],
-            constrained_flags=[True, False],
-            trials=2
-        )
-    else:
-        raise ValueError(f"Unsupported mode: {mode}")
-
+def main(n_workers):
+    jobs = sweep_gradient_smoothing()
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)
@@ -89,6 +80,5 @@ def main(n_workers, mode="smoothing"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n-workers", type=int, default=3)
-    parser.add_argument("--mode", type=str, default="smoothing", choices=["smoothing"])
     args = parser.parse_args()
-    main(args.n_workers, args.mode)
+    main(args.n_workers)
