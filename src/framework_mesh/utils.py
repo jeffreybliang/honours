@@ -256,11 +256,6 @@ def compute_signed_distances(src, tgt):
     mesh_X = trimesh.Trimesh(vertices=src[0].verts_packed().detach().cpu().numpy(), faces=src[0].faces_packed().detach().cpu().numpy())
     mesh_Y = trimesh.Trimesh(vertices=tgt[0].verts_packed().detach().cpu().numpy(), faces=tgt[0].faces_packed().detach().cpu().numpy())
 
-    print("mesh_Y.vertices.shape:", mesh_Y.vertices.shape)
-    print("mesh_Y.faces.shape:", mesh_Y.faces.shape)
-    print("mesh_Y.is_empty:", mesh_Y.is_empty)
-    print("mesh_Y.faces_sparse.shape:", mesh_Y.faces_sparse.shape if hasattr(mesh_Y, "faces_sparse") else "N/A")
-    print("mesh_Y.triangles.shape:", mesh_Y.triangles.shape)
     if not mesh_Y.is_watertight or len(mesh_Y.triangles) == 0:
         raise ValueError("Target mesh is invalid or empty")
 

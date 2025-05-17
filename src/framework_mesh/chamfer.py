@@ -81,7 +81,7 @@ def get_boundary_mesh(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torc
     return boundary_pts, boundary_mask, loops
 
 
-def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 10.0):
+def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 15.0):
     """
     projected_pts : (V,2) *on GPU* – 2‑D projected vertices
     alpha         : α‑shape parameter
@@ -94,21 +94,28 @@ def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 10.0):
     # ── shapely runs on CPU, so work on a detached CPU copy ─────────────
     proj_cpu = projected_pts.detach().clone().cpu()
 
-    shaper       = Alpha_Shaper(proj_cpu)
-    alpha_shape  = shaper.get_shape(alpha)
-    try:
-        boundaries = get_boundaries(alpha_shape)
-    except Exception as e:
-        print(f"[Warning] Failed to extract alpha shape boundaries: {e}")
-        return torch.empty((0, 2), device=projected_pts.device), torch.zeros(projected_pts.shape[0], dtype=torch.bool, device=projected_pts.device)
+    while alpha >= 0:
+        try:
+            shaper = Alpha_Shaper(proj_cpu)
+            shape = shaper.get_shape(alpha)
+            boundaries = get_boundaries(shape)
+
+            if len(boundaries) == 1:
+                break  # ✅ Got a single polygon
+        except Exception as e:
+            print(f"[alpha={alpha:.2f}] Failed to extract shape: {e}")
+            boundaries = []
+
+        alpha -= 1  # Try a smaller α
+    alpha = max(alpha, 0)
 
     if not boundaries:
         return torch.empty((0, 2), device=projected_pts.device), torch.zeros(projected_pts.shape[0], dtype=torch.bool, device=projected_pts.device)
 
     coords = np.concatenate(
-        [b.exterior[:-1] for b in boundaries] +
-        [hole for b in boundaries for hole in b.holes[:-1]],
-        axis=0
+        [b.exterior[:-1] for b in boundaries] 
+        # + [hole for b in boundaries for hole in b.holes[:-1]]
+        ,axis=0
     )
 
     boundary_cpu = torch.as_tensor(coords, dtype=torch.double)  # <- fixed here

@@ -15,12 +15,15 @@
     },
     "training": {
         "n_iters": 100,
-        "lr": 1e-5,
+        "lr": 1.01e-5,
         "momentum": 0.9
     },
     "projection": {
         "mode": "alpha",
-        "alpha": 5.0
+        "alpha": 10.0
+    },
+    "chamfer":{
+        "doublesided": true
     },
     "gradient": {
         "smoothing": true,

@@ -23,11 +23,24 @@ def make_args(**kwargs):
 def run_process(cmd):
     subprocess.run(cmd)
 
-def sweep_projection_modes(projection_modes, trials=3):
+alpha_override = {
+    "Parabola": 9,
+    "Spiky": 8,
+    "Uneven": 7,
+    "Sponge": 6,
+    "Cube": 1,
+    "Ellipsoid": 3,
+    "Cylinder": 2,
+    "Diamond": 2,
+    "Bottle": 4,
+}
+
+def sweep_projection_modes(projection_modes, trials=4):
     mesh_res = 2
     jobs = []
     for mode in projection_modes:
         for obj in objects:
+            alpha = alpha_override.get(obj, 5)  # default to 5 if not in dict 
             for trial in range(trials):
                 run_name = f"{obj}_proj-{mode}_t{trial:02d}"
                 cmd = make_args(
@@ -36,6 +49,7 @@ def sweep_projection_modes(projection_modes, trials=3):
                     target_object=obj,
                     projection_mode=mode,
                     mesh_res=mesh_res,
+                    alpha=alpha,
                     name=run_name,
                     device=device,
                     vis_enabled=int(trial < 1),
@@ -47,7 +61,7 @@ def sweep_projection_modes(projection_modes, trials=3):
 
 def main(n_workers):
     projection_modes = ["alpha", "mesh"]
-    jobs = sweep_projection_modes(projection_modes, trials=3)
+    jobs = sweep_projection_modes(projection_modes, trials=4)
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)

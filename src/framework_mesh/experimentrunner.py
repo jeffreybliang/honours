@@ -207,7 +207,7 @@ class ExperimentRunner:
         bmin,bmax = None,None
 
         initheatmap,cmin,cmax = create_heatmap(Meshes(verts=verts.detach(), faces=src[0].faces_packed().unsqueeze(0)), tgt[0], cmin, cmax)
-        if self.wandb:
+        if self.wandb and self.vis_enabled:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
                         "plt/heatmap": wandb.Plotly(initheatmap)}, step= step_offset)
 
