@@ -9,7 +9,8 @@ device = "cpu"
 
 # shapes = ["Diamond", "Balloon", "Strawberry", "Spiky", "Parabola",  "Cube", "Cylinder"]
 shapes = ["Bottle", "Biconvex", "Uneven", "Tear", "Turnip",  "Ellipsoid", "Sponge"]
-materials = ["Specular", "Real"]
+
+materials = ["Diffuse"]
 mesh_res = 2
 view_mode = "manual"
 num_views = 12
@@ -52,29 +53,30 @@ def sweep_materials():
             for trial in range(2):  # Two trials
                 vis = int(trial == 0)
 
-                for doublesided in (1, 0):  # Sweep both modes
-                    cmd = dict(
-                        data_path=get_data_path(material),
-                        exp_base_path=exp_path,
-                        target_object=shape,
-                        projection_mode="alpha",
-                        mesh_res=mesh_res,
-                        alpha=alpha,
-                        name=f"{shape}_{material}_{'dbl' if doublesided else 'sngl'}_t{trial:02d}",
-                        device=device,
-                        vis_enabled=vis,
-                        velocity_enabled=0,
-                        smoothing_enabled=0,
-                        project="Material Sweep",
-                        view_mode=view_mode,
-                        num_views=num_views,
-                        n_iters=120,
-                        lr=5e-6 if doublesided else 1e-5,  # Adjust learning rate
-                        momentum=0.9,
-                        doublesided=doublesided,
-                        material=material
-                    )
-                    jobs.append(make_args(**cmd))
+                # --- Double-sided ---
+                cmd_dbl = dict(
+                    data_path=get_data_path(material),
+                    exp_base_path=exp_path,
+                    target_object=shape,
+                    projection_mode="alpha",
+                    mesh_res=mesh_res,
+                    alpha=alpha,
+                    name=f"{shape}_{material}_sngl_t{trial:02d}",
+                    device=device,
+                    vis_enabled=vis,
+                    velocity_enabled=0,
+                    smoothing_enabled=0,
+                    project="Material Sweep",
+                    view_mode=view_mode,
+                    num_views=num_views,
+                    n_iters=120,
+                    lr=1e-5,
+                    momentum=0.9,
+                    doublesided=0,
+                    material=material
+                )
+                jobs.append(make_args(**cmd_dbl))
+
     return jobs
 
 def main(n_workers):
@@ -85,6 +87,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=4)
+    parser.add_argument("--n-workers", type=int, default=1)
     args = parser.parse_args()
     main(args.n_workers)
