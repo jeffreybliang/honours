@@ -76,6 +76,8 @@ def main(args):
         }
     }
 
+    exp_cfg["num_views"] = args.num_views
+
     runner = ExperimentRunner(exp_cfg, dataloader)
     runner.run()
 

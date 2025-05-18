@@ -10,8 +10,12 @@ device = "cpu"
 mesh_res = 2
 
 objects = [
-    "Balloon", "Spiky", "Uneven", "Parabola", "Cube", "Strawberry"
+    "Balloon", "Spiky", "Uneven", "Parabola", "Cube", "Strawberry", "Cylinder", "Diamond", "Biconvex", "Ellipsoid"
 ]
+
+# old_objects = [
+#     "Balloon", "Spiky", "Uneven", "Parabola", "Cube", "Strawberry"
+# ]
 
 alpha_override = {
     "Balloon": 2,
@@ -20,11 +24,15 @@ alpha_override = {
     "Parabola": 10,
     "Cube": 5,
     "Strawberry": 2,
+    "Cylinder": 2,
+    "Diamond": 2,
+    "Biconvex": 5,
+    "Ellipsoid": 2,
 }
 
-view_counts = [1, 2, 3, 4, 6, 9, 12]
-projection_modes = ["alpha"]  # Singleton for future extensibility
-trials = 4
+view_counts = [1, 2, 3, 4, 6, 8, 9, 10, 12]
+projection_modes = ["alpha", "mesh"]  # Singleton for future extensibility
+trials = 2
 
 def make_args(**kwargs):
     args = ["python", "-m", "framework_mesh.worker"]
@@ -39,9 +47,15 @@ def sweep_view_counts():
     jobs = []
     for mode in projection_modes:
         for obj in objects:
-            alpha = alpha_override[obj]
+            alpha = alpha_override.get(obj, 5)
             for num_views in view_counts:
-                for trial in range(trials):
+                if mode == "alpha" and num_views in [10, 12]:
+                    continue
+                if mode == "alpha":
+                    trial_count = 2
+                elif mode == "mesh":
+                    trial_count = 5 - num_views // 3
+                for trial in range(trial_count):
                     vis = int(trial == 0)
                     run_name = f"{obj}_views-{num_views}_proj-{mode}_t{trial:02d}"
                     cmd = make_args(
@@ -61,7 +75,7 @@ def sweep_view_counts():
                         project=f"Shape Num Views Res{mesh_res}",
                         n_iters=100,
                         lr=5e-6,
-                        momentum=0.85
+                        momentum=0.87
                     )
                     jobs.append(cmd)
     return jobs
@@ -74,6 +88,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=2)
+    parser.add_argument("--n-workers", type=int, default=4)
     args = parser.parse_args()
     main(args.n_workers)
