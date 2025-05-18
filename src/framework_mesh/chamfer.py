@@ -19,7 +19,7 @@ def get_boundary(mode, projected_pts: torch.Tensor, alpha: float = 10.0,
         return get_boundary_mesh(projected_pts, faces, fnorms, P)
     raise ValueError(f"Unknown boundary mode: {mode}")
 
-def get_boundary_mesh(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Tensor, P: torch.Tensor, eps=1e-3):
+def get_boundary_mesh(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torch.Tensor, P: torch.Tensor, eps=1e-2):
     """
     Args:
         projverts: (V, 2) projected 2D points
@@ -45,16 +45,15 @@ def get_boundary_mesh(projverts: torch.Tensor, faces: torch.Tensor, fnorms: torc
     rings = []
     if unioned.geom_type == 'Polygon':
         rings.append(np.array(unioned.exterior.coords))
-        for interior in unioned.interiors:
-            rings.append(np.array(interior.coords))
+        # for interior in unioned.interiors:
+        #     rings.append(np.array(interior.coords))
     elif unioned.geom_type == 'MultiPolygon':
         # unioned = max(unioned.geoms, key=lambda p: p.area)
         # rings.append(np.array(unioned.exterior.coords))
         for geom in unioned.geoms:
             rings.append(np.array(geom.exterior.coords))
-            for interior in geom.interiors:
-                rings.append(np.array(interior.coords))
-
+            # for interior in geom.interiors:
+            #     rings.append(np.array(interior.coords))
     else:
         raise ValueError(f"Unexpected geometry type: {unioned.geom_type}")
 
