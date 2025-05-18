@@ -241,7 +241,8 @@ class ExperimentRunner:
                     "outer/chamfer": loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
-                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
+                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0],
+                    "gradient/norm": verts.grad.norm(dim=1).mean()
                     },
                     step = i + step_offset
                 )
