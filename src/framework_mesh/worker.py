@@ -50,7 +50,7 @@ def main(args):
 
     exp_cfg.setdefault("chamfer", {})
     if args.doublesided is not None:
-        exp_cfg["chamfer"]["doublesided"] = args.doublesided
+        exp_cfg["chamfer"]["doublesided"] = bool(args.doublesided)
 
     if args.vis_enabled is not None:
         exp_cfg["vis"] = {"enabled": bool(args.vis_enabled), "frequency": 2}
@@ -64,6 +64,9 @@ def main(args):
 
     if args.project is not None:
         exp_cfg["project"] = args.project
+
+    if args.material is not None:
+        exp_cfg["material"] = args.material
 
     exp_cfg["name"] = args.name
     exp_cfg["target"] = args.target_object
@@ -98,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--constrained", type=lambda x: x.lower() == "true", default=False)
 
     parser.add_argument("--vis_enabled", type=int, default=None)
-    parser.add_argument("--doublesided", type=lambda x: x.lower() == "true", default=None)
+    parser.add_argument("--doublesided", type=int, choices=[0, 1], default=None)
     parser.add_argument("--ground_label", default="ground")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--name", required=True)
@@ -109,6 +112,8 @@ if __name__ == "__main__":
     parser.add_argument("--view_mode", choices=["manual", "random"], default="manual")
     parser.add_argument("--num_views", type=int, default=12)
     parser.add_argument("--n_iters", type=int, default=None)
+
+    parser.add_argument("--material", default=None)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)

@@ -7,14 +7,11 @@ data_path = "./framework_mesh/data_diffuse.json"
 exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
 
-objects = ["Diamond", "Balloon", "Spiky", "Parabola", "Biconvex"]
+objects = ["Cylinder"]
 alpha_override = {
-    "Diamond": 2,
-    "Balloon": 2,
-    "Spiky": 10,
-    "Parabola": 10,
-    "Biconvex": 5,
+    "Cylinder": 2,
 }
+
 projection_modes = ["alpha"]  # singleton for extensibility
 
 def make_args(**kwargs):
@@ -79,6 +76,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=3)
+    parser.add_argument("--n-workers", type=int, default=1)
     args = parser.parse_args()
     main(args.n_workers)
