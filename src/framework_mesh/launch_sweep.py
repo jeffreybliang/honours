@@ -79,10 +79,10 @@ def sweep_projection_modes(projection_modes, trials=1):
                         vis_enabled=1,
                         velocity_enabled=0,
                         smoothing_enabled=0,
-                        lr=5e-6 if doublesided==1 else 5e-6,
+                        lr=5e-6 if doublesided==1 else 8e-6,
                         momentum=0.9,
                         doublesided=doublesided,
-                        project="Mesh vs Alpha v2 Res3",
+                        project="Mesh vs Alpha v2 Res2",
                         n_iters=120,
                     )
                     jobs.append(cmd)
