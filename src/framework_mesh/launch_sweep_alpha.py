@@ -65,8 +65,8 @@ def sweep_alpha_values(alpha_range, mesh_res_values=(2,), trials=1):
     mode = "alpha"
     for mesh_res in mesh_res_values:
         ntrials = trials if mesh_res == 2 else 1
-        for obj in objects:
-            for alpha in alpha_range:
+        for alpha in alpha_range:
+            for obj in objects:
                 for trial in range(ntrials):
                     run_name = f"{obj}_alpha-{alpha}_res{mesh_res}_t{trial:02d}"
                     cmd = make_args(
@@ -81,7 +81,9 @@ def sweep_alpha_values(alpha_range, mesh_res_values=(2,), trials=1):
                         vis_enabled=int(trial < 1),
                         velocity_enabled=0,
                         smoothing_enabled=0,
-                        project=f"Shape Alpha Sweep Res{mesh_res}"
+                        project=f"Shape Alpha Sweep Res{mesh_res} v2",
+                        lr=5e-6,
+                        momentum=0.9
                     )
                     jobs.append(cmd)
     return jobs

@@ -14,8 +14,8 @@
         }
     },
     "training": {
-        "n_iters": 100,
-        "lr": 1.01e-5,
+        "n_iters": 80,
+        "lr": 5e-6,
         "momentum": 0.9
     },
     "projection": {
@@ -28,9 +28,9 @@
     "gradient": {
         "smoothing": true,
         "method": "jacobi",
-        "k": 4,
+        "k": 1,
         "constrained": false,
-        "debug": true
+        "debug": false
     },
     "verbose": false,
     "vis": {

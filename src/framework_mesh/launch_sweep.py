@@ -41,41 +41,51 @@ def run_process(cmd):
     subprocess.run(cmd)
 
 alpha_override = {
-    "Parabola": 9,
-    "Spiky": 8,
-    "Uneven": 7,
-    "Sponge": 6,
-    "Cube": 1,
-    "Ellipsoid": 3,
-    "Cylinder": 2,
     "Diamond": 2,
-    "Bottle": 4,
+    "Balloon": 2,
+    "Strawberry": 2,
+    "Spiky": 8,
+    "Parabola": 8,
+    "Cube": 5,
+    "Cylinder": 2,
+    "Bottle": 5,
+    "Biconvex": 5,
+    "Uneven": 7,
+    "Tear": 7,
+    "Turnip": 5,
+    "Ellipsoid": 2,
+    "Sponge": 5
 }
 
-def sweep_projection_modes(projection_modes, trials=4):
-    mesh_res = 3
+
+def sweep_projection_modes(projection_modes, trials=1):
+    mesh_res = 2
     jobs = []
     for mode in projection_modes:
         for obj in objects:
-            if mode == "alpha" and obj in ["Balloon", "Cube", "Cylinder"]:
-                continue
-            alpha = alpha_override.get(obj, 5)  # default to 5 if not in dict 
-            for trial in range(trials):
-                run_name = f"{obj}_proj-{mode}_t{trial:02d}"
-                cmd = make_args(
-                    data_path=data_path,
-                    exp_base_path=exp_path,
-                    target_object=obj,
-                    projection_mode=mode,
-                    mesh_res=mesh_res,
-                    alpha=alpha,
-                    name=run_name,
-                    device=device,
-                    vis_enabled=int(trial < 1),
-                    velocity_enabled=0,
-                    smoothing_enabled=0
-                )
-                jobs.append(cmd)
+            alpha = alpha_override.get(obj, 5)
+            for doublesided in [0, 1]:
+                for trial in range(trials):
+                    run_name = f"{obj}_proj-{mode}_ds{doublesided}_t{trial:02d}"
+                    cmd = make_args(
+                        data_path=data_path,
+                        exp_base_path=exp_path,
+                        target_object=obj,
+                        projection_mode=mode,
+                        mesh_res=mesh_res,
+                        alpha=alpha,
+                        name=run_name,
+                        device=device,
+                        vis_enabled=int(trial < 1),
+                        velocity_enabled=0,
+                        smoothing_enabled=0,
+                        lr=5e-6,
+                        momentum=0.9,
+                        doublesided=doublesided,
+                        project="Mesh vs Alpha v2 Res2",
+                        n_iters=100,
+                    )
+                    jobs.append(cmd)
     return jobs
 
 def main(n_workers):
@@ -87,6 +97,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=3)
+    parser.add_argument("--n-workers", type=int, default=4)
     args = parser.parse_args()
     main(args.n_workers)
