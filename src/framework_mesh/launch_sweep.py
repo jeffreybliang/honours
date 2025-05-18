@@ -45,12 +45,12 @@ alpha_override = {
     "Balloon": 2,
     "Strawberry": 2,
     "Spiky": 8,
-    "Parabola": 8,
+    "Parabola": 10,
     "Cube": 5,
     "Cylinder": 2,
     "Bottle": 5,
     "Biconvex": 5,
-    "Uneven": 7,
+    "Uneven": 8,
     "Tear": 7,
     "Turnip": 5,
     "Ellipsoid": 2,
@@ -59,7 +59,7 @@ alpha_override = {
 
 
 def sweep_projection_modes(projection_modes, trials=1):
-    mesh_res = 2
+    mesh_res = 3
     jobs = []
     for mode in projection_modes:
         for obj in objects:
@@ -76,14 +76,14 @@ def sweep_projection_modes(projection_modes, trials=1):
                         alpha=alpha,
                         name=run_name,
                         device=device,
-                        vis_enabled=int(trial < 1),
+                        vis_enabled=1,
                         velocity_enabled=0,
                         smoothing_enabled=0,
-                        lr=5e-6,
+                        lr=5e-6 if doublesided==1 else 5e-6,
                         momentum=0.9,
                         doublesided=doublesided,
-                        project="Mesh vs Alpha v2 Res2",
-                        n_iters=100,
+                        project="Mesh vs Alpha v2 Res3",
+                        n_iters=120,
                     )
                     jobs.append(cmd)
     return jobs
@@ -97,6 +97,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=4)
+    parser.add_argument("--n-workers", type=int, default=3)
     args = parser.parse_args()
     main(args.n_workers)
