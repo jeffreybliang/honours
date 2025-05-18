@@ -11,7 +11,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
     Performs a projection of the input points X onto the nearest points Y such that the volume of Y is constant.
     """
     def __init__(self, src: Meshes, tgt_vol, wandbBool):
-        super().__init__(eps=1.0e-7) # relax tolerance on optimality test 
+        super().__init__(eps=1.0e-6) # relax tolerance on optimality test 
         self.src = src # source meshes (B,)
         self.b = len(src)
         self.iter = 0
@@ -116,7 +116,7 @@ class ConstrainedProjectionNode(EqConstDeclarativeNode):
                 method='SLSQP',
                 jac=lambda u: least_squares_grad(u, verts, xs.device).cpu().numpy(),
                 constraints=[eq_constraint],
-                options={'ftol': 1e-6, 'iprint': 2, 'maxiter': 100}
+                options={'ftol': 1e-4, 'iprint': 2, 'maxiter': 100}
             )
 
             if not res.success:

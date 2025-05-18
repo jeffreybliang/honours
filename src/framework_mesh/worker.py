@@ -1,3 +1,4 @@
+#worker.py 
 import argparse
 import json
 import torch
@@ -28,12 +29,13 @@ def main(args):
     exp_cfg.setdefault("gradient", {})
     if args.smoothing_enabled is not None:
         exp_cfg["gradient"]["smoothing"] = bool(args.smoothing_enabled)
-    exp_cfg["gradient"].update({
-        "method": "jacobi",
-        "k": args.smoothing_k if args.smoothing_k is not None else 1,
-        "constrained": args.constrained,
-        "debug": False
-    })
+    if args.smoothing_method is not None:
+        exp_cfg["gradient"]["method"] = args.smoothing_method
+    if args.smoothing_k is not None:
+        exp_cfg["gradient"]["k"] = args.smoothing_k
+    if args.constrained is not None:
+        exp_cfg["gradient"]["constrained"] = args.constrained
+    exp_cfg["gradient"]["debug"] = False
 
     exp_cfg.setdefault("training", {})
     if args.lr is not None:
@@ -43,10 +45,12 @@ def main(args):
     if args.optimiser is not None:
         exp_cfg["training"]["optimiser"] = args.optimiser
     exp_cfg["training"].setdefault("n_iters", 100)
+    if args.n_iters is not None:
+        exp_cfg["training"]["n_iters"] = args.n_iters
 
     exp_cfg.setdefault("chamfer", {})
     if args.doublesided is not None:
-        exp_cfg["chamfer"]["doublesided"] = args.doublesided
+        exp_cfg["chamfer"]["doublesided"] = bool(args.doublesided)
 
     if args.vis_enabled is not None:
         exp_cfg["vis"] = {"enabled": bool(args.vis_enabled), "frequency": 2}
@@ -61,14 +65,18 @@ def main(args):
     if args.project is not None:
         exp_cfg["project"] = args.project
 
+    if args.material is not None:
+        exp_cfg["material"] = args.material
+
     exp_cfg["name"] = args.name
     exp_cfg["target"] = args.target_object
     exp_cfg["target_meshes"] = [args.target_object]
+
     exp_cfg["views"] = {
         args.target_object: {
-            "mode": "manual",
+            "mode": args.view_mode,
             "view_idx": list(range(12)),
-            "num_views": 12
+            "num_views": args.num_views
         }
     }
 
@@ -80,17 +88,20 @@ if __name__ == "__main__":
     parser.add_argument("--data_path", required=True)
     parser.add_argument("--exp_base_path", required=True)
     parser.add_argument("--mesh_res", type=int, required=True)
-    parser.add_argument("--constrained", type=lambda x: x.lower() == "true", default=False)
     parser.add_argument("--optimiser", default=None)
     parser.add_argument("--lr", type=float, default=None)
     parser.add_argument("--momentum", type=float, default=None)
     parser.add_argument("--velocity_k", type=int, default=None)
     parser.add_argument("--velocity_beta", type=float, default=None)
     parser.add_argument("--velocity_enabled", type=int, default=None)
+
     parser.add_argument("--smoothing_enabled", type=int, default=None)
+    parser.add_argument("--smoothing_method", default=None)
     parser.add_argument("--smoothing_k", type=int, default=None)
+    parser.add_argument("--constrained", type=lambda x: x.lower() == "true", default=False)
+
     parser.add_argument("--vis_enabled", type=int, default=None)
-    parser.add_argument("--doublesided", type=lambda x: x.lower() == "true", default=None)
+    parser.add_argument("--doublesided", type=int, choices=[0, 1], default=None)
     parser.add_argument("--ground_label", default="ground")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--name", required=True)
@@ -98,6 +109,11 @@ if __name__ == "__main__":
     parser.add_argument("--alpha", type=float, default=None)
     parser.add_argument("--target_object", required=True)
     parser.add_argument("--project", default=None)
+    parser.add_argument("--view_mode", choices=["manual", "random"], default="manual")
+    parser.add_argument("--num_views", type=int, default=12)
+    parser.add_argument("--n_iters", type=int, default=None)
+
+    parser.add_argument("--material", default=None)
 
     args = parser.parse_args()
     args.device = torch.device(args.device)

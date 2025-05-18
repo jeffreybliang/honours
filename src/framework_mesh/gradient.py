@@ -46,11 +46,14 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
             g_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), g[edge_src])
             deg = torch.zeros(V, 1, device=g.device)
             deg.scatter_add_(0, edge_dst[:, None], onesE)
+            # if constrained:
+            #     g_nb += og_g
+            # else:
+            g_nb += g
             deg += 1.0
-            g_nb = g_nb / (deg.clamp_min_(1.0)+1)
-            g = g_nb
+            g_nb = g_nb / (deg.clamp_min_(1.0))
             if constrained:
-                g = torch.where(boundary_mask[:, None], g, g_nb)
+                g = torch.where(boundary_mask[:, None], og_g, g_nb)
             else:
                 g = g_nb
 

@@ -98,7 +98,7 @@ def plot_projections(projverts, projmats, edgemaps,
         # Detach and move to CPU before plotting
         proj_2d = proj_2d.detach().cpu().numpy()
         ax = axes[i]
-        ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='orange', s=8, label="Projected Vertices")
+        ax.scatter(proj_2d[:, 0], proj_2d[:, 1], c='orange', s=2, label="Projected Vertices")
         valid_edges = edge_coords[i, :edge_lens[i]].cpu()
         ax.scatter(valid_edges[:, 0], valid_edges[:, 1], c='b', s=1, label="Target Silhouette")
         # --- Optionally plot hulls ---
