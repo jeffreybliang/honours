@@ -8,6 +8,7 @@ exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
 
 objects = ["Diamond", "Balloon", "Spiky", "Parabola", "Biconvex", "Cylinder"]
+# objects = ["Cylinder"]
 alpha_override = {
     "Diamond": 6,
     "Balloon": 5,
@@ -28,30 +29,31 @@ def run_process(cmd):
     subprocess.run(cmd)
 
 def sweep_gradient_smoothing():
-    mesh_res_vals = [3]
-    smoothing_methods = ["jacobi"]
-    constrained_flags = [False]
+    mesh_res_vals = [2]
+    # smoothing_methods = ["jacobi", "khop", "invhop"]
+    smoothing_methods = ["invhop"]
+    constrained_flags = [False, True]
     smoothing_ks = [1, 3, 5]
-    doublesided_flags = [0, 1]  # New: enable both one-sided and double-sided
+    doublesided_flags = [1]  # New: enable both one-sided and double-sided
     trials = 1
     jobs = []
 
     for mesh_res in mesh_res_vals:
-        for obj in objects:
+        for obj in reversed(objects):
             alpha = alpha_override[obj]
             ntrials = trials if mesh_res == 2 else 1
             for mode in projection_modes:
                 for method in smoothing_methods:
                     for constrained in constrained_flags:
-                        k_vals = smoothing_ks if method in {"jacobi", "khop"} else [0]
+                        k_vals = smoothing_ks #if method in {"jacobi", "khop"} else [0]
                         for k in k_vals:
                             # Adjust learning rate and momentum based on k
                             if k == 1:
-                                lr, momentum = 2e-5, 0.9
+                                lr, momentum = 5e-6, 0.8
                             elif k == 3:
-                                lr, momentum = 2e-5, 0.9
+                                lr, momentum = 5e-6, 0.9
                             elif k == 5:
-                                lr, momentum = 5e-5, 0.9
+                                lr, momentum = 8e-6, 0.9
                             else:
                                 lr, momentum = 5e-6, 0.85  # default
 
