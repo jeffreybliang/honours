@@ -50,7 +50,7 @@ def sweep_materials():
         for shape in shapes:
             alpha = alpha_override[shape]
             for trial in range(2):  # Two trials
-                vis = int(trial == 0)
+                vis = int(trial < 1)
 
                 for doublesided in (1, 0):  # Sweep both modes
                     cmd = dict(
@@ -65,11 +65,11 @@ def sweep_materials():
                         vis_enabled=vis,
                         velocity_enabled=0,
                         smoothing_enabled=0,
-                        project="Material Sweep",
+                        project="Material Sweep test",
                         view_mode=view_mode,
                         num_views=num_views,
                         n_iters=120,
-                        lr=5e-6 if doublesided else 1e-5,  # Adjust learning rate
+                        lr=5e-6 if doublesided else 5e-6,  # Adjust learning rate
                         momentum=0.9,
                         doublesided=doublesided,
                         material=material

@@ -130,13 +130,7 @@ def plot_projections(projverts, projmats, edgemaps,
     plt.tight_layout(pad=0.2)
     plt.subplots_adjust(wspace=0.1, hspace=0.1)
 
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-    buf.seek(0)
-    img = PILImage.open(buf)
-    plt.close(fig)
-    return img
-
+    return fig
 
 def visualise_meshes(srcmesh, tgtmesh):
     vertices = np.asarray(srcmesh.verts_packed())
