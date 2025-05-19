@@ -1,75 +1,107 @@
+import json
 import subprocess
-import sys
-import torch
-import time
+from multiprocessing import Pool
+from pathlib import Path
+from copy import deepcopy
 
-# Fixed experiment settings
-device = "cpu"
-data_path = "./framework_mesh/data_noground.json"
-exp_base_path = "./framework_mesh/exp_oblique_AdamW_TEST.json"
-mesh_res = 2
+# Constants
+mesh_res = 3
 velocity_k = 1
 velocity_beta = 1.0
-doublesided = False
-constrained = True
-ground_label = "ground"
+n_iters = 150
+exp_base_path = "./framework_mesh/exp_oblique.json"
+outdir = Path("./framework_mesh/sweep_configs")
+outdir.mkdir(exist_ok=True)
 
-# Grid sweep parameters
-lrs = [1e-3, 5e-3, 1e-2]
-weight_decays = [0.0, 1e-4]
-beta1_vals = [0.9, 0.95]
-beta2_vals = [0.9, 0.95]
+# Paths for datasets
+data_paths = {
+    "ground": "./framework_mesh/data_real_ground.json",
+    "noground": "./framework_mesh/data_real_noground.json",
+}
 
-# Generate all combinations
-sweeps = []
-for lr in lrs:
-    for wd in weight_decays:
-        for b1 in beta1_vals:
-            for b2 in beta2_vals:
-                sweeps.append({
-                    "lr": lr,
-                    "weight_decay": wd,
-                    "beta1": b1,
-                    "beta2": b2
-                })
+worker_script = "python3 -m framework_mesh.worker"
 
-# Limit concurrent subprocesses
-max_procs = 4
-running_procs = []
+def launch_job(args):
+    data_path, exp_path, device = args
 
-def build_cmd(config, idx):
-    name = f"{ground_label}_AdamW_idx{idx}_lr{config['lr']}_wd{config['weight_decay']}_b1{config['beta1']}_b2{config['beta2']}_res{mesh_res}"
-    return [
-        sys.executable, "-m", "framework_mesh.worker",
-        "--data_path", data_path,
-        "--exp_base_path", exp_base_path,
-        "--mesh_res", str(mesh_res),
-        "--constrained", str(constrained).lower(),
-        "--optimiser", "AdamW",
-        "--lr", str(config["lr"]),
-        "--weight_decay", str(config["weight_decay"]),
-        "--beta1", str(config["beta1"]),
-        "--beta2", str(config["beta2"]),
-        "--velocity_k", str(velocity_k),
-        "--velocity_beta", str(velocity_beta),
-        "--doublesided", str(doublesided).lower(),
-        "--ground_label", ground_label,
-        "--device", device,
-        "--name", name
-    ]
+    cmd = f"{worker_script} --data_path {data_path} --exp_path {exp_path} --device {device}"
+    print(f"[LAUNCHING] {cmd}")
+    subprocess.run(cmd, shell=True)
 
-# Launch processes with concurrency limit
-for idx, config in enumerate(sweeps):
-    cmd = build_cmd(config, idx)
-    print(f"[LAUNCH] {' '.join(cmd)}")
-    proc = subprocess.Popen(cmd)
-    running_procs.append(proc)
+def build_jobs():
+    jobs = []
 
-    if len(running_procs) >= max_procs:
-        for p in running_procs:
-            p.wait()
-        running_procs = []
+    # Load base experiment config
+    with open(exp_base_path, 'r') as f:
+        base_exp = json.load(f)
 
-# Final cleanup
-for p in running_procs:
-    p.wait()
+    for method in ["normal", "penalty"]:
+        for penalty_case in ["none", "lambda0", "lambda01"]:
+            if method == "normal" and penalty_case != "none":
+                continue
+            if method == "penalty" and penalty_case == "none":
+                continue
+
+            for ground in ["ground", "noground"]:
+                data_path = data_paths[ground]
+                doublesided = ground == "noground"
+                device = "cuda" if method == "penalty" else "cpu"
+
+                exp = deepcopy(base_exp)
+
+                exp["method"] = "penalty" if method == "penalty" else "projection"
+
+                exp["velocity"] = {
+                    "enabled": True,
+                    "k": velocity_k,
+                    "beta": velocity_beta
+                }
+
+                exp["gradient"] = {
+                    "smoothing": True,
+                    "method": "jacobi",
+                    "k": 5,
+                    "constrained": False,
+                    "debug": False
+                }
+
+                exp["training"] = {
+                    "n_iters": n_iters,
+                    "lr": 1e-4,
+                    "momentum": 0.9
+                }
+
+                exp["chamfer"] = {
+                    "doublesided": doublesided
+                }
+
+                if method == "penalty":
+                    if penalty_case == "lambda0":
+                        exp["penalty"] = {
+                            "lambda_init": 0.0,
+                            "lambda_max": 0.0,
+                            "rate": 1.0
+                        }
+                    elif penalty_case == "lambda01":
+                        exp["penalty"] = {
+                            "lambda_init": 0.01,
+                            "lambda_max": 1e7,
+                            "linear": 100
+                        }
+
+                name = f"{method}_{penalty_case}_{ground}_res{mesh_res}"
+                exp["name"] = name
+                exp_out_path = outdir / f"exp_{name}.json"
+
+                with open(exp_out_path, "w") as f:
+                    json.dump(exp, f, indent=2)
+
+                jobs.append((data_path, str(exp_out_path), device))
+
+    return jobs
+
+if __name__ == "__main__":
+    jobs = build_jobs()
+    print(f"[INFO] Launching {len(jobs)} jobs with concurrency = 3")
+    with Pool(processes=3) as pool:
+        pool.map(launch_job, jobs)

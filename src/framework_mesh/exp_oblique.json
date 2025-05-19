@@ -103,7 +103,7 @@
         "n_iters": 100,
         "lr": 1e-4,
         "momentum": 0.9,
-        "optimiser": "sgd"
+        "optimiser": "SGD"
     },
     "velocity": {
         "enabled": true,
@@ -118,5 +118,5 @@
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }
