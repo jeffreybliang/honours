@@ -91,7 +91,6 @@
             "num_views": 13
         }
     },
-    "method": "projection",
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -101,9 +100,10 @@
     },
     "training": {
         "n_iters": 100,
-        "lr": 1e-4,
+        "lr": 5e-5,
         "momentum": 0.9,
-        "optimiser": "sgd"
+        "optimiser": "AdamW",
+        "laplacian_weight": 0.1
     },
     "velocity": {
         "enabled": true,
@@ -111,7 +111,7 @@
         "beta": 1
     },
     "chamfer": {
-        "doublesided": true
+        "doublesided": false
     },      
     "verbose": false,
     "vis": {

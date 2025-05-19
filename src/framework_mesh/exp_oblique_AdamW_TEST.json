@@ -1,23 +1,10 @@
 {
-    "project": "Video Sequence",
+    "project": "AdamW",
     "name": "res_2_sphere_init",
     "description": "sky background, sphere to balloon dropping on ground",
     "src_mesh": "sphere",
     "target_meshes": [
-        "Oblique0", 
-        "Oblique1", 
-        "Oblique2", 
-        "Oblique3", 
-        "Oblique4", 
-        "Oblique5", 
-        "Oblique6", 
-        "Oblique7", 
-        "Oblique8", 
-        "Oblique9", 
-        "Oblique10", 
-        "Oblique11", 
-        "Oblique12", 
-        "Oblique13"
+        "Oblique0"
     ],    
     "views": {
         "Oblique0": {
@@ -91,7 +78,6 @@
             "num_views": 13
         }
     },
-    "method": "projection",
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -101,9 +87,12 @@
     },
     "training": {
         "n_iters": 100,
-        "lr": 1e-4,
+        "lr": 5e-5,
         "momentum": 0.9,
-        "optimiser": "sgd"
+        "optimiser": "AdamW",
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 1e-2
     },
     "velocity": {
         "enabled": true,
@@ -111,12 +100,12 @@
         "beta": 1
     },
     "chamfer": {
-        "doublesided": true
+        "doublesided": false
     },      
     "verbose": false,
     "vis": {
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }

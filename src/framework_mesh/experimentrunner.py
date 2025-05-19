@@ -11,6 +11,7 @@ import random
 import wandb
 import os
 from tqdm import trange
+from pytorch3d.loss.mesh_laplacian_smoothing import mesh_laplacian_smoothing
 
 
 class ExperimentRunner:
@@ -42,6 +43,8 @@ class ExperimentRunner:
         self.n_iters = self.cfg["training"]["n_iters"]
         self.lr = self.cfg["training"]["lr"]
         self.momentum = self.cfg["training"]["momentum"]
+        self.opt = self.cfg["training"].get("optimiser", "sgd")
+
         self.verbose = self.cfg["verbose"]
         self.vis_enabled = self.cfg["vis"]["enabled"]
         self.vis_freq = self.cfg["vis"]["frequency"]
@@ -153,11 +156,11 @@ class ExperimentRunner:
         faces = src[0].faces_packed().to(device)
         V = verts_init.size(1)
         boundary_mask = torch.zeros(V, dtype=torch.bool, device=device)
+        edge_src, edge_dst = build_edge_lists(faces, device)
+        all_idx = torch.arange(V, device=device)
+        D_all = bfs_hop_distance(V, edge_src, edge_dst, all_idx, k_max=10, device=device)
 
         if self.smoothing:
-            edge_src, edge_dst = build_edge_lists(faces, device)
-            all_idx = torch.arange(V, device=device)
-            D_all = bfs_hop_distance(V, edge_src, edge_dst, all_idx, k_max=10, device=device)
             hook = select_hook(
                 method=self.smoothing_method,
                 edge_src=edge_src,
@@ -168,10 +171,10 @@ class ExperimentRunner:
                 constrained=self.smoothing_constrained,
                 debug=self.smoothing_debug,
             )
-            if self.method == "penalty":
-                xs.register_hook(hook)
-            else:
-                verts.register_hook(hook)
+        if self.method == "penalty":
+            xs.register_hook(hook)
+        else:
+            verts.register_hook(hook)
 
         if self.method == "penalty":
             loss_fn = PenaltyMethod(src, tgt, projmats, edgemap_info,
@@ -235,21 +238,29 @@ class ExperimentRunner:
             optimiser.step()
             pbar.set_description(f"Loss: {loss.item()*10:.4f}")
 
-            tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
             # log
+            tmp_mesh = Meshes(verts=projverts.detach(), faces=src[0].faces_packed().unsqueeze(0))
             if self.wandb:
+                if self.method == "penalty":
+                    wandb.log(
+                        data = {
+                        "outer/vol_penalty_lambda": old_lambda_vol,
+                        "outer/vol_error": loss_dict["vol_error"],
+                        "outer/penalty": penalty_loss,
+                        },
+                        step = i + step_offset
+                    )
+
                 wandb.log(
                     data = {
                     "outer/chamfer": loss,
-                    "outer/vol_penalty_lambda": old_lambda_vol,
-                    "outer/vol_error": loss_dict["vol_error"],
-                    "outer/penalty": penalty_loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
                     },
                     step = i + step_offset
                 )
+
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss:.3f} Tgt: {target_volume} VolErr: {loss_dict['vol_error']:.3f}")

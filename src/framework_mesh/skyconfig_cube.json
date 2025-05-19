@@ -1,0 +1,28 @@
+{
+  "paths": {
+    "mesh_dir": "/Users/jeffreyliang/Documents/Honours/honours/src/data/meshes",
+    "mesh_res": 2,
+    "renders_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/renders",
+    "matrices_path": "/Users/jeffreyliang/Documents/Honours/honours/src/data/sky/cameras"
+  },
+  "meshes": [
+    {
+      "name": "cube",
+      "edgemap_options": {
+        "0": [false, 15, 70],
+        "1": [false, 15, 70],
+        "2": [false, 15, 70],
+        "3": [false, 15, 70],
+        "4": [false, 15, 70], 
+        "5": [false, 15, 70],
+        "6": [false, 15, 70],
+        "7": [false, 15, 70],
+        "8": [false, 15, 70],
+        "9": [false, 15, 70],
+        "10":[false, 15, 70],
+        "11":[false, 15, 70]
+        }
+    },
+    {"name": "sphere"}
+  ]
+}
