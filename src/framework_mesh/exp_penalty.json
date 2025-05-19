@@ -91,7 +91,12 @@
             "num_views": 13
         }
     },
-    "method": "projection",
+    "method": "penalty",
+    "penalty": {
+        "lambda_init": 0,
+        "lambda_max": 1e6,
+        "rate": 500
+},
     "gradient": {
         "smoothing": false,
         "method": "jacobi",
@@ -100,10 +105,9 @@
         "debug": false
     },
     "training": {
-        "n_iters": 100,
-        "lr": 1e-4,
-        "momentum": 0.9,
-        "optimiser": "sgd"
+        "n_iters": 2,
+        "lr": 5e-5,
+        "momentum": 0.9
     },
     "velocity": {
         "enabled": true,
@@ -118,5 +122,5 @@
         "enabled": true,
         "frequency": 5
     },
-    "wandb": false
+    "wandb": true
 }

@@ -8,9 +8,10 @@ warnings.filterwarnings("ignore")
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
 
     data_path = "./framework_mesh/data_noground.json"
+    exp_path = "./framework_mesh/exp_penalty.json"
     exp_path = "./framework_mesh/exp_oblique_AdamW_laplacian.json"
 
     with open(data_path, 'r') as f:
@@ -19,51 +20,55 @@ def main():
     with open(exp_path, 'r') as f:
         exp_config_base = json.load(f)
 
-    mesh_res = 2
     velocity_k = 1
     velocity_beta = 1.0
+    iters_to_sweep = [100]
 
-    data_config['paths']['mesh_res'] = mesh_res
-    dataloader = DataLoader(data_config, device)
+    for mesh_res in [3]:
+        data_config['paths']['mesh_res'] = mesh_res
+        dataloader = DataLoader(data_config, device)
 
-    for constrained in [False]:
-        exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
+        constrained_options = [False]
 
-        # Velocity settings (unchanged)
-        exp_config["velocity"] = {
-            "enabled": True,
-            "k": velocity_k,
-            "beta": velocity_beta
-        }
+        for constrained in constrained_options:
+            for n_iters in iters_to_sweep:
+                exp_config = json.loads(json.dumps(exp_config_base))  # deep copy
 
-        # Gradient smoothing
-        exp_config["gradient"] = {
-            "smoothing": True,
-            "method": "jacobi",
-            "k": 5,
-            "constrained": constrained,
-            "debug": False
-        }
+                exp_config["method"] = "penalty"
 
-        # Training hyperparameters
-        # exp_config["training"] = {
-        #     "n_iters": 150,
-        #     "lr": 5e-5,
-        #     "momentum": 0.8
-        # }
+                exp_config["velocity"] = {
+                    "enabled": True,
+                    "k": velocity_k,
+                    "beta": velocity_beta
+                }
 
-        # Chamfer loss: double-sided
-        exp_config["chamfer"] = {
-            "doublesided": True
-        }
+                exp_config["gradient"] = {
+                    "smoothing": True,
+                    "method": "jacobi",
+                    "k": 5,
+                    "constrained": constrained,
+                    "debug": False
+                }
 
-        # Naming
-        name = f"clean_vbeta_{velocity_beta}_vk_{velocity_k}_gradsmooth_True_constrained_{constrained}_res_{mesh_res}"
-        exp_config["name"] = name
+                exp_config["training"] = {
+                    "n_iters": n_iters,
+                    "lr": 1e-4,
+                    "momentum": 0.9
+                }
 
-        print(f"[RUN] {name}")
-        runner = ExperimentRunner(exp_config, dataloader)
-        runner.run()
+                exp_config["chamfer"] = {
+                    "doublesided": True
+                }
+
+                name = (
+                    f"PENALTY_clean_vbeta_{velocity_beta}_vk_{velocity_k}_"
+                    f"gradsmooth_True_constrained_{constrained}_res_{mesh_res}_n{n_iters}"
+                )
+                exp_config["name"] = name
+
+                print(f"[RUN] {name}")
+                runner = ExperimentRunner(exp_config, dataloader)
+                runner.run()
 
 
 if __name__ == "__main__":
