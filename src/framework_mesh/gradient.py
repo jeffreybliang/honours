@@ -15,6 +15,7 @@ def bfs_hop_distance(V, edge_src, edge_dst, boundary_idx, k_max=10, device=torch
     edge_src = edge_src.cpu()
     edge_dst = edge_dst.cpu()
     boundary_idx = boundary_idx.cpu()
+    
 
     frontier = [deque([b.item()]) for b in boundary_idx]
     visited  = [set([b.item()])   for b in boundary_idx]
