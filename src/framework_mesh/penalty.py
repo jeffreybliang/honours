@@ -11,7 +11,7 @@ from .utils import *
 import wandb
 
 class PenaltyMethod(nn.Module):
-    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None, device=torch.device("cpu"), doublesided=False, target_volume=None):
+    def __init__(self, src: Meshes, tgt: Meshes, projmatrices, edgemap_info, lambda_vol=1.0, boundary_mask=None, device=torch.device("cpu"), doublesided=False, target_volume=None, alpha=12.0):
         super().__init__()
         self.src = src
         self.tgt = tgt
@@ -24,6 +24,8 @@ class PenaltyMethod(nn.Module):
         self.boundary_mask = boundary_mask.to(device) if boundary_mask is not None else None
         self.lambda_vol = lambda_vol
         self.iter = 0
+        self.alpha = alpha
+        print("alpha is ", alpha)
 
         # Precompute and store target volumes on the correct device
         B = len(src)
@@ -74,9 +76,9 @@ class PenaltyMethod(nn.Module):
         boundaries_pad   = []                              # list of (P, B_max, 2)
         boundary_lengths = torch.zeros(B, P, device=xs.device)
 
-        faces_padded = self.src.faces_padded() if self.mode == "mesh" else None
-        fnorms_padded = self.src.update_padded(xs).faces_normals_padded() if self.mode == "mesh" else None
-        num_faces = self.src.num_faces_per_mesh() if self.mode == "mesh" else None
+        # faces_padded = self.src.faces_padded() if self.mode == "mesh" else None
+        # fnorms_padded = self.src.update_padded(xs).faces_normals_padded() if self.mode == "mesh" else None
+        # num_faces = self.src.num_faces_per_mesh() if self.mode == "mesh" else None
 
         all_boundary_pts = [[] for _ in range(B)]
         all_hulls = [[] for _ in range(B)]
@@ -87,14 +89,14 @@ class PenaltyMethod(nn.Module):
             Vb = num_verts_per_mesh[b]
             boundaries_b = []
             for p in range(P):
-                if self.mode == "alpha":
-                    boundary_p, mask_p, hulls_p = get_boundary_alpha(projected[b][p], alpha=self.alpha)
-                else:
-                    faces_b = faces_padded[b][:num_faces[b]]
-                    fnorms_b = fnorms_padded[b][:num_faces[b]]
-                    boundary_p, mask_p, loops_p = get_boundary_mesh(projected[b][p], faces=faces_b, fnorms=fnorms_b, P=self.projmatrices[p])
-                    hulls_p = []  # for consistency
-                    all_loops[b].append(loops_p)
+                # if self.mode == "alpha":
+                boundary_p, mask_p, hulls_p = get_boundary_alpha(projected[b][p], alpha=self.alpha)
+                # else:
+                #     faces_b = faces_padded[b][:num_faces[b]]
+                #     fnorms_b = fnorms_padded[b][:num_faces[b]]
+                #     boundary_p, mask_p, loops_p = get_boundary_mesh(projected[b][p], faces=faces_b, fnorms=fnorms_b, P=self.projmatrices[p])
+                #     hulls_p = []  # for consistency
+                #     all_loops[b].append(loops_p)
 
                 with torch.no_grad():
                     self.boundary_mask[:Vb].logical_or_(mask_p)
@@ -110,7 +112,7 @@ class PenaltyMethod(nn.Module):
             boundaries_pad.append(padded)                               # (P, B_max, 2)
 
         # 4) Chamfer distance per mesh
-        chamfer_loss = torch.zeros(B, device=y.device)
+        chamfer_loss = torch.zeros(B, device=xs.device)
         for b in range(B):
             res, _ = chamfer_distance(
                         x=boundaries_pad[b].float(),

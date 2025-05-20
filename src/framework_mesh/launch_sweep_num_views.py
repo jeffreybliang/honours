@@ -31,7 +31,7 @@ alpha_override = {
 }
 
 view_counts = [1, 2, 3, 4, 6, 8, 9, 10, 12]
-projection_modes = ["alpha", "mesh"]  # Singleton for future extensibility
+projection_modes = ["alpha"]  # Singleton for future extensibility
 trials = 2
 
 def make_args(**kwargs):
@@ -49,12 +49,7 @@ def sweep_view_counts():
         for obj in objects:
             alpha = alpha_override.get(obj, 5)
             for num_views in view_counts:
-                if mode == "alpha" and num_views in [10, 12]:
-                    continue
-                if mode == "alpha":
-                    trial_count = 2
-                elif mode == "mesh":
-                    trial_count = 5 - num_views // 3
+                trial_count = 10
                 for trial in range(trial_count):
                     vis = int(trial == 0)
                     run_name = f"{obj}_views-{num_views}_proj-{mode}_t{trial:02d}"

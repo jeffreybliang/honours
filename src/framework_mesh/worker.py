@@ -82,6 +82,17 @@ def main(args):
 
     exp_cfg["num_views"] = args.num_views
 
+    if args.penalty_lambda_init is not None:
+        exp_cfg.setdefault("penalty", {})
+        exp_cfg["penalty"]["lambda_init"] = args.penalty_lambda_init
+        exp_cfg["method"] = "penalty"
+
+        if args.penalty_lambda_max is not None:
+            exp_cfg["penalty"]["lambda_max"] = args.penalty_lambda_max
+        if args.penalty_linear is not None:
+            exp_cfg["penalty"]["linear"] = args.penalty_linear
+
+
     runner = ExperimentRunner(exp_cfg, dataloader)
     runner.run()
 
@@ -116,6 +127,11 @@ if __name__ == "__main__":
     parser.add_argument("--n_iters", type=int, default=None)
 
     parser.add_argument("--material", default=None)
+
+    parser.add_argument("--penalty_lambda_init", type=float, default=None)
+    parser.add_argument("--penalty_lambda_max", type=float, default=None)
+    parser.add_argument("--penalty_linear", type=int, default=None)
+
 
     args = parser.parse_args()
     args.device = torch.device(args.device)

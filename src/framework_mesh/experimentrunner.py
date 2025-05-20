@@ -176,15 +176,15 @@ class ExperimentRunner:
                 k=self.smoothing_k,
                 constrained=self.smoothing_constrained,
                 debug=self.smoothing_debug,
-            )
-        if self.method == "penalty":
-            xs.register_hook(hook)
-        else:
-            verts.register_hook(hook)
+        )
+            if self.method == "penalty":
+                xs.register_hook(hook)
+            else:
+                verts.register_hook(hook)
 
         if self.method == "penalty":
             loss_fn = PenaltyMethod(src, tgt, projmats, edgemap_info,
-                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask, device=device, doublesided=self.cfg["chamfer"]["doublesided"], target_volume=target_volume)
+                                    lambda_vol=self.lambda_vol, boundary_mask=boundary_mask, device=device, doublesided=self.cfg["chamfer"]["doublesided"], target_volume=target_volume, alpha=self.alpha)
             optimiser = torch.optim.SGD([xs], lr=lr, momentum=moment)
         else:
             node = ConstrainedProjectionNode(src, target_volume, self.wandb)
@@ -265,7 +265,7 @@ class ExperimentRunner:
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
                     "outer/gt/iou": iou_gt(projverts, src, tgt)[0],
-                    "gradient/norm": verts.grad.norm(dim=1).mean()
+                    # "gradient/norm": verts.grad.norm(dim=1).mean()
                     },
                     step = i + step_offset
                 )
