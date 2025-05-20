@@ -47,17 +47,16 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
             g_nb.scatter_add_(0, edge_dst[:, None].expand(-1, 3), g[edge_src])
             deg = torch.zeros(V, 1, device=g.device)
             deg.scatter_add_(0, edge_dst[:, None], onesE)
-            if constrained:
-                g_nb += og_g
-            else:
-                g_nb += g
-            deg += 1.0
-            g_nb = g_nb / (deg.clamp_min_(1.0)+1)
-            g = g_nb
             # if constrained:
-            #     g = torch.where(boundary_mask[:, None], g, g_nb)
+            #     g_nb += og_g
             # else:
-            #     g = g_nb
+            g_nb += g
+            deg += 1.0
+            g_nb = g_nb / (deg.clamp_min_(1.0))
+            if constrained:
+                g = torch.where(boundary_mask[:, None], og_g, g_nb)
+            else:
+                g = g_nb
 
         if debug:
             g_diff = (g - grad_in.view(-1, 3)).abs()
@@ -72,7 +71,7 @@ def make_jacobi_hook(edge_src, edge_dst, boundary_mask, k=5, constrained=False, 
 # -------------------------------
 # 2. Inverse-hop smoother
 # -------------------------------
-def make_invhop_hook(D_all, boundary_mask, eps=1e-4, constrained=True, debug=False):
+def make_invhop_hook(D_all, boundary_mask, k=-1, eps=1e-4, constrained=True, debug=False):
     V = boundary_mask.size(0)
 
     def hook(grad_in):
@@ -80,27 +79,32 @@ def make_invhop_hook(D_all, boundary_mask, eps=1e-4, constrained=True, debug=Fal
 
         with torch.no_grad():
             boundary_idx = boundary_mask.nonzero(as_tuple=False).view(-1)
-            D_hop = D_all[:, boundary_idx].to(g.device)  # (V, B)
+            D_hop = D_all[:, boundary_idx].to(g.device).float()  # convert here
 
-        inv = 1.0 / (D_hop.float() + eps)
-        inv[D_hop == D_hop.max()] = 0.0
-        w_self = torch.ones(V, 1, device=g.device)
-        row_sum = w_self + inv.sum(1, keepdim=True)
-        W = inv / row_sum
-        w_self = w_self / row_sum
+            if k >= 0:
+                D_mask = (D_hop <= k)
+                D_hop = D_hop.masked_fill(~D_mask, float('inf'))
 
-        g_b = g[boundary_idx]
-        g_new = W @ g_b + w_self * g
+            inv = 1.0 / (D_hop.float() + eps)
+            inv[D_hop == float('inf')] = 0.0  # zero out masked entries
 
-        if constrained:
-            bmask = torch.zeros(V, dtype=torch.bool, device=g.device)
-            bmask[boundary_idx] = True
-            g_new[bmask] = g[bmask]
+            w_self = torch.ones(V, 1, device=g.device)
+            row_sum = w_self + inv.sum(1, keepdim=True)
+            W = inv / row_sum
+            w_self = w_self / row_sum
 
-        if debug:
-            g_diff = (g_new - g).abs()
-            print("[InvHop-cached] Δg > 1e-6:", (g_diff.norm(dim=-1) > 1e-6).sum().item(),
-                  "| max Δg:", g_diff.max().item())
+            g_b = g[boundary_idx]
+            g_new = W @ g_b + w_self * g
+
+            if constrained:
+                bmask = torch.zeros(V, dtype=torch.bool, device=g.device)
+                bmask[boundary_idx] = True
+                g_new[bmask] = g[bmask]
+
+            if debug:
+                g_diff = (g_new - g).abs()
+                print("[InvHop-k] Δg > 1e-6:", (g_diff.norm(dim=-1) > 1e-6).sum().item(),
+                      "| max Δg:", g_diff.max().item())
 
         return g_new.view_as(grad_in)
 
@@ -163,6 +167,7 @@ def select_hook(
         return make_invhop_hook(
             D_all=D_all,
             boundary_mask=boundary_mask,
+            k=k,
             constrained=constrained,
             debug=debug
         )

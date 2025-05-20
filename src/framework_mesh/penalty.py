@@ -5,7 +5,7 @@ from pytorch3d.structures import Meshes
 from pytorch3d.loss import chamfer_distance
 from torch import nn
 import numpy as np
-from .chamfer import get_boundary
+from .chamfer import *
 from .functions import calculate_volume
 from .utils import *
 import wandb
@@ -58,56 +58,84 @@ class PenaltyMethod(nn.Module):
 
     def silhouette_chamfer(self, xs):
         B, P = len(self.src), self.projmatrices.size(0)
+        vertices = xs
         num_verts_per_mesh = self.src.num_verts_per_mesh()
+
+        # 1) project every mesh into every view
         projected = []
         for b in range(B):
             Vb = num_verts_per_mesh[b]
-            projected.append(self.project_vertices(xs[b, :Vb]))
+            projected.append(self.project_vertices(vertices[b, :Vb]))  # (P, Vb, 2)
 
-        if self.boundary_mask is not None:
-            with torch.no_grad():
-                self.boundary_mask.zero_()
+        # 2) reset the shared boundary mask
+        with torch.no_grad():
+            self.boundary_mask.zero_()
 
-        boundaries_pad = []
+        boundaries_pad   = []                              # list of (P, B_max, 2)
         boundary_lengths = torch.zeros(B, P, device=xs.device)
 
+        faces_padded = self.src.faces_padded() if self.mode == "mesh" else None
+        fnorms_padded = self.src.update_padded(xs).faces_normals_padded() if self.mode == "mesh" else None
+        num_faces = self.src.num_faces_per_mesh() if self.mode == "mesh" else None
+
+        all_boundary_pts = [[] for _ in range(B)]
+        all_hulls = [[] for _ in range(B)]
+        all_loops = [[] for _ in range(B)]
+
+        # 3) per‑mesh → per‑view boundary extraction
         for b in range(B):
             Vb = num_verts_per_mesh[b]
             boundaries_b = []
             for p in range(P):
-                boundary_p, mask_p = get_boundary(projected[b][p])
-                if self.boundary_mask is not None:
-                    with torch.no_grad():
-                        self.boundary_mask[:Vb].logical_or_(mask_p)
+                if self.mode == "alpha":
+                    boundary_p, mask_p, hulls_p = get_boundary_alpha(projected[b][p], alpha=self.alpha)
+                else:
+                    faces_b = faces_padded[b][:num_faces[b]]
+                    fnorms_b = fnorms_padded[b][:num_faces[b]]
+                    boundary_p, mask_p, loops_p = get_boundary_mesh(projected[b][p], faces=faces_b, fnorms=fnorms_b, P=self.projmatrices[p])
+                    hulls_p = []  # for consistency
+                    all_loops[b].append(loops_p)
+
+                with torch.no_grad():
+                    self.boundary_mask[:Vb].logical_or_(mask_p)
+
                 boundaries_b.append(boundary_p)
                 boundary_lengths[b, p] = boundary_p.size(0)
-            padded = torch.nn.utils.rnn.pad_sequence(boundaries_b, batch_first=True, padding_value=0.0)
-            boundaries_pad.append(padded)
+                all_boundary_pts[b].append(boundary_p)
+                all_hulls[b].append(hulls_p)
 
-        chamfer_loss = torch.zeros(B, device=xs.device)
+            padded = torch.nn.utils.rnn.pad_sequence(boundaries_b,
+                                                    batch_first=True,
+                                                    padding_value=0.0)
+            boundaries_pad.append(padded)                               # (P, B_max, 2)
+
+        # 4) Chamfer distance per mesh
+        chamfer_loss = torch.zeros(B, device=y.device)
         for b in range(B):
             res, _ = chamfer_distance(
-                x=boundaries_pad[b].float(),
-                y=self.edgemaps[b].float(),
-                x_lengths=boundary_lengths[b].long(),
-                y_lengths=self.edgemaps_len[b].long(),
-                batch_reduction="mean",
-                point_reduction="mean",
-                single_directional=not self.doublesided)
+                        x=boundaries_pad[b].float(),
+                        y=self.edgemaps[b].float(),
+                        x_lengths=boundary_lengths[b].long(),
+                        y_lengths=self.edgemaps_len[b].long(),
+                        batch_reduction="mean",
+                        point_reduction="mean",
+                        single_directional=not self.doublesided)
             chamfer_loss[b] = res.sum()
-        return chamfer_loss.double()
+
+        return chamfer_loss.double(), all_boundary_pts, all_hulls, all_loops
+
 
     def forward(self, xs: torch.Tensor):
-        silhouette_chamfer_loss = self.silhouette_chamfer(xs)
+        silhouette_chamfer_loss, all_boundary_pts, all_hulls, all_loops = self.silhouette_chamfer(xs)
 
         if self.lambda_vol != 0:
             volume_loss = self.volume_constraint(xs)
             return {
                 "chamfer": silhouette_chamfer_loss,
                 "vol_error": volume_loss
-            }
+            }, all_boundary_pts, all_hulls, all_loops
 
         return {
             "chamfer": silhouette_chamfer_loss,
             "vol_error": 0
-        }
+        }, all_boundary_pts, all_hulls, all_loops

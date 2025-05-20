@@ -33,7 +33,7 @@ class ExperimentRunner:
         self.views_config = {
             mesh_name: {
                 "mode": view_config["mode"],
-                "view_names": view_config["view_names"],
+                "view_names": [str(i) for i in view_config["view_idx"]],
                 "num_views": view_config["num_views"]
             }
             for mesh_name, view_config in self.cfg["views"].items()
@@ -67,6 +67,10 @@ class ExperimentRunner:
 
         self.method = self.cfg.get("method", "projection")
         self.lambda_vol = self.cfg.get("penalty", {}).get("lambda_init", 0.0)
+        self.projection_mode = self.cfg["projection"].get("mode", "alpha")
+        self.alpha = self.cfg["projection"].get("alpha", 10.0)
+        
+# ============================================================================================================
 
     def run(self):
         device = self.data_loader.device
@@ -89,7 +93,7 @@ class ExperimentRunner:
             wandb.define_metric("outer/gt/chamfer", summary="min")
             wandb.define_metric("outer/gt/iou", summary="max")
 
-        view_names_used = {}
+        view_ids_used = {}
         step_offset = 0
 
         prev_verts = None
@@ -107,7 +111,9 @@ class ExperimentRunner:
 
             _, _, cam_id_to_name = self.data_loader.load_camera_matrices()
             view_names = [cam_id_to_name[i] for i in view_ids]
-            view_names_used[tgt_name] = view_names
+            # view_names_used[tgt_name] = view_names
+            # Reverse map view_ids to view_names
+            view_ids_used[tgt_name] = view_ids
 
             edgemap_info = ([tgt_edgemap_info[0]], [tgt_edgemap_info[1]])
 
@@ -140,7 +146,7 @@ class ExperimentRunner:
             step_offset += self.n_iters
 
         if self.wandb:
-            run.config["view_names"] = view_names_used
+            run.config["view_ids"] = view_ids_used
             run.finish()
 
     def train_loop(self, src, tgt, projmats, edgemap_info, gt_projmats, gt_edgemap_info,
@@ -193,8 +199,7 @@ class ExperimentRunner:
         bmin,bmax = None,None
 
         initheatmap, cmin, cmax = create_heatmap(Meshes(verts=mesh_input.detach(), faces=faces.unsqueeze(0)), tgt[0], cmin, cmax)
-
-        if self.wandb:
+        if self.wandb and self.vis_enabled:
             wandb.log({"plt/projections": wandb.Image(projectionplot),
                     "plt/heatmap": wandb.Plotly(initheatmap)}, step=step_offset)
 
@@ -210,10 +215,11 @@ class ExperimentRunner:
             linear = penalty.get("linear", -1)
         for i in pbar:
             optimiser.zero_grad(set_to_none=True)
+    
 
             if self.method == "penalty":
                 loss_fn.iter = i + step_offset
-                loss_dict = loss_fn(xs)
+                loss_dict, boundary_pts, hulls, loops = loss_fn(xs)
                 penalty_loss = lambda_vol * loss_dict["vol_error"]
                 loss = loss_dict["chamfer"] + penalty_loss
                 old_lambda_vol = lambda_vol
@@ -226,8 +232,10 @@ class ExperimentRunner:
             else:
                 node.iter = i + step_offset
                 projverts = ConstrainedProjectionFunction.apply(node, verts)
-                loss = loss_fn(projverts)
-                
+                loss, boundary_pts, hulls, loops = loss_fn(verts)
+
+            tmp_mesh = Meshes(verts=projverts.float().clone().detach(), faces=src[0].faces_packed().unsqueeze(0))
+
             colour = bcolors.FAIL
             if loss.item() < min_loss:
                 min_loss = loss.item()
@@ -256,11 +264,11 @@ class ExperimentRunner:
                     "outer/chamfer": loss,
                     "outer/vol": calculate_volume(projverts[0], src[0].faces_packed()),
                     "outer/gt/chamfer": chamfer_gt(tmp_mesh, tgt)[0],
-                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0]
+                    "outer/gt/iou": iou_gt(projverts, src, tgt)[0],
+                    "gradient/norm": verts.grad.norm(dim=1).mean()
                     },
                     step = i + step_offset
                 )
-
 
             if self.verbose:
                 print(f"{i:4d} Loss: {colour}{loss.item():.3f}{bcolors.ENDC} Volume: {calculate_volume(projverts[0], src[0].faces_packed()).item():.3f} Chamfer: {loss_dict['chamfer'].item():.3f} Penalty: {penalty_loss:.3f} Tgt: {target_volume} VolErr: {loss_dict['vol_error']:.3f}")
@@ -269,7 +277,14 @@ class ExperimentRunner:
             def should_log(i):
                 return i < 50 or (i % self.vis_freq == self.vis_freq-1)  # True at i = 1, 2, 4, 8, 16, ...
             if self.vis_enabled and should_log(i):
-                projectionplot = plot_projections(projverts.detach().squeeze().double(), gt_projmats, gt_edgemap_info)
+                projectionplot = plot_projections(
+                    projverts.detach().squeeze().double(),
+                    gt_projmats,
+                    gt_edgemap_info,
+                    boundary_points=boundary_pts[0],  # B=1 case
+                    hulls=hulls[0],
+                    loops=loops[0]
+                )
                 heatmap,cmin,cmax = create_heatmap(tmp_mesh, tgt[0], cmin, cmax)
                 boundary_fig, bmin, bmax = compute_boundary_distance_heatmap(
                     tmp_mesh, boundary_mask, D_all, bmin, bmax
@@ -296,13 +311,14 @@ class ExperimentRunner:
         view_conf = self.views_config[mesh_name]
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]
         renders = self.data_loader.load_renders(mesh_name)
+        print("Loaded renders:", list(renders.keys()))
 
+        full_idx = view_conf["view_names"]
         view_names = (
-            view_conf["view_names"]
-            if view_conf["mode"] == "manual"
-            else random.sample(view_conf["view_names"], view_conf["num_views"])
+            full_idx if view_conf["mode"] == "manual"
+            else random.sample(full_idx, view_conf["num_views"])
         )
-        print(f"{view_names} from {view_conf['view_names']}")
+        print(f"{view_names} from view_idx: {view_conf['view_names']}")
 
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
@@ -317,19 +333,34 @@ class ExperimentRunner:
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
 
     def get_gt_projmats_and_edgemap_info(self, mesh_name, device=torch.device("cpu")):
+        view_conf = self.views_config[mesh_name]
         edgemap_opts = self.data_loader.edgemap_options[mesh_name]
         renders = self.data_loader.load_renders(mesh_name)
         edgemaps, edgemaps_len = load_edgemaps(renders, edgemap_opts)
 
         camera_matrices, cam_name_to_id, _ = self.data_loader.load_camera_matrices()
-        view_names = sorted(cam_name_to_id.keys())
+        # view_names = sorted(cam_name_to_id.keys())
+
+        # Decide on view names based on mode
+        full_idx = view_conf["view_names"]  # Already stringified
+        view_names = (
+            full_idx if view_conf["mode"] == "manual"
+            else random.sample(full_idx, view_conf["num_views"])
+        )
         view_idx = [cam_name_to_id[name] for name in view_names]
 
-        projmats = torch.stack([camera_matrices[cam_name_to_id[name]]["P"] for name in view_names]).to(device)
+        projmats = torch.stack([
+            camera_matrices[cam_name_to_id[name]]["P"].to(device)
+            for name in view_names
+        ])
         tgt_edgemaps = torch.nn.utils.rnn.pad_sequence(
-            [edgemaps[name] for name in view_names], batch_first=True, padding_value=0.0
-        ).to(device)
-        tgt_edgemaps_len = torch.tensor([edgemaps_len[name] for name in view_names], device=device)
+            [edgemaps[name].to(device) for name in view_names],
+            batch_first=True, padding_value=0.0
+        )
+        tgt_edgemaps_len = torch.tensor(
+            [edgemaps_len[name] for name in view_names],
+            device=device
+        )
 
         return projmats, (tgt_edgemaps, tgt_edgemaps_len), view_idx
 

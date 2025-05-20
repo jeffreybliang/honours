@@ -1,31 +1,38 @@
 {
-    "project": "Flowchart",
+    "project": "Mesh vs Alpha Res3",
     "name": "cube",
-    "description": "sky, sphere to strawberry",
-    "src_mesh": "sphere",
+    "description": "",
+    "src_mesh": "Sphere",
     "target_meshes": [
         "cube"
     ],
     "views": {
-        "rstrawberry": {
+        "cube": {
             "mode": "manual",
             "view_idx": [0,1,2,3,4,5,6,7,8,9,10,11],
             "num_views": 12
         }
     },
     "training": {
-    "n_iters": 100,
-    "lr": 1e-5,
-    "momentum": 0.8
+        "n_iters": 80,
+        "lr": 5e-6,
+        "momentum": 0.9
+    },
+    "projection": {
+        "mode": "alpha",
+        "alpha": 10.0
+    },
+    "chamfer":{
+        "doublesided": true
     },
     "gradient": {
         "smoothing": true,
         "method": "jacobi",
-        "k": 4,
+        "k": 1,
         "constrained": false,
-        "debug": true
+        "debug": false
     },
-    "verbose": true,
+    "verbose": false,
     "vis": {
         "enabled": true,
         "frequency": 2

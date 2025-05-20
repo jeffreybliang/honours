@@ -135,7 +135,6 @@ def nearest_boundary_points(original_pts, boundary_np, atol=1e-6):
     return torch.stack(matched, dim=1)  # (2, P)
 
 
-
 class BoundaryProjectionChamferLoss(nn.Module):
     def __init__(self, views, m=50, sqrt_m=25, alpha=0.0):
         super().__init__()

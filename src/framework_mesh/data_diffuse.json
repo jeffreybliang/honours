@@ -1,0 +1,278 @@
+{
+  "env": "gpu",
+  "paths": {
+    "local": {
+      "mesh_dir": "/Users/jeffreyliang/Documents/Honours/Blender/shape_reconstruction/meshes",
+      "renders_path": "/Users/jeffreyliang/Documents/Honours/Blender/shape_reconstruction/renders",
+      "matrices_path": "/Users/jeffreyliang/Documents/Honours/Blender/shape_reconstruction/cameras",
+      "material": "Diffuse"
+    },
+    "gpu": {
+      "mesh_dir": "/home/jeffrey/shape/meshes",
+      "renders_path": "/home/jeffrey/shape",
+      "matrices_path": "/home/jeffrey/shape/cameras",
+      "material": "Diffuse"
+    },
+    "mesh_res": 2
+  },
+  "meshes": [
+    {
+      "name": "Sphere"
+    },
+    {
+      "name": "Balloon",
+      "edgemap_options": {
+        "0": [false, 15, 30],
+        "1": [false, 15, 30],
+        "2": [false, 15, 40],
+        "3": [false, 15, 50],
+        "4": [false, 15, 50],
+        "5": [false, 15, 30],
+        "6": [false, 15, 30],
+        "7": [false, 15, 30],
+        "8": [false, 15, 30],
+        "9": [false, 15, 30],
+        "10": [false, 15, 70],
+        "11": [false, 30, 60]
+      }
+    },
+    {
+      "name": "Biconvex",
+      "edgemap_options": {
+        "0": [false, 10, 70],
+        "1": [false, 10, 70],
+        "2": [false, 10, 70],
+        "3": [false, 10, 70],
+        "4": [false, 10, 70],
+        "5": [false, 10, 70],
+        "6": [false, 10, 70],
+        "7": [false, 10, 70],
+        "8": [false, 10, 70],
+        "9": [false, 10, 70],
+        "10": [false, 10, 70],
+        "11": [false, 10, 70]
+      }
+    },
+    {
+      "name": "Bottle",
+      "edgemap_options": {
+        "0": [false, 15, 40],
+        "1": [false, 15, 40],
+        "2": [false, 15, 40],
+        "3": [false, 15, 40],
+        "4": [false, 15, 40],
+        "5": [false, 15, 40],
+        "6": [false, 5, 40],
+        "7": [false, 15, 40],
+        "8": [false, 15, 40],
+        "9": [false, 15, 40],
+        "10": [false, 20, 70],
+        "11": [false, 20, 70]
+      }
+    },
+    {
+      "name": "Cube",
+      "edgemap_options": {
+        "0": [false, 10, 80],
+        "1": [false, 10, 80],
+        "2": [false, 10, 80],
+        "3": [false, 10, 80],
+        "4": [false, 10, 80],
+        "5": [false, 10, 80],
+        "6": [false, 10, 80],
+        "7": [false, 10, 80],
+        "8": [false, 10, 80],
+        "9": [false, 10, 80],
+        "10": [false, 10, 80],
+        "11": [false, 10, 90]
+      }
+    },
+    {
+      "name": "Cylinder",
+      "edgemap_options": {
+        "0": [false, 10, 80],
+        "1": [false, 10, 80],
+        "2": [false, 10, 80],
+        "3": [false, 10, 80],
+        "4": [false, 10, 80],
+        "5": [false, 10, 40],
+        "6": [false, 10, 80],
+        "7": [false, 10, 80],
+        "8": [false, 10, 80],
+        "9": [false, 10, 80],
+        "10": [false, 10, 80],
+        "11": [false, 10, 80]
+      }
+    },
+    {
+      "name": "Diamond",
+      "edgemap_options": {
+        "0": [false, 10, 40],
+        "1": [false, 10, 50],
+        "2": [false, 10, 80],
+        "3": [false, 10, 80],
+        "4": [false, 10, 80],
+        "5": [false, 10, 80],
+        "6": [false, 10, 80],
+        "7": [false, 10, 80],
+        "8": [false, 10, 80],
+        "9": [false, 10, 80],
+        "10": [false, 10, 80],
+        "11": [false, 10, 80]
+      }
+    },
+    {
+      "name": "Ellipsoid",
+      "edgemap_options": {
+        "0": [false, 10, 30],
+        "1": [false, 10, 40],
+        "2": [false, 10, 40],
+        "3": [false, 10, 40],
+        "4": [false, 10, 40],
+        "5": [false, 10, 40],
+        "6": [false, 20, 40],
+        "7": [false, 20, 40],
+        "8": [false, 20, 40],
+        "9": [false, 20, 50],
+        "10": [false, 20, 60],
+        "11": [false, 20, 60]
+      }
+    },
+    {
+      "name": "Parabola",
+      "edgemap_options": {
+        "0": [false, 10, 80],
+        "1": [false, 10, 80],
+        "2": [false, 10, 40],
+        "3": [false, 10, 80],
+        "4": [false, 10, 80],
+        "5": [false, 10, 80],
+        "6": [false, 10, 80],
+        "7": [false, 10, 80],
+        "8": [false, 10, 80],
+        "9": [false, 10, 80],
+        "10": [false, 10, 80],
+        "11": [false, 10, 80]
+      }
+    },
+    {
+      "name": "Spiky",
+      "edgemap_options": {
+        "0": [false, 5, 20],
+        "1": [false, 10, 40],
+        "2": [false, 10, 80],
+        "3": [false, 10, 80],
+        "4": [false, 10, 80],
+        "5": [false, 10, 80],
+        "6": [false, 10, 80],
+        "7": [false, 10, 80],
+        "8": [false, 10, 80],
+        "9": [false, 10, 80],
+        "10": [false, 10, 80],
+        "11": [false, 10, 80]
+      }
+    },
+    {
+      "name": "Sponge",
+      "edgemap_options": {
+        "0": [false, 10, 40],
+        "1": [false, 10, 40],
+        "2": [false, 8, 30],
+        "3": [false, 20, 60],
+        "4": [false, 20, 60],
+        "5": [false, 20, 60],
+        "6": [false, 20, 60],
+        "7": [false, 20, 40],
+        "8": [false, 20, 60],
+        "9": [false, 20, 60],
+        "10": [false, 10, 60],
+        "11": [false, 20, 60]
+      }
+    },
+    {
+      "name": "Strawberry",
+      "edgemap_options": {
+        "0": [false, 10, 40],
+        "1": [false, 10, 40],
+        "2": [false, 15, 40],
+        "3": [false, 20, 40],
+        "4": [false, 20, 40],
+        "5": [false, 20, 40],
+        "6": [false, 20, 40],
+        "7": [false, 20, 40],
+        "8": [false, 20, 60],
+        "9": [false, 20, 60],
+        "10": [false, 10, 60],
+        "11": [false, 20, 60]
+      }
+    },
+    {
+      "name": "Tear",
+      "edgemap_options": {
+        "0": [false, 10,80],
+        "1": [false, 10,80],
+        "2": [false, 10,80],
+        "3": [false, 10,80],
+        "4": [false, 10,80],
+        "5": [false, 10,80],
+        "6": [false, 10,80],
+        "7": [false, 10,80],
+        "8": [false, 10,80],
+        "9": [false, 10,80],
+        "10": [false,10,80],
+        "11": [false,10,80]
+      }
+    },
+    {
+      "name": "Torus",
+      "edgemap_options": {
+        "0": [false, 10,80],
+        "1": [false, 10,80],
+        "2": [false, 10,80],
+        "3": [false, 10,80],
+        "4": [false, 10,80],
+        "5": [false, 10,80],
+        "6": [false, 10,80],
+        "7": [false, 10,80],
+        "8": [false, 10,80],
+        "9": [false, 10,80],
+        "10": [false,10,80],
+        "11": [false,10,80]
+      }
+    },
+    {
+      "name": "Turnip",
+      "edgemap_options": {
+        "0": [false, 10,80],
+        "1": [false, 10,30],
+        "2": [false, 10,80],
+        "3": [false, 10,50],
+        "4": [false, 10,80],
+        "5": [false, 10,80],
+        "6": [false, 10,80],
+        "7": [false, 10,80],
+        "8": [false, 10,80],
+        "9": [false, 10,80],
+        "10": [false,10,80],
+        "11": [false,10,80]
+      }
+    },
+    {
+      "name": "Uneven",
+      "edgemap_options": {
+        "0": [false, 10,80],
+        "1": [false, 10,40],
+        "2": [false, 10,80],
+        "3": [false, 10,80],
+        "4": [false, 10,80],
+        "5": [false, 10,80],
+        "6": [false, 10,80],
+        "7": [false, 10,80],
+        "8": [false, 10,80],
+        "9": [false, 10,80],
+        "10": [false,10,80],
+        "11": [false,10,80]
+      }
+    }
+  ]
+}

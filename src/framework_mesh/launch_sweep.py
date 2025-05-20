@@ -1,75 +1,102 @@
+import argparse
+import json
 import subprocess
-import sys
-import torch
-import time
+from multiprocessing import Pool
 
-# Fixed experiment settings
+# --- CONFIG ---
+data_path = "./framework_mesh/data_diffuse.json"
+exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
-data_path = "./framework_mesh/data_noground.json"
-exp_base_path = "./framework_mesh/exp_oblique_AdamW_TEST.json"
-mesh_res = 2
-velocity_k = 1
-velocity_beta = 1.0
-doublesided = False
-constrained = True
-ground_label = "ground"
 
-# Grid sweep parameters
-lrs = [1e-3, 5e-3, 1e-2]
-weight_decays = [0.0, 1e-4]
-beta1_vals = [0.9, 0.95]
-beta2_vals = [0.9, 0.95]
+objects = [
+    "Balloon", "Biconvex", "Bottle", "Cube", "Cylinder",
+    "Diamond", "Ellipsoid", "Parabola", "Spiky", "Sponge",
+    "Strawberry", "Tear", "Turnip", "Uneven"
+]
 
-# Generate all combinations
-sweeps = []
-for lr in lrs:
-    for wd in weight_decays:
-        for b1 in beta1_vals:
-            for b2 in beta2_vals:
-                sweeps.append({
-                    "lr": lr,
-                    "weight_decay": wd,
-                    "beta1": b1,
-                    "beta2": b2
-                })
+# bad_views = {
+#     "Balloon": [],
+#     "Biconvex": [7, 8],
+#     "Bottle": [],
+#     "Cube": [],
+#     "Cylinder": [3, 4, 5, 11],
+#     "Diamond": [],
+#     "Ellipsoid": [0, 2],
+#     "Parabola": [2,6,8],
+#     "Spiky": [],
+#     "Sponge": [7],
+#     "Strawberry": [2, 4, 10],
+#     "Tear": [0,3],
+#     "Turnip": [],
+#     "Uneven":[]
+# }
 
-# Limit concurrent subprocesses
-max_procs = 4
-running_procs = []
+def make_args(**kwargs):
+    args = ["python", "-m", "framework_mesh.worker"]
+    for k, v in kwargs.items():
+        args += [f"--{k}", str(v)]
+    return args
 
-def build_cmd(config, idx):
-    name = f"{ground_label}_AdamW_idx{idx}_lr{config['lr']}_wd{config['weight_decay']}_b1{config['beta1']}_b2{config['beta2']}_res{mesh_res}"
-    return [
-        sys.executable, "-m", "framework_mesh.worker",
-        "--data_path", data_path,
-        "--exp_base_path", exp_base_path,
-        "--mesh_res", str(mesh_res),
-        "--constrained", str(constrained).lower(),
-        "--optimiser", "AdamW",
-        "--lr", str(config["lr"]),
-        "--weight_decay", str(config["weight_decay"]),
-        "--beta1", str(config["beta1"]),
-        "--beta2", str(config["beta2"]),
-        "--velocity_k", str(velocity_k),
-        "--velocity_beta", str(velocity_beta),
-        "--doublesided", str(doublesided).lower(),
-        "--ground_label", ground_label,
-        "--device", device,
-        "--name", name
-    ]
+def run_process(cmd):
+    subprocess.run(cmd)
 
-# Launch processes with concurrency limit
-for idx, config in enumerate(sweeps):
-    cmd = build_cmd(config, idx)
-    print(f"[LAUNCH] {' '.join(cmd)}")
-    proc = subprocess.Popen(cmd)
-    running_procs.append(proc)
+alpha_override = {
+    "Diamond": 2,
+    "Balloon": 2,
+    "Strawberry": 2,
+    "Spiky": 8,
+    "Parabola": 10,
+    "Cube": 5,
+    "Cylinder": 2,
+    "Bottle": 5,
+    "Biconvex": 5,
+    "Uneven": 8,
+    "Tear": 7,
+    "Turnip": 5,
+    "Ellipsoid": 2,
+    "Sponge": 5
+}
 
-    if len(running_procs) >= max_procs:
-        for p in running_procs:
-            p.wait()
-        running_procs = []
 
-# Final cleanup
-for p in running_procs:
-    p.wait()
+def sweep_projection_modes(projection_modes, trials=1):
+    mesh_res = 3
+    jobs = []
+    for mode in projection_modes:
+        for obj in objects:
+            alpha = alpha_override.get(obj, 5)
+            for doublesided in [0, 1]:
+                for trial in range(trials):
+                    run_name = f"{obj}_proj-{mode}_ds{doublesided}_t{trial:02d}"
+                    cmd = make_args(
+                        data_path=data_path,
+                        exp_base_path=exp_path,
+                        target_object=obj,
+                        projection_mode=mode,
+                        mesh_res=mesh_res,
+                        alpha=alpha,
+                        name=run_name,
+                        device=device,
+                        vis_enabled=1,
+                        velocity_enabled=0,
+                        smoothing_enabled=0,
+                        lr=5e-6 if doublesided==1 else 8e-6,
+                        momentum=0.9,
+                        doublesided=doublesided,
+                        project="Mesh vs Alpha v2 Res2",
+                        n_iters=120,
+                    )
+                    jobs.append(cmd)
+    return jobs
+
+def main(n_workers):
+    projection_modes = ["alpha", "mesh"]
+    jobs = sweep_projection_modes(projection_modes, trials=1)
+    print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
+    with Pool(processes=n_workers) as pool:
+        pool.map(run_process, jobs)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--n-workers", type=int, default=3)
+    args = parser.parse_args()
+    main(args.n_workers)
