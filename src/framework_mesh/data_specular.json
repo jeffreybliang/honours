@@ -1,5 +1,5 @@
 {
-  "env": "gpu",
+  "env": "local",
   "paths": {
     "local": {
       "mesh_dir": "/Users/jeffreyliang/Documents/Honours/Blender/shape_reconstruction/meshes",

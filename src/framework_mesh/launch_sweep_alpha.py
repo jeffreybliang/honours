@@ -81,9 +81,10 @@ def sweep_alpha_values(alpha_range, mesh_res_values=(2,), trials=1):
                         vis_enabled=int(trial < 1),
                         velocity_enabled=0,
                         smoothing_enabled=0,
-                        project=f"Shape Alpha Sweep Res{mesh_res} v2",
+                        project=f"REDO Shape Alpha Sweep Res{mesh_res}",
                         lr=5e-6,
-                        momentum=0.9
+                        momentum=0.9,
+                        n_iters=80
                     )
                     jobs.append(cmd)
     return jobs
@@ -94,11 +95,11 @@ def main(n_workers, mode="alpha"):
     # if mode == "projection":
     #     jobs = sweep_projection_modes(["alpha", "mesh"], trials=4)
 
-    alpha_range = [0, 2, 5, 10, 20]
-    mesh_res_vals = [2, 3]
+    alpha_range = [0, 2, 5, 10, 15, 20]
+    mesh_res_vals = [2]
     jobs = sweep_alpha_values(alpha_range=alpha_range, 
                                 mesh_res_values=mesh_res_vals, 
-                                trials=2)
+                                trials=1)
 
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:

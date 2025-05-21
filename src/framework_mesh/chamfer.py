@@ -93,20 +93,24 @@ def get_boundary_alpha(projected_pts: torch.Tensor, alpha: float = 15.0):
     # ── shapely runs on CPU, so work on a detached CPU copy ─────────────
     proj_cpu = projected_pts.detach().clone().cpu()
 
-    while alpha >= 0:
-        try:
-            shaper = Alpha_Shaper(proj_cpu)
-            shape = shaper.get_shape(alpha)
-            boundaries = get_boundaries(shape)
+    shaper = Alpha_Shaper(proj_cpu)
+    shape = shaper.get_shape(alpha)
+    boundaries = get_boundaries(shape)
 
-            if len(boundaries) == 1:
-                break  # ✅ Got a single polygon
-        except Exception as e:
-            print(f"[alpha={alpha:.2f}] Failed to extract shape: {e}")
-            boundaries = []
+    # while alpha >= 0:
+    #     try:
+    #         shaper = Alpha_Shaper(proj_cpu)
+    #         shape = shaper.get_shape(alpha)
+    #         boundaries = get_boundaries(shape)
 
-        alpha -= 1  # Try a smaller α
-    alpha = max(alpha, 0)
+    #         if len(boundaries) == 1:
+    #             break  # ✅ Got a single polygon
+    #     except Exception as e:
+    #         print(f"[alpha={alpha:.2f}] Failed to extract shape: {e}")
+    #         boundaries = []
+
+    #     alpha -= 1  # Try a smaller α
+    # alpha = max(alpha, 0)
 
     if not boundaries:
         return torch.empty((0, 2), device=projected_pts.device), torch.zeros(projected_pts.shape[0], dtype=torch.bool, device=projected_pts.device)

@@ -219,9 +219,9 @@ class ExperimentRunner:
             optimiser.zero_grad(set_to_none=True)
             node.iter = i + step_offset
             projverts = ConstrainedProjectionFunction.apply(node, verts)
-            loss, boundary_pts, hulls, loops = chamfer_loss(verts)
+            loss, boundary_pts, hulls, loops = chamfer_loss(projverts)
             tmp_mesh = Meshes(verts=projverts.float(), faces=src[0].faces_packed().unsqueeze(0))
-
+            
             colour = bcolors.FAIL
             if loss.item() < min_loss:
                 min_loss = loss.item()
