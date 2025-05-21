@@ -15,6 +15,7 @@ def bfs_hop_distance(V, edge_src, edge_dst, boundary_idx, k_max=10, device=torch
     edge_src = edge_src.cpu()
     edge_dst = edge_dst.cpu()
     boundary_idx = boundary_idx.cpu()
+    
 
     frontier = [deque([b.item()]) for b in boundary_idx]
     visited  = [set([b.item()])   for b in boundary_idx]
@@ -78,7 +79,7 @@ def make_invhop_hook(D_all, boundary_mask, k=-1, eps=1e-4, constrained=True, deb
 
         with torch.no_grad():
             boundary_idx = boundary_mask.nonzero(as_tuple=False).view(-1)
-            D_hop = D_all[:, boundary_idx].to(g.device)  # (V, B)
+            D_hop = D_all[:, boundary_idx].to(g.device).float()  # convert here
 
             if k >= 0:
                 D_mask = (D_hop <= k)
@@ -166,6 +167,7 @@ def select_hook(
         return make_invhop_hook(
             D_all=D_all,
             boundary_mask=boundary_mask,
+            k=k,
             constrained=constrained,
             debug=debug
         )

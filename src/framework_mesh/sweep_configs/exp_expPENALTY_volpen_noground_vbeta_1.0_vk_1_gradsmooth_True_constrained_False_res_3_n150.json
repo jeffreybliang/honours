@@ -1,0 +1,322 @@
+{
+  "project": "Video Sequence",
+  "name": "expPENALTY_volpen_noground_vbeta_1.0_vk_1_gradsmooth_True_constrained_False_res_3_n150",
+  "description": "sky background, sphere to balloon dropping on ground",
+  "src_mesh": "sphere",
+  "target_meshes": [
+    "Oblique0",
+    "Oblique1",
+    "Oblique2",
+    "Oblique3",
+    "Oblique4",
+    "Oblique5",
+    "Oblique6",
+    "Oblique7",
+    "Oblique8",
+    "Oblique9",
+    "Oblique10",
+    "Oblique11",
+    "Oblique12",
+    "Oblique13"
+  ],
+  "views": {
+    "Oblique0": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique1": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique2": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique3": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique4": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique5": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique6": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique7": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique8": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique9": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique10": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique11": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique12": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    },
+    "Oblique13": {
+      "mode": "manual",
+      "view_names": [
+        "Above_0",
+        "Above_1",
+        "Above_2",
+        "Above_3",
+        "Above_4",
+        "Above_5",
+        "Above_6",
+        "Ground_0",
+        "Ground_1",
+        "Ground_2",
+        "Ground_3",
+        "Ground_4",
+        "Overhead_0"
+      ],
+      "num_views": 13
+    }
+  },
+  "method": "penalty",
+  "penalty": {
+    "lambda_init": 10,
+    "lambda_max": 10000000.0,
+    "rate": 1.07
+  },
+  "gradient": {
+    "smoothing": true,
+    "method": "jacobi",
+    "k": 5,
+    "constrained": false,
+    "debug": false
+  },
+  "training": {
+    "n_iters": 150,
+    "lr": 1e-05,
+    "momentum": 0.9
+  },
+  "velocity": {
+    "enabled": true,
+    "k": 1,
+    "beta": 1.0
+  },
+  "chamfer": {
+    "doublesided": true
+  },
+  "verbose": false,
+  "vis": {
+    "enabled": true,
+    "frequency": 5
+  },
+  "wandb": true
+}

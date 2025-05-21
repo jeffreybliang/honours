@@ -1,0 +1,1003 @@
+{
+  "env": "gpu",
+  "paths": {
+    "local": {
+      "mesh_dir": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/exports",
+      "renders_path": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/renders",
+      "matrices_path": "/Users/jeffreyliang/Documents/Honours/Blender/oblique/cameras",
+      "material": "NoGround"
+    },
+    "gpu": {
+      "mesh_dir": "/home/jeffrey/data/meshes",
+      "renders_path": "/home/jeffrey/data/renders",
+      "matrices_path": "/home/jeffrey/data/cameras",
+      "material": "NoGround"
+    },
+    "mesh_res": 3
+  },
+  "meshes": [
+    {
+      "name": "sphere"
+    },
+    {
+      "name": "Oblique0",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique1",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique2",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique3",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          20,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique4",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          20,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique5",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          20,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique6",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          45
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique7",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique8",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          5,
+          25
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique9",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          5,
+          25
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique10",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique11",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          25
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          45
+        ]
+      }
+    },
+    {
+      "name": "Oblique12",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          25
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          20,
+          35
+        ]
+      }
+    },
+    {
+      "name": "Oblique13",
+      "edgemap_options": {
+        "Above_0": [
+          false,
+          10,
+          45
+        ],
+        "Above_1": [
+          false,
+          10,
+          45
+        ],
+        "Above_2": [
+          false,
+          10,
+          45
+        ],
+        "Above_3": [
+          false,
+          10,
+          45
+        ],
+        "Above_4": [
+          false,
+          10,
+          45
+        ],
+        "Above_5": [
+          false,
+          10,
+          45
+        ],
+        "Above_6": [
+          false,
+          10,
+          45
+        ],
+        "Ground_0": [
+          false,
+          10,
+          45
+        ],
+        "Ground_1": [
+          false,
+          10,
+          45
+        ],
+        "Ground_2": [
+          false,
+          10,
+          45
+        ],
+        "Ground_3": [
+          false,
+          10,
+          30
+        ],
+        "Ground_4": [
+          false,
+          10,
+          45
+        ],
+        "Overhead_0": [
+          false,
+          10,
+          35
+        ]
+      }
+    }
+  ]
+}
