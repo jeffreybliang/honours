@@ -82,7 +82,7 @@ def sweep_alpha_values(alpha_range, mesh_res_values=(2,), trials=1):
                         velocity_enabled=0,
                         smoothing_enabled=0,
                         project=f"REDO Shape Alpha Sweep Res{mesh_res}",
-                        lr=5e-6,
+                        lr=5e-5,
                         momentum=0.9,
                         n_iters=80
                     )

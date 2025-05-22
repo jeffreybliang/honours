@@ -45,58 +45,60 @@ alpha_override = {
     "Balloon": 2,
     "Strawberry": 2,
     "Spiky": 8,
-    "Parabola": 10,
+    "Parabola": 8,
     "Cube": 5,
     "Cylinder": 2,
     "Bottle": 5,
     "Biconvex": 5,
     "Uneven": 8,
     "Tear": 7,
-    "Turnip": 5,
+    "Turnip": 4,
     "Ellipsoid": 2,
     "Sponge": 5
 }
 
 
 def sweep_projection_modes(projection_modes, trials=1):
-    mesh_res = 3
+    mesh_res = [2]
     jobs = []
-    for mode in projection_modes:
-        for obj in objects:
-            alpha = alpha_override.get(obj, 5)
-            for doublesided in [0, 1]:
-                for trial in range(trials):
-                    run_name = f"{obj}_proj-{mode}_ds{doublesided}_t{trial:02d}"
-                    cmd = make_args(
-                        data_path=data_path,
-                        exp_base_path=exp_path,
-                        target_object=obj,
-                        projection_mode=mode,
-                        mesh_res=mesh_res,
-                        alpha=alpha,
-                        name=run_name,
-                        device=device,
-                        vis_enabled=1,
-                        velocity_enabled=0,
-                        smoothing_enabled=0,
-                        lr=5e-6 if doublesided==1 else 8e-6,
-                        momentum=0.9,
-                        doublesided=doublesided,
-                        project="Mesh vs Alpha v2 Res2",
-                        n_iters=120,
-                    )
-                    jobs.append(cmd)
+    for res in mesh_res:
+        for mode in projection_modes:
+            for obj in objects:
+                alpha = alpha_override.get(obj, 5)
+                for doublesided in [0, 1]:
+                    for trial in range(trials):
+                        run_name = f"{obj}_proj-{mode}_ds{doublesided}_t{trial:02d}"
+                        cmd = make_args(
+                            data_path=data_path,
+                            exp_base_path=exp_path,
+                            target_object=obj,
+                            projection_mode=mode,
+                            mesh_res=res,
+                            alpha=alpha,
+                            name=run_name,
+                            device=device,
+                            vis_enabled=int(trial<1),
+                            velocity_enabled=0,
+                            smoothing_enabled=0,
+                            lr=1e-5,
+                            momentum=0.9,
+                            doublesided=doublesided,
+                            project=f"REDO PolyVsAlpha Res{res}",
+                            n_iters=100,
+                        )
+                        jobs.append(cmd)
     return jobs
 
 def main(n_workers):
-    projection_modes = ["alpha", "mesh"]
-    jobs = sweep_projection_modes(projection_modes, trials=1)
+    # projection_modes = ["alpha", "mesh"]
+    projection_modes = ["mesh"]
+    jobs = sweep_projection_modes(projection_modes, trials=2)
     print(f"Launching {len(jobs)} jobs with {n_workers} workers...")
     with Pool(processes=n_workers) as pool:
         pool.map(run_process, jobs)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=3)
+    parser.add_argument("--n-workers", type=int, default=4)
     args = parser.parse_args()
     main(args.n_workers)

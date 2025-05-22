@@ -188,7 +188,7 @@ class ExperimentRunner:
             optimiser = torch.optim.SGD([xs], lr=lr, momentum=moment)
         else:
             node = ConstrainedProjectionNode(src, target_volume, self.wandb)
-            loss_fn = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask)
+            loss_fn = PyTorchChamferLoss(src, tgt, projmats, edgemap_info, boundary_mask=boundary_mask, doublesided=self.cfg["chamfer"]["doublesided"], mode=self.projection_mode, alpha=self.alpha)
             optimiser = torch.optim.SGD([verts], lr=lr, momentum=moment)
 
         a, b = edgemap_info
@@ -316,7 +316,7 @@ class ExperimentRunner:
         full_idx = view_conf["view_names"]
         view_names = (
             full_idx if view_conf["mode"] == "manual"
-            else random.sample(full_idx, view_conf["num_views"])
+            else sorted(random.sample(full_idx, view_conf["num_views"]))
         )
         print(f"{view_names} from view_idx: {view_conf['view_names']}")
 
@@ -345,7 +345,7 @@ class ExperimentRunner:
         full_idx = view_conf["view_names"]  # Already stringified
         view_names = (
             full_idx if view_conf["mode"] == "manual"
-            else random.sample(full_idx, view_conf["num_views"])
+            else sorted(random.sample(full_idx, view_conf["num_views"]))
         )
         view_idx = [cam_name_to_id[name] for name in view_names]
 

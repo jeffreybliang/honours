@@ -8,7 +8,7 @@ exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
 
 shapes = ["Diamond", "Balloon", "Strawberry", "Spiky", "Parabola",  "Cube", "Cylinder", "Bottle", "Biconvex", "Uneven", "Tear", "Turnip",  "Ellipsoid", "Sponge"]
-materials = ["Diffuse", "Specular", "Real"]
+materials = ["Diffuse", "Specular"]
 mesh_res = 2
 view_mode = "manual"
 num_views = 12
@@ -23,11 +23,11 @@ alpha_override = {
     "Cylinder": 2,
     "Bottle": 5,
     "Biconvex": 5,
-    "Uneven": 10,
-    "Tear": 10,
+    "Uneven": 8,
+    "Tear": 5,
     "Turnip": 5,
     "Ellipsoid": 5,
-    "Sponge": 10
+    "Sponge": 7
 }
 
 def get_data_path(material):
@@ -68,7 +68,7 @@ def sweep_materials():
                         view_mode=view_mode,
                         num_views=num_views,
                         n_iters=100,
-                        lr=1e-5 if doublesided else 5e-6,  # Adjust learning rate
+                        lr=1e-5,  # Adjust learning rate
                         momentum=0.9,
                         doublesided=doublesided,
                         material=material

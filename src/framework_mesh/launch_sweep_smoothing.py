@@ -7,8 +7,8 @@ data_path = "./framework_mesh/data_diffuse.json"
 exp_path = "./framework_mesh/exp_all_diffuse.json"
 device = "cpu"
 
-objects = ["Diamond", "Balloon", "Spiky", "Parabola", "Biconvex", "Cylinder"]
-# objects = ["Cylinder"]
+objects = ["Diamond", "Balloon", "Spiky", "Biconvex", "Cylinder"]
+# objects = ["Parabola"] 
 alpha_override = {
     "Diamond": 6,
     "Balloon": 5,
@@ -31,9 +31,9 @@ def run_process(cmd):
 def sweep_gradient_smoothing():
     mesh_res_vals = [2]
     # smoothing_methods = ["jacobi", "khop", "invhop"]
-    smoothing_methods = ["invhop"]
+    smoothing_methods = ["jacobi"]
     constrained_flags = [False, True]
-    smoothing_ks = [1, 3, 5]
+    smoothing_ks = [0, 1, 3, 5]
     doublesided_flags = [1]  # New: enable both one-sided and double-sided
     trials = 1
     jobs = []
@@ -49,16 +49,16 @@ def sweep_gradient_smoothing():
                         for k in k_vals:
                             # Adjust learning rate and momentum based on k
                             if k == 1:
-                                lr, momentum = 5e-6, 0.8
+                                lr, momentum = 1e-5, 0.9
                             elif k == 3:
-                                lr, momentum = 5e-6, 0.9
+                                lr, momentum = 2e-5, 0.9
                             elif k == 5:
-                                lr, momentum = 8e-6, 0.9
+                                lr, momentum = 5e-5, 0.9
                             else:
-                                lr, momentum = 5e-6, 0.85  # default
+                                lr, momentum = 1e-5, 0.9  # default
 
                             # Adjust number of iterations based on k
-                            n_iters = 120 + 10 * max(0, k - 1)
+                            n_iters = 100
 
                             for doublesided in doublesided_flags:
                                 for trial in range(ntrials):
@@ -80,7 +80,7 @@ def sweep_gradient_smoothing():
                                         smoothing_method=method,
                                         smoothing_k=k,
                                         constrained=constrained,
-                                        project=f"Shape Smoothing Sweep Res{mesh_res} v2",
+                                        project=f"Parabola Smoothing",
                                         n_iters=n_iters,
                                         lr=lr,
                                         momentum=momentum,
@@ -99,6 +99,6 @@ def main(n_workers):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n-workers", type=int, default=3)
+    parser.add_argument("--n-workers", type=int, default=4)
     args = parser.parse_args()
     main(args.n_workers)
